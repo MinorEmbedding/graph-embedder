@@ -18,10 +18,10 @@ jobs:
 
     - name: Build project
       run: |
-      mkdir build
-      cd build 
-      cmake ..
-      make
+        mkdir build
+        cd build 
+        cmake ..
+        make
     - name: Run GTest
       run: ./test_majorminer
 
