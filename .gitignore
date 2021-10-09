@@ -1,3 +1,7 @@
+# Own stuff
+build/
+Makefile
+
 # Prerequisites
 *.d
 
