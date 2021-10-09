@@ -23,5 +23,5 @@ jobs:
         cmake ..
         make
     - name: Run GTest
-      run: ./test_majorminer
+      run: ./build/test_majorminer
 
