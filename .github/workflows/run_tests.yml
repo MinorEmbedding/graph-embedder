@@ -1,0 +1,27 @@
+name: Test project
+
+on:
+  push:
+    branches: [ master, develop ]
+  pull_request:
+    branches: [ master, develop ]
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v2
+
+    - name: Build project
+      run: |
+      mkdir build
+      cd build 
+      cmake ..
+      make
+    - name: Run GTest
+      run: ./test_majorminer
+
