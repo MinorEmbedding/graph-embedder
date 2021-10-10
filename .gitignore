@@ -1,6 +1,7 @@
 # Own stuff
 build/
 Makefile
+.vscode/
 
 # Prerequisites
 *.d
