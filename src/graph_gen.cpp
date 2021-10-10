@@ -75,3 +75,83 @@ graph_t majorminer::generate_king(fuint32_t rows, fuint32_t cols)
 
   return graph;
 }
+
+
+graph_t majorminer::import_graph(std::string filename)
+{
+  std::ifstream file(filename);
+  if (!file.is_open()) throw std::runtime_error("File not found.");
+
+  file.seekg(0, std::ios::end);
+  size_t length = file.tellg();
+
+  file.seekg(0, std::ios::beg);
+
+  auto content = std::make_unique<char[]>(length);
+  file.read(content.get(), length);
+  return import_graph(content.get(), length);
+}
+
+enum ImportState
+{
+  INITIAL,
+  OUTER_LIST,
+  INNER_LIST
+};
+
+graph_t majorminer::import_graph(const char* edgeList, size_t length)
+{
+  graph_t graph{};
+  ImportState state = INITIAL;
+
+  fuint32_t readIdx = 0;
+  fuint32_t nodes[] = { 0, 0 };
+  fuint32_t nrEnds = 0;
+  fuint32_t currentVal = 0;
+  bool done = false;
+  bool readNb = false;
+  while(readIdx < length && !done)
+  {
+    char sym = edgeList[readIdx];
+    switch(state)
+    {
+      case INITIAL:
+        if (sym == '[') state = OUTER_LIST;
+        break;
+      case OUTER_LIST:
+      {
+        if (sym == '[') state = INNER_LIST;
+        else if (sym == ']') done = true;
+        else if (sym != ' ' && sym != ',') throw std::runtime_error("Bad edge list.");
+        break;
+      }
+      case INNER_LIST:
+      {
+        if (std::isdigit(sym))
+        {
+          currentVal = currentVal * 10 + (sym - '0');
+          readNb = true;
+        }
+        else if ((sym == ',' || sym == ']') && readNb)
+        {
+          readNb = false;
+          if (nrEnds < 2) nodes[nrEnds++] = currentVal;
+          else throw std::runtime_error("Invalid edge list.");
+          currentVal = 0;
+        }
+        if (sym == ']')
+        {
+          if (nrEnds != 2) throw std::runtime_error("Invalid edge list. Wrong number of ends.");
+          graph.insert(std::make_pair(nodes[0], nodes[1]));
+          nrEnds = 0;
+          state = OUTER_LIST;
+          nodes[0] = 0;
+          nodes[1] = 0;
+        }
+        break;
+      }
+    }
+    readIdx++;
+  }
+  return graph;
+}

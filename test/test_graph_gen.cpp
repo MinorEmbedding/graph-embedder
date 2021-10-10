@@ -71,3 +71,20 @@ TEST(KingGraphGen, King_3x3)
     {4, 8}, {5, 7}
   });
 }
+
+TEST(ImportGraphEdgeList, SimpleEdgeList)
+{
+  auto graph = majorminer::import_graph("test/data/sample_edgelists/simple_edgelist.txt");
+  EXPECT_EQ(graph.size(), 3);
+  containsEdges(graph, {
+    {0,1},
+    {1,2},
+    {2,0}
+  });
+}
+
+TEST(ImportGraphEdgeList, EmptyEdgeList)
+{
+  auto graph = majorminer::import_graph("test/data/sample_edgelists/empty_edgelist.txt");
+  EXPECT_EQ(graph.size(), 0);
+}

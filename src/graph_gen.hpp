@@ -1,6 +1,11 @@
 #ifndef __MAJORMINER_GRAPH_GEN_HPP_
 #define __MAJORMINER_GRAPH_GEN_HPP_
 
+#include <fstream>
+#include <string>
+#include <memory>
+#include <iostream>
+
 #include "majorminer_types.hpp"
 
 
@@ -15,6 +20,12 @@ namespace majorminer
 
   /// TODO: Implement generate Pegasus graph
   graph_t generate_pegasus();
+
+  /// Import an edge list from a file.
+  graph_t import_graph(std::string filename);
+
+  /// Import an edge list from a character array.
+  graph_t import_graph(const char* edgeList, size_t length);
 
 }
 
