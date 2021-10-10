@@ -1,4 +1,5 @@
 #include <gtest/gtest.h>
+#include <tbb/parallel_for.h>
 #include <majorminer.hpp>
 
 using namespace majorminer;
@@ -7,12 +8,13 @@ namespace
 {
   void containsEdges(const graph_t& graph, std::initializer_list<edge_t> edges)
   {
-    for (auto& edge : edges)
-    {
-      EXPECT_TRUE(graph.find(edge) != graph.end()
-        || graph.find(std::make_pair(edge.second, edge.first)) != graph.end());
-    }
+    tbb::parallel_for_each(edges.begin(), edges.end(),
+      [&graph](const edge_t& edge) {
+        EXPECT_TRUE(graph.find(edge) != graph.end()
+          || graph.find(std::make_pair(edge.second, edge.first)) != graph.end());
+    });
   }
+
   void printGraph(const graph_t& graph)
   {
     for (const auto& p : graph)

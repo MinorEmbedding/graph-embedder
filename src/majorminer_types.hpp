@@ -3,8 +3,9 @@
 
 #include <vector>
 #include <map>
-#include <unordered_map>
-#include <unordered_set>
+#include <tbb/concurrent_vector.h>
+#include <tbb/concurrent_unordered_set.h>
+#include <tbb/concurrent_unordered_map.h>
 
 #include <cinttypes>
 
@@ -22,14 +23,14 @@ namespace majorminer
     }
   };
 
-  template<typename T, typename Allocator>
-  using Vector = std::vector<T, Allocator>;
+  template<typename T, typename Allocator = std::allocator<T>>
+  using Vector = tbb::concurrent_vector<T, Allocator>;
 
-  template<class T, typename HashFunc = std::hash<T>>
-  using UnorderedSet = std::unordered_set<T, HashFunc, std::equal_to<T>, std::allocator<T>>;
+  template<class T, typename HashFunc = std::hash<T>, typename Allocator = std::allocator<T>>
+  using UnorderedSet = tbb::concurrent_unordered_set<T, HashFunc, std::equal_to<T>, Allocator>;
 
   template<typename K, typename V, typename HashFunc = std::hash<K>, typename Allocator = std::allocator<std::pair<const K, V>>>
-  using UnorderedMap = std::unordered_map<K, V, HashFunc, std::equal_to<K>, Allocator>;
+  using UnorderedMap = tbb::concurrent_unordered_map<K, V, HashFunc, std::equal_to<K>, Allocator>;
 
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
