@@ -18,6 +18,7 @@ jobs:
 
     - name: Build project
       run: |
+        bash prepare.sh
         mkdir build
         cd build 
         cmake ..
