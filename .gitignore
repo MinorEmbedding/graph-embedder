@@ -4,6 +4,9 @@ Makefile
 .vscode/
 external/oneTBB/
 
+# Python
+__pycache__
+
 # Prerequisites
 *.d
 
