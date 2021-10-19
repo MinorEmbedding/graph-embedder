@@ -1,6 +1,5 @@
 import dwave_networkx as dnx
 import numpy as np
-
 from chimera_graph import ChimeraGraph
 
 
