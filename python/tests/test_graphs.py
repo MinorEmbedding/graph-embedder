@@ -1,6 +1,7 @@
 import unittest
 from unittest.case import TestCase
 
+from src.graphs.chimera_embedding import ChimeraEmbedding
 from src.graphs.chimera_graph import ChimeraGraph
 from src.graphs.undirected_graph import UndirectedGraph
 
@@ -8,20 +9,17 @@ from src.graphs.undirected_graph import UndirectedGraph
 class Test_Graphs(TestCase):
 
     def test_sample_undirected_graph(self):
-        # --- Arrange
         G = UndirectedGraph(6)
-        G.add_edge(0, 4, 10)
-        G.add_edge(0, 2, 20)
-        G.add_edge(2, 1, 30)
-        G.add_edge(1, 4, 40)
-        G.add_edge(4, 3, 50)
-        G.add_edge(5, 4, 60)
+        G._set_edge(0, 4, 10)
+        G._set_edge(0, 2, 20)
+        G._set_edge(2, 1, 30)
+        G._set_edge(1, 4, 40)
+        G._set_edge(4, 3, 50)
+        G._set_edge(5, 4, 60)
 
-        # --- Act
-        edges = G.get_edges()
-        adj_matrix = G.get_adj_matrix()
+        edges = G._get_edges()
+        adj_matrix = G._get_adj_matrix()
 
-        # --- Assert
         edges_assert = [(0, 2, 20), (0, 4, 10), (1, 2, 30), (1, 4, 40), (2, 0, 20),
                         (2, 1, 30), (3, 4, 50), (4, 0, 10), (4, 1, 40), (4, 3, 50),
                         (4, 5, 60), (5, 4, 60)]
@@ -35,12 +33,10 @@ class Test_Graphs(TestCase):
         self.assertEqual(adj_matrix, adjacency_matrix_assert)
 
     def test_chimera_graph(self):
-        # --- Arrange
         G = ChimeraGraph()
 
-        # --- Act
-        edges = G.get_edges()
-        adj_matrix = G.get_adj_matrix()
+        edges = G._get_edges()
+        adj_matrix = G._get_adj_matrix()
 
         # --- Assert
         edges_assert = [(0, 4, 0), (0, 5, 0), (0, 6, 0), (0, 7, 0),
