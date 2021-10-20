@@ -2,10 +2,12 @@ import dwave_networkx as dnx
 import matplotlib.pyplot as plt
 import networkx as nx
 from dwave_networkx.drawing.chimera_layout import draw_chimera
+from python.src.graphs.undirected_graphs import UndirectedGraphAdjList
 
 from src.embedding import EmbeddingSolver
 
 # TODO: split evolution and drawing functionality
+
 
 def define_minor():
     # in this case: Haus vom Nikolaus
@@ -31,20 +33,36 @@ def main():
     print('Started program')
 
     # --- Init minor H
-    h, pos = define_minor()
+    # h, pos = define_minor()
     # nx.draw_networkx(h, pos=pos)
 
-    # --- Init Chimera graph G
+    # Define minor H
+    H = UndirectedGraphAdjList(5)
+    H._set_edge(0, 1)
+    H._set_edge(0, 4)
+    H._set_edge(1, 2)
+    H._set_edge(1, 3)
+    H._set_edge(2, 3)
+    H._set_edge(3, 4)
+    H._set_edge(4, 0)
+
+    # --- Draw one unit cell of a Chimera graph
     g = dnx.chimera_graph(1, 1, 4)
     dnx.draw_chimera(g)
 
-    solver = EmbeddingSolver(len(h.nodes()))
+    ############################################################################
+    solver = EmbeddingSolver(H)
     solver.init_basic_path()
 
-    nodes, edges = solver.get_current_embedding()
-    print(nodes)
-    print(edges)
+    while True:
+        cost = solver.calculate_cost()
+        print(cost)
+        solver.mutate()
+        nodes, edges = solver.get_current_embedding()
+        print(nodes)
+        print(edges)
 
+    ############################################################################
     # --- Draw
     g_view_draw = nx.Graph()
     g_view_draw.add_nodes_from(nodes)
@@ -59,6 +77,11 @@ def main():
         6: (0.5, -0.75),
         7: (0.5, -1.)
     }
+    # pos = dict()
+    # for node in nodes:
+    #     pos[node] = pos_all[node]
+    # print(pos)
+
     nx.draw_networkx(g_view_draw, pos=pos, node_color='b', node_shape='*',
                      style='dashed', edge_color='b', width=3)
 

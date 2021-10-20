@@ -41,7 +41,7 @@ class UndirectedGraphAdjList:
     """
 
     def __init__(self, vertices_count):
-        self.vertices_count = vertices_count
+        self.nodes_count = vertices_count
         self._adj_list = dict()
         for i in range(vertices_count):
             self._adj_list[i] = []
@@ -53,11 +53,17 @@ class UndirectedGraphAdjList:
             self._adj_list[to].append(frm)
         except:
             raise IndexError(
-                f'Graph only contains {self.vertices_count} vertices')
+                f'Graph only contains {self.nodes_count} vertices')
 
-    def _get_reachable_vertices(self, from_vertex):
+    def _get_edges_from_node(self, from_vertex):
         try:
             return self._adj_list[from_vertex]
         except:
             raise IndexError(
-                f'Graph only contains {self.vertices_count} vertices')
+                f'Graph only contains {self.nodes_count} vertices')
+
+    def _get_nodes(self):
+        return self._adj_list.keys()
+
+    def _get_edges(self):
+        return self._adj_list.values()
