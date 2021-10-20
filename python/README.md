@@ -1,5 +1,13 @@
 # Python evolutionary embedding
 
+## How to use?
+From within the python folder, execute
+(exact command will probably change frequently in the near future):
+
+```
+python -m src.evolution
+```
+
 ## Inputs
 - `H`: Minor to embed
 - `G`: Graph, e.g. a Chimera or Pegasus graph
