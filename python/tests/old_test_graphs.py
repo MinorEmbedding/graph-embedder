@@ -3,7 +3,7 @@ from unittest.case import TestCase
 
 from src.graphs.chimera_embedding import ChimeraEmbedding
 from src.graphs.chimera_graph import ChimeraGraph
-from src.graphs.undirected_graph import UndirectedGraph
+from src.graphs.undirected_graph_adj_matrix import UndirectedGraphAdjMatrix
 
 
 class Test_Graphs(TestCase):
