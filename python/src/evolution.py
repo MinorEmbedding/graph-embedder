@@ -2,11 +2,9 @@ import dwave_networkx as dnx
 import matplotlib.pyplot as plt
 import networkx as nx
 from dwave_networkx.drawing.chimera_layout import draw_chimera
-from python.src.graphs.undirected_graphs import UndirectedGraphAdjList
 
-from src.embedding import EmbeddingSolver
-
-# TODO: split evolution and drawing functionality
+from src.embedding_solver import EmbeddingSolver
+from src.graphs.undirected_graphs import UndirectedGraphAdjList
 
 
 def define_minor():
@@ -39,7 +37,6 @@ def main():
     # Define minor H
     H = UndirectedGraphAdjList(5)
     H._set_edge(0, 1)
-    H._set_edge(0, 4)
     H._set_edge(1, 2)
     H._set_edge(1, 3)
     H._set_edge(2, 3)
@@ -56,6 +53,13 @@ def main():
 
     while True:
         cost = solver.calculate_cost()
+        print(f'COST: {cost}')
+
+        # Draw
+        nodes, edges = solver.get_current_embedding()
+        draw_embedding(nodes, edges)
+
+        return
         print(cost)
         solver.mutate()
         nodes, edges = solver.get_current_embedding()
@@ -63,7 +67,9 @@ def main():
         print(edges)
 
     ############################################################################
-    # --- Draw
+
+
+def draw_embedding(nodes, edges):
     g_view_draw = nx.Graph()
     g_view_draw.add_nodes_from(nodes)
     g_view_draw.add_edges_from(edges)
@@ -92,8 +98,6 @@ def main():
     #                  style='dashed', edge_color='b', width=3)
 
     plt.show()
-
-    # TODO: Implement evolution
 
 
 if __name__ == "__main__":
