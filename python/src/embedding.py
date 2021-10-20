@@ -6,6 +6,9 @@ from src.graphs.chimera_graph import ChimeraGraphEmbedding, ChimeraGraphLayout
 class EmbeddingSolver():
 
     def __init__(self, minor_vertices_count):
+        if minor_vertices_count < 2:
+            raise NameError('The minor to embed must have at least two nodes')
+
         self._minor_vertices_count = minor_vertices_count
 
         self._G_layout = ChimeraGraphLayout()
@@ -36,19 +39,15 @@ class EmbeddingSolver():
         # Init with path graph as long as H
         # Start at vertex 0
         vertex_id = 0
-        for i in range(self._minor_vertices_count):
-            print('---------')
-            print(i)
+        for i in range(self._minor_vertices_count-1):
             neighbors = self._get_neighbors_not_used(vertex_id)
-            print(neighbors)
             next_vertex_id = random.choice(neighbors)
-            print(next_vertex_id)
             self._G_embedding.embed_edge(vertex_id, next_vertex_id)
             vertex_id = next_vertex_id
         # TODO: what if no path graph embedding is possible? When is this the case?
 
     def get_current_embedding(self):
-        nodes = [i for i in range(self._minor_vertices_count)]
+        nodes = self._G_embedding.get_embedded_nodes()
 
         # costs are not necessary here anymore, strip them
         edges = [edge[0:2] for edge in self._G_embedding.get_embedded_edges()]
