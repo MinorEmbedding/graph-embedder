@@ -43,7 +43,7 @@ class ChimeraGraphEmbedding(UndirectedGraphAdjMatrix):
         shore_size = 4  # TODO: init layout of ChimeraGraph dynamically
         vertices_count = shore_size * 2
         super().__init__(vertices_count)
-        self._embedded_nodes = []
+        self._embedded_nodes = set()
 
         # Define layout of Chimera graphs
         for i in range(0, 4):  # TODO: use shore_size here
@@ -54,12 +54,17 @@ class ChimeraGraphEmbedding(UndirectedGraphAdjMatrix):
     def embed_edge(self, frm, to):
         # 1 is the default embedded edge that belongs to no chain
         super()._set_edge(frm, to, 1)
-        self._embedded_nodes.append(frm)
-        self._embedded_nodes.append(to)
+        self._embedded_nodes.add(frm)
+        self._embedded_nodes.add(to)
 
     def get_embedded_edges(self):
         # TODO: add logic to indicate chains (use indexes like 1, 2, 3 to indicate groups)
-        return [edge for edge in super()._get_edges() if edge[2] > 0]
+
+        # only return embedded edges (cost bigger than 0)
+        # to avoid duplicated: only include those edges from node i to j
+        # where i<j holds true
+        return [edge for edge in super()._get_edges()
+                if edge[2] > 0 and edge[0] < edge[1]]
 
     def get_embedded_nodes(self):
         return self._embedded_nodes
