@@ -3,8 +3,9 @@ import matplotlib.pyplot as plt
 import networkx as nx
 from dwave_networkx.drawing.chimera_layout import draw_chimera
 
-from chimera_graph_view import ChimeraGraphView
+from src.embedding import EmbeddingSolver
 
+# TODO: split evolution and drawing functionality
 
 def define_minor():
     # in this case: Haus vom Nikolaus
@@ -37,11 +38,10 @@ def main():
     g = dnx.chimera_graph(1, 1, 4)
     dnx.draw_chimera(g)
 
-    g_view = ChimeraGraphView(len(h.nodes()))
-    g_view.init_basic_graph()
+    solver = EmbeddingSolver(len(h.nodes()))
+    solver.init_basic_path()
 
-    nodes = g_view.chimera.get_nodes()
-    edges = g_view.chimera.get_edges()
+    nodes, edges = solver.get_current_embedding()
     print(nodes)
     print(edges)
 
