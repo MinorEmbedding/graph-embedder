@@ -44,20 +44,20 @@ class UndirectedGraphAdjList:
         self.nodes_count = vertices_count
         self._adj_list = dict()
         for i in range(vertices_count):
-            self._adj_list[i] = []
+            self._adj_list[i] = set()
 
     def _set_edge(self, frm, to):
         try:
-            self._adj_list[frm].append(to)
+            self._adj_list[frm].add(to)
             # set vice-versa to preserve symmetric matrix (undirected graph)
-            self._adj_list[to].append(frm)
+            self._adj_list[to].add(frm)
         except:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
 
-    def _get_edges_from_node(self, from_vertex):
+    def _get_edges_from_node(self, from_node):
         try:
-            return self._adj_list[from_vertex]
+            return self._adj_list[from_node]
         except:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
@@ -66,4 +66,13 @@ class UndirectedGraphAdjList:
         return self._adj_list.keys()
 
     def _get_edges(self):
-        return self._adj_list.values()
+        edges = set()
+        for frm in self._adj_list.keys():
+            for to in self._adj_list[frm]:
+                # frm, to = to, frm
+                # would be fatal here inside the loop (!)
+                if frm < to:
+                    edges.add((frm, to))
+                else:
+                    edges.add((to, frm))
+        return edges
