@@ -12,3 +12,10 @@ std::vector<int> majorminer::testTBB()
   return ret;
 }
 
+EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target)
+{
+  convertToAdjacencyList(m_source, source);
+  convertToAdjacencyList(m_target, target);
+}
+
+

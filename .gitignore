@@ -2,8 +2,6 @@
 build/
 Makefile
 .vscode/
-external/eigen/
-external/NetworkSimplex/
 external/lemon/
 external/lemon.tar.gz
 

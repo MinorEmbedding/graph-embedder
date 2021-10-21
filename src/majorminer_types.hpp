@@ -34,10 +34,14 @@ namespace majorminer
   template<typename K, typename V, typename HashFunc = std::hash<K>, typename Allocator = std::allocator<std::pair<const K, V>>>
   using UnorderedMap = tbb::concurrent_unordered_map<K, V, HashFunc, std::equal_to<K>, Allocator>;
 
+  template<typename K, typename V, typename HashFunc = std::hash<K>, typename Allocator = std::allocator<std::pair<const K, V>>>
+  using UnorderedMultiMap = tbb::concurrent_unordered_multimap<K, V, HashFunc, std::equal_to<K>, Allocator>;
+
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
 
   typedef UnorderedSet<edge_t, PairHashFunc<fuint32_t, fuint32_t>> graph_t;
+  typedef UnorderedMultiMap<fuint32_t, fuint32_t> adjacency_list_t;
 }
 
 
