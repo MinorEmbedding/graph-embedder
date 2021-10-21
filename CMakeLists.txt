@@ -6,26 +6,34 @@ project(majorminer)
 set(CMAKE_CXX_STANDARD 17)
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
+set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/)
 
 # do not build tests in oneTBB
 set(TBB_TEST CACHE BOOL OFF)
 
+# build NetworkSimplex, gtest and oneTBB
+add_subdirectory(external)
 
-add_subdirectory(external/google-test)
-add_subdirectory(external/oneTBB)
 
 
+if ( CMAKE_COMPILER_IS_GNUCC )
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+endif()
+if ( MSVC )
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /W4")
+endif()
 
 add_library(majorminer)
 
-target_include_directories(majorminer PUBLIC external/oneTBB/include)
+
+target_include_directories(majorminer PUBLIC ${MM_INCLUDE_LIBS})
 
 add_subdirectory(src)
 
 
-add_executable(test_majorminer)
+add_executable(majorminer_test)
 add_subdirectory(test)
 
-target_include_directories(test_majorminer PUBLIC src external/openTBB/include)
+target_include_directories(majorminer_test PUBLIC src ${MM_INCLUDE_LIBS})
 
-target_link_libraries(test_majorminer majorminer gtest_main TBB::tbb)
+target_link_libraries(majorminer_test majorminer gtest_main TBB::tbb lemon)

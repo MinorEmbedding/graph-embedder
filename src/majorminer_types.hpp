@@ -17,9 +17,11 @@ namespace majorminer
   template<typename K, typename V>
   struct PairHashFunc
   {
-    size_t operator()(const std::pair<K,V>& p) const
+    size_t operator()(const std::pair<K,V>& pair) const
     {
-      return (std::hash<K>()(p.first) << 32) ^ (std::hash<V>()(p.second) >> 32);
+      size_t first = std::hash<K>()(pair.first);
+      size_t second = std::hash<V>()(pair.second);
+      return first ^ (second << 32) ^ (second >> 32);
     }
   };
 
@@ -35,7 +37,7 @@ namespace majorminer
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
 
-  typedef UnorderedSet<std::pair<fuint32_t, fuint32_t>, PairHashFunc<fuint32_t, fuint32_t>> graph_t;
+  typedef UnorderedSet<edge_t, PairHashFunc<fuint32_t, fuint32_t>> graph_t;
 }
 
 

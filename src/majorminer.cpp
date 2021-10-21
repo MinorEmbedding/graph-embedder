@@ -11,3 +11,4 @@ std::vector<int> majorminer::testTBB()
   tbb::parallel_sort(ret.begin(), ret.end());
   return ret;
 }
+

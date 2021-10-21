@@ -1,0 +1,7 @@
+#ifndef __MAJORMINER_CONFIG_HPP_
+#define __MAJORMINER_CONFIG_HPP_
+
+#define EIGEN_MPL2_ONLY
+
+
+#endif
