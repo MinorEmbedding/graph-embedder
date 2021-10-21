@@ -28,7 +28,7 @@ def define_minor():
 
 
 def main():
-    print('Started program')
+    print('--- Main() ---')
 
     # --- Init minor H
     # h, pos = define_minor()
@@ -51,20 +51,19 @@ def main():
     solver = EmbeddingSolver(H)
     solver.init_basic_path()
 
+    # --- Epochs
     while True:
-        cost = solver.calculate_cost()
-        print(f'COST: {cost}')
+        # --- Mutations
+        # Strategy1: Pick the best mutation from 5
+        # Strategy2 (for now): Take the first mutation that yields better costs
+        while True:
+            mutation = solver.mutate()
+            cost = solver.calculate_cost()
+            break  # go on with next epoch
 
         # Draw
-        nodes, edges = solver.get_current_embedding()
+        nodes, edges = solver.get_embedding()
         draw_embedding(nodes, edges)
-
-        return
-        print(cost)
-        solver.mutate()
-        nodes, edges = solver.get_current_embedding()
-        print(nodes)
-        print(edges)
 
     ############################################################################
 
@@ -72,6 +71,8 @@ def main():
 def draw_embedding(nodes, edges):
     g_view_draw = nx.Graph()
     g_view_draw.add_nodes_from(nodes)
+    edges = [(edge[0], edge[1])
+             for edge in edges]  # strip chains for right now
     g_view_draw.add_edges_from(edges)
     pos = {
         0: (0., -0.5),

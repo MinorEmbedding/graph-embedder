@@ -26,11 +26,10 @@ class ChimeraGraphLayout(UndirectedGraphAdjList):
         # Define layout of Chimera graphs
         for i in range(0, 4):  # TODO: use shore_size here
             for j in range(4, 8):
-                # cost=0 is just an edge that exists but is not used by the embedding
-                self._set_edge(i, j)  # default cost: 0
+                self._set_edge(i, j)
 
-    def get_neighbors(self, from_node):
-        return super()._get_edges_from_node(from_node)
+    def get_neighbor_nodes(self, from_node):
+        return super()._get_neighbor_nodes(from_node)
 
 
 class GraphEmbedding(UndirectedGraphAdjList):
@@ -39,23 +38,29 @@ class GraphEmbedding(UndirectedGraphAdjList):
     """
 
     def __init__(self, nodes_count):
+        self._chain_last = 1
         super().__init__(nodes_count)
 
-    def get_neighbors(self, from_node):
-        return super()._get_edges_from_node(from_node)
+    def get_neighbor_nodes(self, from_node):
+        return super()._get_neighbor_nodes(from_node)
 
-    def embed_edge(self, frm, to):
-        super()._set_edge(frm, to)
+    def embed_edge(self, frm, to, chain=0):
+        # Chain=0 means no chain, just a "normal" edge
+        super()._set_edge(frm, to, cost=chain)
+
+    def add_node(self):
+        super()._add_node()
 
     def get_embedded_nodes(self):
         nodes = super()._get_nodes()
-        nodes = [node for node in nodes if self._adj_list[node]]
+        # Filter for nodes that have an edge
+        nodes = [node for node in nodes if self._adj_list[node].get()]
         return nodes
 
     def get_embedded_edges(self):
         return super()._get_edges()
 
-    def get_current_embedding(self):
+    def get_embedding(self):
         nodes = self.get_embedded_nodes()
         edges = self.get_embedded_edges()
         return nodes, edges

@@ -16,14 +16,21 @@ class Test_EmbeddingSolver(TestCase):
                     continue
                 solver = EmbeddingSolver(H)
                 solver.init_basic_path()
-                nodes, edges = solver.get_current_embedding()
+                nodes, edges = solver.get_embedding()
                 self.assertEqual(len(nodes), i)
 
     def test_cost_stay_the_same_for_same_inits(self):
         cost_fixed = -1
 
         for i in range(20):
-            H = UndirectedGraphAdjList(4)
+            H = UndirectedGraphAdjList(5)
+            H._set_edge(0, 1)
+            H._set_edge(1, 2)
+            H._set_edge(1, 3)
+            H._set_edge(2, 3)
+            H._set_edge(3, 4)
+            H._set_edge(4, 0)
+
             solver = EmbeddingSolver(H)
             solver.init_basic_path()
             cost = solver.calculate_cost()

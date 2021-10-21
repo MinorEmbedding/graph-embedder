@@ -40,39 +40,67 @@ class UndirectedGraphAdjList:
     an edge from vertex u to vertex v.
     """
 
-    def __init__(self, vertices_count):
-        self.nodes_count = vertices_count
+    def __init__(self, nodes_count):
+        self.nodes_count = nodes_count
         self._adj_list = dict()
-        for i in range(vertices_count):
-            self._adj_list[i] = set()
+        for i in range(nodes_count):
+            self._adj_list[i] = AdjListEntryWithCosts()
 
-    def _set_edge(self, frm, to):
+    def _set_edge(self, frm, to, cost=0):
         try:
-            self._adj_list[frm].add(to)
+            self._adj_list[frm].add(to, cost)
             # set vice-versa to preserve symmetric matrix (undirected graph)
-            self._adj_list[to].add(frm)
+            self._adj_list[to].add(frm, cost)
         except:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
 
     def _get_edges_from_node(self, from_node):
         try:
-            return self._adj_list[from_node]
+            return self._adj_list[from_node].get()
         except:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
 
+    def _get_neighbor_nodes(self, from_node):
+        neighbors = self._get_edges_from_node(from_node)
+        # We only need the neighbor nodes, no costs
+        neighbors = [neighbor[0] for neighbor in neighbors]
+        return neighbors
+
     def _get_nodes(self):
         return self._adj_list.keys()
+
+    def _add_node(self):
+        self.nodes_count += 1
+        self._adj_list[self.nodes_count-1] = AdjListEntryWithCosts()
 
     def _get_edges(self):
         edges = set()
         for frm in self._adj_list.keys():
-            for to in self._adj_list[frm]:
+            for (to, cost) in self._adj_list[frm].get():
                 # frm, to = to, frm
                 # would be fatal here inside the loop (!)
                 if frm < to:
-                    edges.add((frm, to))
+                    edges.add((frm, to, cost))
                 else:
-                    edges.add((to, frm))
+                    edges.add((to, frm, cost))
         return edges
+
+
+class AdjListEntryWithCosts():
+    """
+    One entry of an adjacency list. Allows for costs. Makes sure that an edge
+    from node u to node v cannot exist multiple times with different costs.
+    """
+
+    def __init__(self):
+        self.to_nodes = set()
+        self.costs = dict()
+
+    def add(self, to, cost):
+        self.to_nodes.add(to)
+        self.costs[to] = cost  # may alter the costs for an existing edge
+
+    def get(self):
+        return [(to, self.costs[to]) for to in self.to_nodes]
