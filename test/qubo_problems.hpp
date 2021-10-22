@@ -16,12 +16,12 @@ namespace majorminer
     for (fuint32_t i = 0; i < n; ++i)
     {
       cities.push_back(model.createBinaryVars(n));
-      auto cons = *model.createConstraint(QConstraintType::EQUAL, 1, penalty);
+      auto& cons = *model.createConstraint(QConstraintType::EQUAL, 1, penalty);
       cons.addTerms(cities.back(), 1.0);
     }
     for (fuint32_t i = 0; i < n; ++i)
     {
-      auto cons = *model.createConstraint(QConstraintType::EQUAL, 1, penalty);
+      auto& cons = *model.createConstraint(QConstraintType::EQUAL, 1, penalty);
       for (fuint32_t j = 0; j < n; ++j)
       {
         cons.addTerm(*cities[j][i], 1.0);

@@ -3,7 +3,6 @@
 using namespace majorminer;
 
 
-
 void QPolynomial::updateTerm(QVariable* varI, QVariable* varJ, qcoeff_t coeff)
 {
   m_terms[orderedPair(varI, varJ)] += coeff;
@@ -31,9 +30,10 @@ QVariablePairMap QPolynomial::square() const
   QVariablePairMap map{};
   for (auto it = m_terms.begin(); it != m_terms.end(); ++it)
   {
-    for (auto it2 = it; it2 != m_terms.end(); ++it2)
+    auto it2 = it;
+    ++it2;
+    for (; it2 != m_terms.end(); ++it2)
     {
-      if (&(*it) == &(*it2)) continue;
       map[orderedPair(it->first.first, it2->first.first)] += 2 * it->second + it2->second;
     }
   }

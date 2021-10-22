@@ -43,6 +43,7 @@ namespace majorminer
       void addTerm(QVariable& varI, QVariable& varJ, qcoeff_t coeff) { updateTerm(&varI, &varJ, coeff); }
       void addTermMap(const QVariablePairMap& map, qcoeff_t multiplier = 1.0);
       void addTerms(QVariableVec& vars, qcoeff_t coeff);
+      size_t nbTerms() const { return m_terms.size(); }
       QVariablePairMap square() const;
       graph_t getConnectivityGraph() const;
 
@@ -78,11 +79,15 @@ namespace majorminer
       void addTerms(QVariableVec& vars, qcoeff_t coeff) { m_polynomial.addTerms(vars, coeff); }
       qcoeff_t getPenalty() const { return m_penalty; }
       const QPolynomial& getPolynomial() const { return m_polynomial; }
+      qcoeff_t getRhs() const { return m_rhs; }
 
       friend QPolynomial& operator+=(QPolynomial& poly, QConstraint& cons)
       {
-        auto map = cons.getPolynomial().square();
-        // TODO rhs
+        QPolynomial temp{};
+        temp += cons.getPolynomial();
+        temp.addTerm(-cons.getRhs());
+
+        auto map = temp.square();
         poly.addTermMap(map, cons.getPenalty());
         return poly;
       }
