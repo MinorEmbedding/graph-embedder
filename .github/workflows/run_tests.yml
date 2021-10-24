@@ -20,9 +20,9 @@ jobs:
       run: |
         bash prepare.sh
         mkdir build
-        cd build 
+        cd build
         cmake ..
         make
     - name: Run GTest
-      run: ./build/test_majorminer
+      run: ./build/majorminer_test
 

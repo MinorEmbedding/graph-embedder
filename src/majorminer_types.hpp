@@ -4,17 +4,24 @@
 #include <vector>
 #include <map>
 #include <tbb/concurrent_vector.h>
+#include <tbb/concurrent_set.h>
+#include <tbb/concurrent_map.h>
 #include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_unordered_map.h>
 
 #include <cinttypes>
 
+#include "config.hpp"
+
+#if __DEBUG__ == 1
+#include <iostream>
+#endif
 
 namespace majorminer
 {
   typedef uint_fast32_t fuint32_t;
 
-  template<typename K, typename V>
+  template<typename K, typename V = K>
   struct PairHashFunc
   {
     size_t operator()(const std::pair<K,V>& pair) const
@@ -40,8 +47,10 @@ namespace majorminer
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
 
-  typedef UnorderedSet<edge_t, PairHashFunc<fuint32_t, fuint32_t>> graph_t;
+  typedef UnorderedSet<edge_t, PairHashFunc<fuint32_t>> graph_t;
   typedef UnorderedMultiMap<fuint32_t, fuint32_t> adjacency_list_t;
+  typedef adjacency_list_t embedding_mapping_t;
+  typedef UnorderedSet<fuint32_t> nodeset_t;
 }
 
 

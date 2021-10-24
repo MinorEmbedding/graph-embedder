@@ -5,6 +5,7 @@
 #include <string>
 #include <memory>
 #include <iostream>
+#include <tbb/parallel_for.h>
 
 #include "majorminer_types.hpp"
 
@@ -20,6 +21,9 @@ namespace majorminer
 
   /// TODO: Implement generate Pegasus graph
   graph_t generate_pegasus();
+
+  /// Generate a simple cyclic graph C_n
+  graph_t generate_cyclegraph(fuint32_t n);
 
   /// Import an edge list from a file.
   graph_t import_graph(std::string filename);

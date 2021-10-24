@@ -70,3 +70,26 @@ TEST(ImportGraphEdgeList, EmptyEdgeList)
   auto graph = majorminer::import_graph("test/data/sample_edgelists/empty_edgelist.txt");
   EXPECT_EQ(graph.size(), 0);
 }
+
+TEST(CycleGraphGen, Cycle_5)
+{
+  auto graph = majorminer::generate_cyclegraph(5);
+  EXPECT_EQ(graph.size(), 5);
+  containsEdges(graph, {
+    { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 0 }
+  });
+}
+
+TEST(CycleGraphGen, Cycle_0)
+{
+  auto graph = majorminer::generate_cyclegraph(0);
+  EXPECT_EQ(graph.size(), 0);
+  containsEdges(graph, {});
+}
+
+TEST(CycleGraphGen, Cycle_1)
+{
+  auto graph = majorminer::generate_cyclegraph(1);
+  EXPECT_EQ(graph.size(), 0);
+  containsEdges(graph, {});
+}
