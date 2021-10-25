@@ -95,19 +95,64 @@ QModel::~QModel()
 }
 
 
-QPolynomial QModel::reformulate() const
+QPolynomial QModel::reformulate()
 {
   QPolynomial qubo{};
   qubo += m_objective;
   for (auto cons : m_constraints)
   {
-    qubo += *cons;
+    reformulateConstraint(cons, qubo);
+  }
+  for (auto cons : m_internalConstraints)
+  {
+    reformulateConstraint(cons, qubo);
   }
   return qubo;
 }
 
-graph_t QModel::operator()() const
+graph_t QModel::operator()()
 {
   auto poly = reformulate();
   return poly.getConnectivityGraph();
+}
+
+void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
+{
+  auto terms = constraint.getPolynomial().getTermMap();
+  fuint32_t nbOnes = 0;
+  fuint32_t nbMinusOnes = 0;
+  fuint32_t otherTerms = 0;
+  for (const auto& term : terms)
+  {
+    if (term.second == 0) continue;
+    if (term.second == 1) nbOnes++;
+    else if (term.second == -1) nbMinusOnes++;
+    else otherTerms++;
+  }
+  if (otherTerms > 0)
+  {
+    poly += constraint;
+  }
+  else if (nbOnes > 0 && nbMinusOnes == 0 && constraint.getRhs() == 1.0)
+  {
+    switch (constraint.getType())
+    {
+      case QConstraintType::EQUAL:
+        break;
+      case QConstraintType::LOWER_EQUAL:
+        break;
+      case QConstraintType::GREATER_EQUAL:
+        break;
+    }
+  }
+  else if (nbOnes > 0 && nbMinusOnes == 1)
+  {
+
+  }
+  else
+  {
+    poly += constraint;
+  }
+
+
 }

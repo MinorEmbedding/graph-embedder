@@ -46,6 +46,7 @@ namespace majorminer
       size_t nbTerms() const { return m_terms.size(); }
       QVariablePairMap square() const;
       graph_t getConnectivityGraph() const;
+      const QVariablePairMap& getTermMap() const { return m_terms; }
 
       friend QPolynomial operator+=(QPolynomial& lhs, const QPolynomial& rhs)
       {
@@ -74,12 +75,13 @@ namespace majorminer
     public:
       QConstraint(QConstraintType type, qcoeff_t rhs, qcoeff_t penalty)
         : m_type(type), m_rhs(rhs), m_penalty(penalty){}
-      void addTerm(qcoeff_t coeff) { m_polynomial.addTerm(coeff); }
+      void addTerm(qcoeff_t coeff) { m_rhs += coeff; }
       void addTerm(QVariable& var, qcoeff_t coeff) { m_polynomial.addTerm(var, coeff); }
       void addTerms(QVariableVec& vars, qcoeff_t coeff) { m_polynomial.addTerms(vars, coeff); }
       qcoeff_t getPenalty() const { return m_penalty; }
       const QPolynomial& getPolynomial() const { return m_polynomial; }
       qcoeff_t getRhs() const { return m_rhs; }
+      QConstraintType getType() const { return m_type; }
 
       friend QPolynomial& operator+=(QPolynomial& poly, QConstraint& cons)
       {
@@ -109,14 +111,16 @@ namespace majorminer
       QVariable* createBinaryVar();
       QConstraint* createConstraint(QConstraintType type, qcoeff_t rhs, qcoeff_t penalty);
       QPolynomial& getObjective(){ return m_objective; }
-      graph_t operator()() const;
-      QPolynomial reformulate() const;
+      graph_t operator()();
+      QPolynomial reformulate();
+      void reformulateConstraint(QConstraint& constraint, QPolynomial& poly);
 
 
     private:
       QPolynomial m_objective;
       QVariableVec m_variables;
       QConstraintVec m_constraints;
+      QConstraintVec m_internalConstraints;
   };
 
 }
