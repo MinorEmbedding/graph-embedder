@@ -1,5 +1,5 @@
 
-target_sources(majorminer PUBLIC
+target_sources(majorminer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/graph_gen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/network_simplex.cpp

@@ -24,7 +24,7 @@ EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target)
 embedding_mapping_t EmbeddingSuite::find_embedding()
 {
   UnorderedSet<fuint32_t> nodesRemaining{};
-  for (const auto& arc : *m_targetGraph)
+  for (const auto& arc : *m_sourceGraph)
   {
     nodesRemaining.insert(arc.first);
     nodesRemaining.insert(arc.second);
@@ -33,7 +33,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   {
     auto node = *nodesRemaining.begin();
     nodesRemaining.unsafe_erase(node);
-    auto adjacentNodes = m_target.equal_range(node);
+    auto adjacentNodes = m_source.equal_range(node);
     fuint32_t nbAdjacent = 0;
     fuint32_t adjacentNode = 0;
     for (auto adjNode = adjacentNodes.first; adjNode != adjacentNodes.second; ++adjNode)
@@ -44,12 +44,15 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
         nbAdjacent++;
       }
     }
+    DEBUG(OUT_S << "Nb adjacent to node " << node << ": " << nbAdjacent << std::endl;)
     if (nbAdjacent > 1)
     {
+      DEBUG(OUT_S << "Complex node to embedd." << std::endl;)
       embeddNode(node);
     }
     else if (nbAdjacent == 1)
     { // find a node that is adjacent to the node "adjacentNode"
+      DEBUG(OUT_S << "Simple adjacent node to embedd." << std::endl;)
       auto embeddedPathIt = m_mapping.equal_range(adjacentNode);
       fuint32_t bestNodeFound = adjacentNode;
 
@@ -71,11 +74,16 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
     }
     else
     { // just place the node anywhere
+      DEBUG(OUT_S << "Trivial node to embedd." << std::endl;)
       if (!m_targetNodesRemaining.empty())
       {
         auto targetNode = *m_targetNodesRemaining.begin();
         m_targetNodesRemaining.unsafe_erase(m_targetNodesRemaining.begin());
         mapNode(node, targetNode);
+      }
+      else
+      {
+        throw std::runtime_error("Oooops...");
       }
     }
   }

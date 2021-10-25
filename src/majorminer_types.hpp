@@ -13,9 +13,6 @@
 
 #include "config.hpp"
 
-#if __DEBUG__ == 1
-#include <iostream>
-#endif
 
 namespace majorminer
 {

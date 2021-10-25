@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.7)
 project(majorminer)
 
 
-set(CMAKE_CXX_STANDARD 17)
+enable_language(C CXX)
+set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/)

@@ -19,3 +19,12 @@ void majorminer::printGraph(const graph_t& graph)
     std::cout << "(" << p.first << ", " << p.second << ")" << std::endl;
   }
 }
+
+
+void majorminer::addEdges(graph_t& graph, std::initializer_list<edge_t> edges)
+{
+  for (const auto& edge : edges)
+  {
+    graph.insert(edge);
+  }
+}

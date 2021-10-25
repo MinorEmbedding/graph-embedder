@@ -1,4 +1,4 @@
-#include "test_common.hpp"
+#include "utils/test_common.hpp"
 
 using namespace majorminer;
 

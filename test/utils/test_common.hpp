@@ -11,6 +11,8 @@ namespace majorminer
 
   void printGraph(const graph_t& graph);
 
+  void addEdges(graph_t& graph, std::initializer_list<edge_t> edges);
+
 }
 
 
