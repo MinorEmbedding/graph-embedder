@@ -8,6 +8,7 @@
 #include <tbb/concurrent_map.h>
 #include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_unordered_map.h>
+#include <tbb/concurrent_priority_queue.h>
 
 #include <cinttypes>
 

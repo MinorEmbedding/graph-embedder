@@ -101,11 +101,11 @@ QPolynomial QModel::reformulate()
   qubo += m_objective;
   for (auto cons : m_constraints)
   {
-    reformulateConstraint(cons, qubo);
+    reformulateConstraint(*cons, qubo);
   }
   for (auto cons : m_internalConstraints)
   {
-    reformulateConstraint(cons, qubo);
+    reformulateConstraint(*cons, qubo);
   }
   return qubo;
 }
@@ -133,21 +133,24 @@ void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
   {
     poly += constraint;
   }
-  else if (nbOnes > 0 && nbMinusOnes == 0 && constraint.getRhs() == 1.0)
+  else if (nbOnes > 8 && nbMinusOnes == 0 && constraint.getRhs() == 1.0)
   {
     switch (constraint.getType())
     {
       case QConstraintType::EQUAL:
+        reformulateAlternative(constraint, poly, AlternativeConstraintType::EQUAL_ONE, nbOnes);
         break;
       case QConstraintType::LOWER_EQUAL:
+        reformulateAlternative(constraint, poly, AlternativeConstraintType::LEQ_ONE, nbOnes);
         break;
       case QConstraintType::GREATER_EQUAL:
+        reformulateAlternative(constraint, poly, AlternativeConstraintType::GEQ_ONE, nbOnes);
         break;
     }
   }
-  else if (nbOnes > 0 && nbMinusOnes == 1)
+  else if (nbOnes > 8 && nbMinusOnes == 1)
   {
-
+    reformulateAlternative(constraint, poly, AlternativeConstraintType::ABSORPTION, nbOnes);
   }
   else
   {
@@ -156,3 +159,129 @@ void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
 
 
 }
+
+
+void QModel::reformulateAlternative(QConstraint& constraint, QPolynomial& poly, AlternativeConstraintType type, fuint32_t n)
+{
+  QVariableVec nodes{};
+  nodes.reserve(n);
+  auto penalty = constraint.getPenalty();
+
+  const auto& terms = constraint.getPolynomial().getTermMap();
+  QVariable* absorber = nullptr; // only if absorber constraint
+  for (const auto& term : terms)
+  {
+    if (term.second == 0.0 || term.first.first == nullptr) continue;
+    if (term.second == -1.0) absorber = term.first.first;
+    else if (term.second == 1.0) nodes.push_back(term.first.first);
+  }
+
+  fuint32_t level = 0;
+  bool lastBad = false;
+  QVariable* layer0Bad = nullptr; // for GEQ_ONE a "bad" node in the lowest layer must be negated into the rosenberg polynomial
+  while(nodes.size() > 2)
+  {
+    fuint32_t writeIdx = 0;
+    for (fuint32_t readIdx = 0; readIdx < nodes.size(); readIdx += 2)
+    {
+      if (readIdx + 2 == nodes.size() && lastBad)
+      { // last level a node was left alone
+        lastBad = false;
+        if (type != AlternativeConstraintType::GEQ_ONE)
+        { // x1 + x2 - y = 0
+          nodes[writeIdx++] = smallAbsorptionConstraint(nodes[readIdx], nodes[readIdx + 1], penalty);
+        }
+        else
+        { // GEQ_ONE needs logical AND but if the current "bad" node is from layer 0, we have to negate the variable
+          if (layer0Bad == nodes[readIdx + 1]) nodes[writeIdx++] = partialNegatedRosenbergPolynomial(poly, nodes[readIdx], nodes[readIdx + 1], penalty);
+          else nodes[writeIdx++] = normalRosenbergPolynomial(poly, nodes[readIdx], nodes[readIdx + 1], penalty);
+          layer0Bad = nullptr;
+        }
+      }
+      else if (readIdx + 1 < nodes.size())
+      { // condense simple
+        if (type != AlternativeConstraintType::GEQ_ONE)
+        { // x1 + x2 - y = 0
+          nodes[writeIdx++] = smallAbsorptionConstraint(nodes[readIdx], nodes[readIdx + 1], penalty);
+        }
+        else
+        { // for level=0: y = not(x1) * not(x2), enforce this by using Rosenberg polynomial (with negated x1 and x2)
+          // else: y = x1 * x2 (logical and), again Rosenberg polynomial
+          if (level == 0) nodes[writeIdx++] = negatedRosenbergPolynomial(poly, nodes[readIdx], nodes[readIdx + 1], penalty);
+          else nodes[writeIdx++] = normalRosenbergPolynomial(poly, nodes[readIdx], nodes[readIdx + 1], penalty);
+        }
+      }
+      else
+      { // node left over
+        if (level == 0) layer0Bad = nodes[readIdx];
+        nodes[writeIdx++] = nodes[readIdx];
+        lastBad = true;
+      }
+    }
+    nodes.resize(writeIdx); // condensed a lot of nodes
+    level++;
+  }
+
+  if (nodes.size() == 2)
+  {
+    switch(type)
+    {
+      case AlternativeConstraintType::EQUAL_ONE:
+      { // insert constraint x1 + x2 = 1
+        m_internalConstraints.push_back(new QConstraint{QConstraintType::EQUAL, 1, penalty});
+        auto& cons = *m_internalConstraints.back();
+        cons.addTerm(*nodes[0], 1.0);
+        cons.addTerm(*nodes[1], 1.0);
+        break;
+      }
+      case AlternativeConstraintType::LEQ_ONE:
+      { // insert polynomial x1 * x2
+        poly.addTerm(*nodes[0], *nodes[1], penalty);
+        break;
+      }
+      case AlternativeConstraintType::GEQ_ONE:
+      { // insert high penalty for either x1*x2 or (if layer0Bad == x2) x1 * (not(x2)) = x1 - x1x2
+        if (layer0Bad != nodes[1])
+        {
+          poly.addTerm(*nodes[0], *nodes[1], -1.0);
+          poly.addTerm(*nodes[0], 1.0);
+        }
+        break;
+      }
+      case AlternativeConstraintType::ABSORPTION:
+      { // insert constraint x1 + x2 - absorber = 0
+        smallAbsorptionConstraint(nodes[0], nodes[1], penalty, absorber);
+        break;
+      }
+    }
+  }
+
+}
+
+QVariable* QModel::normalRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
+{ // y = x1 * x2
+  return addRosenbergPolynomial<false, false>(poly, x1, x2, penalty);
+}
+
+QVariable* QModel::negatedRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
+{ // y = not(x1) * not(x2)
+  return addRosenbergPolynomial<true, true>(poly, x1, x2, penalty);
+}
+
+QVariable* QModel::partialNegatedRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
+{ // y = x1 * not(x2)
+  return addRosenbergPolynomial<false, true>(poly, x1, x2, penalty);
+}
+
+
+QVariable* QModel::smallAbsorptionConstraint(QVariable* x1, QVariable* x2, qcoeff_t penalty, QVariable* y)
+{ // x1 + x2 - y = 0;
+  if (y == nullptr) y = createBinaryVar();
+  m_internalConstraints.push_back(new QConstraint{QConstraintType::EQUAL, 0, penalty});
+  auto& cons = *m_internalConstraints.back();
+  cons.addTerm(*x1, 1.0);
+  cons.addTerm(*x2, 1.0);
+  cons.addTerm(*y, -1.0);
+  return y;
+}
+

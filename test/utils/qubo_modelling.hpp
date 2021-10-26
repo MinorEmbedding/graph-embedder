@@ -101,6 +101,13 @@ namespace majorminer
       qcoeff_t m_penalty;
   };
 
+  enum AlternativeConstraintType
+  {
+    EQUAL_ONE,
+    LEQ_ONE,
+    GEQ_ONE,
+    ABSORPTION
+  };
 
   class QModel
   {
@@ -113,8 +120,39 @@ namespace majorminer
       QPolynomial& getObjective(){ return m_objective; }
       graph_t operator()();
       QPolynomial reformulate();
-      void reformulateConstraint(QConstraint& constraint, QPolynomial& poly);
 
+    private:
+      void reformulateConstraint(QConstraint& constraint, QPolynomial& poly);
+      void reformulateAlternative(QConstraint& constraint, QPolynomial& poly, AlternativeConstraintType type, fuint32_t n);
+      QVariable* normalRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty);
+      QVariable* negatedRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty);
+      QVariable* partialNegatedRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty);
+      QVariable* smallAbsorptionConstraint(QVariable* x1, QVariable* x2, qcoeff_t penalty, QVariable* y = nullptr);
+
+      template<bool x1Negated = false, bool x2Negated = false>
+      QVariable* addRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
+      { // normal rosenberg polynomial y = x1 * x2 <=> P * ( 3y + x1*x2 - 2yx1 - 2yx2 )
+        auto* y = createBinaryVar();
+        qcoeff_t yCoeff = 3 + (x1Negated ? -2 : 0) + (x2Negated ? -2 : 0);
+        poly.addTerm(*y, yCoeff * penalty);
+        if (x1Negated) poly.addTerm(*x1, *y, 2 * penalty);
+        else poly.addTerm(*x1, *y, -2.0 * penalty);
+
+        if (x2Negated) poly.addTerm(*x2, *y, 2 * penalty);
+        else poly.addTerm(*x2, *y, -2.0 * penalty);
+
+        poly.addTerm(*x1, *x2, penalty * (x1Negated == x2Negated ? 1 : -1));
+
+        if (x1Negated && x2Negated)
+        { // both negated
+          poly.addTerm(penalty);
+          poly.addTerm(*x1, -penalty);
+          poly.addTerm(*x2, -penalty);
+        }
+        else if (x1Negated) poly.addTerm(*x2, penalty);
+        else if (x2Negated) poly.addTerm(*x1, penalty);
+        return y;
+      }
 
     private:
       QPolynomial m_objective;
