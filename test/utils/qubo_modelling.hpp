@@ -3,8 +3,11 @@
 
 #include <vector>
 #include <unordered_map>
+#include <atomic>
 
 #include <majorminer_types.hpp>
+#include <tbb/parallel_for.h>
+#include <tbb/parallel_reduce.h>
 
 
 
@@ -15,6 +18,8 @@ namespace majorminer
   class QModel;
   class QPolynomial;
   class QConstraint;
+  class QEnumerationVerifier;
+  struct QRosenbergPoly;
   typedef std::pair<QVariable*, QVariable*> QVariablePair;
 
   class QVariable
@@ -29,9 +34,10 @@ namespace majorminer
 
   typedef double qcoeff_t;
   typedef PairHashFunc<QVariable*, QVariable*> QVariablePairHashFunc;
-  typedef std::vector<QVariable*> QVariableVec;
-  typedef std::vector<QConstraint*> QConstraintVec;
-  typedef std::unordered_map<QVariablePair, qcoeff_t, QVariablePairHashFunc> QVariablePairMap;
+  typedef Vector<QVariable*> QVariableVec;
+  typedef Vector<QConstraint*> QConstraintVec;
+  typedef Vector<QRosenbergPoly> QRosenbergPolyVec;
+  typedef UnorderedMap<QVariablePair, qcoeff_t, QVariablePairHashFunc> QVariablePairMap;
 
 
   class QPolynomial
@@ -109,8 +115,20 @@ namespace majorminer
     ABSORPTION
   };
 
+  struct QRosenbergPoly
+  {
+    QRosenbergPoly(QVariable* x1, QVariable* x2, QVariable* y, bool x1Neg, bool x2Neg)
+      : m_x1(x1), m_x2(x2), m_y(y), m_x1Negated(x1Neg), m_x2Negated(x2Neg) {}
+    QVariable* m_x1;
+    QVariable* m_x2;
+    QVariable* m_y;
+    bool m_x1Negated;
+    bool m_x2Negated;
+  };
+
   class QModel
   {
+    friend QEnumerationVerifier;
     public:
       QModel(){}
       ~QModel();
@@ -133,6 +151,7 @@ namespace majorminer
       QVariable* addRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
       { // normal rosenberg polynomial y = x1 * x2 <=> P * ( 3y + x1*x2 - 2yx1 - 2yx2 )
         auto* y = createBinaryVar();
+        m_rosenbergVec.push_back(QRosenbergPoly{x1,x2,y,x1Negated,x2Negated});
         qcoeff_t yCoeff = 3 + (x1Negated ? -2 : 0) + (x2Negated ? -2 : 0);
         poly.addTerm(*y, yCoeff * penalty);
         if (x1Negated) poly.addTerm(*x1, *y, 2 * penalty);
@@ -159,6 +178,46 @@ namespace majorminer
       QVariableVec m_variables;
       QConstraintVec m_constraints;
       QConstraintVec m_internalConstraints;
+      QRosenbergPolyVec m_rosenbergVec;
+  };
+
+  struct QTerm
+  {
+    QTerm(QVariable* x, QVariable* y, qcoeff_t coeff)
+      : m_x(x), m_y(y), m_coeff(coeff) {}
+
+    bool quadratic() const { return m_x != nullptr && m_y != nullptr; }
+    bool linear() const { return m_x != nullptr && m_y == nullptr; }
+
+    QVariable* m_x;
+    QVariable* m_y;
+    qcoeff_t m_coeff;
+  };
+  typedef Vector<QTerm> QTermVec;
+
+  // Exponential time complexity, use only for small problems!
+  class QEnumerationVerifier
+  {
+    public:
+      QEnumerationVerifier(QModel& model, const QPolynomial& reformulated, qcoeff_t minErrorVal, bool firstStop)
+        : m_model(&model), m_minErrorVal(minErrorVal), m_firstStop(firstStop)
+        { copyReformulated(reformulated); }
+
+      bool verify();
+
+    private:
+      bool testSetting() const;
+      bool testConstraint(const QConstraint& cons) const;
+      bool testRosenberg(const QRosenbergPoly& rosenberg) const;
+      qcoeff_t evaluateObjective() const;
+      void copyReformulated(const QPolynomial& reformulated);
+
+    private:
+      const QModel* m_model;
+      QTermVec m_reformulated;
+      qcoeff_t m_minErrorVal; // what should be the min error if constraint is violated
+      bool m_firstStop; // stop on first error?
+      Vector<bool> m_setting;
   };
 
 }

@@ -68,11 +68,13 @@ QVariableVec QModel::createBinaryVars(fuint32_t n)
   QVariableVec vars{};
   vars.resize(n);
   fuint32_t idx = m_variables.size();
+  m_variables.reserve(m_variables.size() + n);
   for (auto& var : vars)
   {
     var = new QVariable{ idx++ };
+
+    m_variables.push_back(var);
   }
-  m_variables.insert(m_variables.end(), vars.begin(), vars.end());
   return vars;
 }
 
@@ -118,7 +120,7 @@ graph_t QModel::operator()()
 
 void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
 {
-  auto terms = constraint.getPolynomial().getTermMap();
+  const auto& terms = constraint.getPolynomial().getTermMap();
   fuint32_t nbOnes = 0;
   fuint32_t nbMinusOnes = 0;
   fuint32_t otherTerms = 0;
@@ -133,7 +135,7 @@ void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
   {
     poly += constraint;
   }
-  else if (nbOnes > 8 && nbMinusOnes == 0 && constraint.getRhs() == 1.0)
+  else if (nbOnes >= 8 && nbMinusOnes == 0 && constraint.getRhs() == 1.0)
   {
     switch (constraint.getType())
     {
@@ -148,9 +150,24 @@ void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
         break;
     }
   }
-  else if (nbOnes > 8 && nbMinusOnes == 1)
+  else if (nbOnes >= 8 && nbMinusOnes == 1 && constraint.getRhs() == 0.0)
   {
     reformulateAlternative(constraint, poly, AlternativeConstraintType::ABSORPTION, nbOnes);
+  }
+  else if (nbOnes > 0 && nbMinusOnes == 0 && constraint.getRhs() == 1.0 && constraint.getType() == QConstraintType::LOWER_EQUAL)
+  {
+    auto penalty = constraint.getPenalty();
+    for (auto outerTermIt = terms.begin(); outerTermIt != terms.end(); ++outerTermIt)
+    {
+      if (outerTermIt->second == 0) continue;
+      auto innerTermIt = outerTermIt;
+      innerTermIt++;
+      for (; innerTermIt != terms.end(); ++innerTermIt)
+      {
+        if (innerTermIt->second == 0) continue;
+        poly.addTerm(*outerTermIt->first.first, *innerTermIt->first.first, penalty);
+      }
+    }
   }
   else
   {
@@ -235,8 +252,11 @@ void QModel::reformulateAlternative(QConstraint& constraint, QPolynomial& poly, 
         break;
       }
       case AlternativeConstraintType::LEQ_ONE:
-      { // insert polynomial x1 * x2
-        poly.addTerm(*nodes[0], *nodes[1], penalty);
+      { // insert constraint x1 + x2 <= 1
+        m_internalConstraints.push_back(new QConstraint{QConstraintType::LOWER_EQUAL, 1, penalty});
+        auto& cons = *m_internalConstraints.back();
+        cons.addTerm(*nodes[0], 1.0);
+        cons.addTerm(*nodes[1], 1.0);
         break;
       }
       case AlternativeConstraintType::GEQ_ONE:
@@ -283,5 +303,142 @@ QVariable* QModel::smallAbsorptionConstraint(QVariable* x1, QVariable* x2, qcoef
   cons.addTerm(*x2, 1.0);
   cons.addTerm(*y, -1.0);
   return y;
+}
+
+
+bool QEnumerationVerifier::verify()
+{
+  const auto& model = *m_model;
+  fuint32_t n = model.m_variables.size();
+  m_setting.assign(n, false);
+
+  fuint32_t idx = 0;
+  bool returned = false;
+  bool failed = false;
+  while(!(returned && idx == 0))
+  {
+    if (returned) --idx;
+    if (idx == n)
+    { // test
+      failed |= (!testSetting());
+      if (failed && m_firstStop) return false;
+      returned = true;
+    }
+    else if (returned)
+    {
+      m_setting[idx] ^= true; // toggle bit
+      if (m_setting[idx] == false) continue;
+      else returned = false;
+    }
+    else
+    {
+      idx = n;
+    }
+  }
+}
+
+bool QEnumerationVerifier::testSetting() const
+{
+  const auto& model = *m_model;
+  std::atomic<bool> satisfied { true };
+  const auto& rosenbergVec = m_model->m_rosenbergVec;
+  fuint32_t nbRosenberg = m_model->m_rosenbergVec.size();
+  tbb::parallel_for(tbb::blocked_range<fuint32_t>(0, nbRosenberg),
+    [&satisfied, &rosenbergVec, this](const tbb::blocked_range<fuint32_t>& range){
+      for (auto i = range.begin(); i != range.end() && satisfied; ++i)
+      {
+        bool valid = this->testRosenberg(rosenbergVec[i]);
+        if (!valid) satisfied = false;
+      }
+  });
+
+  if (satisfied)
+  {
+    fuint32_t nbCons = model.m_constraints.size() + model.m_internalConstraints.size();
+    const auto& consVec = m_model->m_constraints;
+    const auto& internalCons = m_model->m_internalConstraints;
+    tbb::parallel_for(tbb::blocked_range<fuint32_t>(0, nbCons),
+      [&satisfied, &consVec, &internalCons, this](const tbb::blocked_range<fuint32_t>& range){
+        for (auto i = range.begin(); i != range.end() && satisfied; ++i)
+        {
+          bool valid = true;
+          if (i < consVec.size()) valid = this->testConstraint(*consVec[i]);
+          else valid = this->testConstraint(*internalCons[i - consVec.size()]);
+          if (!valid) satisfied = false;
+        }
+    });
+  }
+
+  auto obj = evaluateObjective();
+  if (!satisfied) return obj >= m_minErrorVal;
+  return obj < m_minErrorVal;
+}
+
+
+bool QEnumerationVerifier::testConstraint(const QConstraint& cons) const
+{
+  const auto& terms = cons.getPolynomial().getTermMap();
+  qcoeff_t lhs = 0;
+  for (const auto& term : terms)
+  {
+    const auto& vars = term.first;
+    if (vars.first != nullptr && m_setting[vars.first->getIdx()]) lhs += term.second;
+    else if (vars.first == nullptr) lhs += term.second;
+  }
+  switch (cons.getType())
+  {
+    case QConstraintType::EQUAL:
+      return lhs == cons.getRhs();
+    case QConstraintType::LOWER_EQUAL:
+      return lhs <= cons.getRhs();
+    case QConstraintType::GREATER_EQUAL:
+      return lhs >= cons.getRhs();
+  }
+  return false;
+}
+
+
+bool QEnumerationVerifier::testRosenberg(const QRosenbergPoly& rosenberg) const
+{
+  bool x1Val = m_setting[rosenberg.m_x1->getIdx()];
+  bool x2Val = m_setting[rosenberg.m_x2->getIdx()];
+  return m_setting[rosenberg.m_y->getIdx()] == ((rosenberg.m_x1Negated ? !x1Val : x1Val) & (rosenberg.m_x2Negated ? !x2Val : x1Val));
+}
+
+qcoeff_t QEnumerationVerifier::evaluateObjective() const
+{;
+  const auto& setting = m_setting;
+  return tbb::parallel_reduce(
+    tbb::blocked_range<QTermVec::const_iterator>(m_reformulated.begin(), m_reformulated.end()),
+    qcoeff_t(0.0),
+    [&setting](const tbb::blocked_range<QTermVec::const_iterator>& it, qcoeff_t running_sum){
+      for (auto i = it.begin(); i != it.end(); ++i)
+      {
+        // quadratic term
+        if (i->quadratic())
+        { if (setting[i->m_x->getIdx()] && setting[i->m_y->getIdx()]) running_sum += i->m_coeff; }
+
+        // linear term
+        else if (i->linear())
+        { if (setting[i->m_x->getIdx()]) running_sum += i->m_coeff; }
+
+        // constant
+        else running_sum += i->m_coeff;
+      }
+      return running_sum;
+    }, std::plus<qcoeff_t>()
+  );
+
+
+}
+
+void QEnumerationVerifier::copyReformulated(const QPolynomial& reformulated)
+{
+  const auto terms = reformulated.getTermMap();
+  m_reformulated.reserve(terms.size());
+  for (const auto& term : terms)
+  {
+    if (term.second != 0) m_reformulated.push_back(QTerm{term.first.first, term.first.second, term.second});
+  }
 }
 
