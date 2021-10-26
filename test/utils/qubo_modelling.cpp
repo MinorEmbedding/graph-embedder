@@ -31,10 +31,11 @@ QVariablePairMap QPolynomial::square() const
   for (auto it = m_terms.begin(); it != m_terms.end(); ++it)
   {
     auto it2 = it;
+    map[orderedPair(it->first.first, it->first.first)] += pow(it->second, 2);
     ++it2;
     for (; it2 != m_terms.end(); ++it2)
     {
-      map[orderedPair(it->first.first, it2->first.first)] += 2 * it->second + it2->second;
+      map[orderedPair(it->first.first, it2->first.first)] += 2 * it->second * it2->second;
     }
   }
   return map;
@@ -180,6 +181,7 @@ void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
 
 void QModel::reformulateAlternative(QConstraint& constraint, QPolynomial& poly, AlternativeConstraintType type, fuint32_t n)
 {
+  DEBUG(OUT_S << "Alternative constraint reformulation." << std::endl;)
   QVariableVec nodes{};
   nodes.reserve(n);
   auto penalty = constraint.getPenalty();
@@ -371,7 +373,7 @@ bool QEnumerationVerifier::testSetting() const
   }
 
   auto obj = evaluateObjective();
-  DEBUG(OUT_S << satisfied << " and Value " << obj << std::endl;)
+  // DEBUG(OUT_S << satisfied << " and Value " << obj << std::endl;)
   if (!satisfied) return obj >= m_minErrorVal;
   return obj < m_minErrorVal;
 }

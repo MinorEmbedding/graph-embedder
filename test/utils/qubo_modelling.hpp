@@ -28,6 +28,9 @@ namespace majorminer
       QVariable(fuint32_t idx) : m_idx(idx){}
       fuint32_t getIdx() const { return m_idx; }
 
+      friend std::ostream& operator<<(std::ostream& os, const QVariable& var)
+      { os << "x" << var.m_idx; return os; }
+
     private:
       fuint32_t m_idx;
   };
@@ -58,6 +61,32 @@ namespace majorminer
       {
         lhs.addTermMap(rhs.m_terms);
         return lhs;
+      }
+
+      friend std::ostream& operator<<(std::ostream& os, const QPolynomial& poly)
+      {
+        const auto& terms = poly.getTermMap();
+
+        fuint32_t col = 0;
+        for (const auto& term : terms)
+        {
+          if (term.second == 0) continue;
+          if (col == 4)
+          {
+            col = 0;
+            os << std::endl;
+          }
+
+          if (term.second > 0) os << " + ";
+          else os << " - ";
+
+          os << std::abs(term.second);
+          const auto& vars = term.first;
+          if (vars.first != nullptr) os << " * " << *vars.first;
+          if (vars.second != nullptr) os << " * " << *vars.second;
+          col++;
+        }
+        return os;
       }
 
     private:

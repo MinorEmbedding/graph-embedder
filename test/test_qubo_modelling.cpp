@@ -11,9 +11,9 @@ TEST(QuboReformulation, Enumerate_Simple_4_LEQ_1)
 }
 
 
-TEST(QuboReformulation, Enumerate_Simple_9_LEQ_1)
+TEST(QuboReformulation, Enumerate_Simple_8_LEQ_1)
 {
-  majorminer::assertLEQ1(9, PENALTY);
+  majorminer::assertLEQ1(8, PENALTY);
 }
 
 TEST(QuboReformulation, Enumerate_Simple_4_EQ_1)
@@ -21,9 +21,9 @@ TEST(QuboReformulation, Enumerate_Simple_4_EQ_1)
   majorminer::assertEquality1(4, PENALTY);
 }
 
-TEST(QuboReformulation, Enumerate_Simple_9_EQ_1)
+TEST(QuboReformulation, Enumerate_Simple_8_EQ_1)
 {
-  majorminer::assertEquality1(4, PENALTY);
+  majorminer::assertEquality1(8, PENALTY);
 }
 
 TEST(QuboReformulation, Enumerate_Simple_4_Absorber)
@@ -31,7 +31,13 @@ TEST(QuboReformulation, Enumerate_Simple_4_Absorber)
   majorminer::assertAbsorber(4, PENALTY);
 }
 
-TEST(QuboReformulation, Enumerate_Simple_9_Absorber)
+TEST(QuboReformulation, Enumerate_Simple_8_Absorber)
 {
-  majorminer::assertAbsorber(4, PENALTY);
+  majorminer::assertAbsorber(8, PENALTY);
+}
+
+
+TEST(QuboReformulation, Enumerate_Simple_9_GEQ)
+{
+  majorminer::assertGEQ1(9, PENALTY);
 }
