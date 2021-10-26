@@ -2,6 +2,19 @@
 
 using namespace majorminer;
 
+namespace
+{
+  void assertSimpleConstraint(fuint32_t n, qcoeff_t penalty, QConstraintType type)
+  {
+    QModel model{};
+    auto vars = model.createBinaryVars(n);
+    auto& cons = *model.createConstraint(type, 1.0, penalty);
+    cons.addTerms(vars, 1.0);
+    auto reformulated = model.reformulate();
+    QEnumerationVerifier verifier{model, reformulated, penalty, true};
+    ASSERT_TRUE(verifier.verify());
+  }
+}
 
 void majorminer::containsEdges(const graph_t& graph, std::initializer_list<edge_t> edges)
 {
@@ -27,4 +40,33 @@ void majorminer::addEdges(graph_t& graph, std::initializer_list<edge_t> edges)
   {
     graph.insert(edge);
   }
+}
+
+
+void majorminer::assertEquality1(fuint32_t n, qcoeff_t penalty)
+{
+  assertSimpleConstraint(n, penalty, QConstraintType::EQUAL);
+}
+
+void majorminer::assertLEQ1(fuint32_t n, qcoeff_t penalty)
+{
+  assertSimpleConstraint(n, penalty, QConstraintType::LOWER_EQUAL);
+}
+
+void majorminer::assertAbsorber(fuint32_t n, qcoeff_t penalty)
+{
+  QModel model{};
+  auto vars = model.createBinaryVars(n);
+  auto* absorber = model.createBinaryVar();
+  auto& cons = *model.createConstraint(QConstraintType::EQUAL, 0.0, penalty);
+  cons.addTerms(vars, 1.0);
+  cons.addTerm(*absorber, -1.0);
+  auto reformulated = model.reformulate();
+  QEnumerationVerifier verifier{model, reformulated, penalty, true};
+  ASSERT_TRUE(verifier.verify());
+}
+
+void majorminer::assertGEQ1(fuint32_t n, qcoeff_t penalty)
+{
+  assertSimpleConstraint(n, penalty, QConstraintType::GREATER_EQUAL);
 }

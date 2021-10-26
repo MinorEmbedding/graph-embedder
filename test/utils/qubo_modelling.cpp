@@ -335,6 +335,7 @@ bool QEnumerationVerifier::verify()
       idx = n;
     }
   }
+  return !failed;
 }
 
 bool QEnumerationVerifier::testSetting() const
@@ -370,6 +371,7 @@ bool QEnumerationVerifier::testSetting() const
   }
 
   auto obj = evaluateObjective();
+  DEBUG(OUT_S << satisfied << " and Value " << obj << std::endl;)
   if (!satisfied) return obj >= m_minErrorVal;
   return obj < m_minErrorVal;
 }

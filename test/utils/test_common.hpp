@@ -4,6 +4,7 @@
 #include <gtest/gtest.h>
 #include <tbb/parallel_for.h>
 #include <majorminer.hpp>
+#include "qubo_modelling.hpp"
 
 namespace majorminer
 {
@@ -13,6 +14,10 @@ namespace majorminer
 
   void addEdges(graph_t& graph, std::initializer_list<edge_t> edges);
 
+  void assertEquality1(fuint32_t n, qcoeff_t penalty);
+  void assertLEQ1(fuint32_t n, qcoeff_t penalty);
+  void assertAbsorber(fuint32_t n, qcoeff_t penalty);
+  void assertGEQ1(fuint32_t n, qcoeff_t penalty);
 }
 
 

@@ -45,10 +45,10 @@ namespace majorminer
     public:
       QPolynomial(){}
       void addTerm(qcoeff_t coeff) { updateTerm(nullptr, nullptr, coeff); }
-      void addTerm(QVariable& var, qcoeff_t coeff) { updateTerm(&var, nullptr, coeff); }
-      void addTerm(QVariable& varI, QVariable& varJ, qcoeff_t coeff) { updateTerm(&varI, &varJ, coeff); }
+      void addTerm(QVariable& var, qcoeff_t coeff = 1.0) { updateTerm(&var, nullptr, coeff); }
+      void addTerm(QVariable& varI, QVariable& varJ, qcoeff_t coeff = 1.0) { updateTerm(&varI, &varJ, coeff); }
       void addTermMap(const QVariablePairMap& map, qcoeff_t multiplier = 1.0);
-      void addTerms(QVariableVec& vars, qcoeff_t coeff);
+      void addTerms(QVariableVec& vars, qcoeff_t coeff = 1.0);
       size_t nbTerms() const { return m_terms.size(); }
       QVariablePairMap square() const;
       graph_t getConnectivityGraph() const;
@@ -82,8 +82,8 @@ namespace majorminer
       QConstraint(QConstraintType type, qcoeff_t rhs, qcoeff_t penalty)
         : m_type(type), m_rhs(rhs), m_penalty(penalty){}
       void addTerm(qcoeff_t coeff) { m_rhs += coeff; }
-      void addTerm(QVariable& var, qcoeff_t coeff) { m_polynomial.addTerm(var, coeff); }
-      void addTerms(QVariableVec& vars, qcoeff_t coeff) { m_polynomial.addTerms(vars, coeff); }
+      void addTerm(QVariable& var, qcoeff_t coeff = 1.0) { m_polynomial.addTerm(var, coeff); }
+      void addTerms(QVariableVec& vars, qcoeff_t coeff = 1.0) { m_polynomial.addTerms(vars, coeff); }
       qcoeff_t getPenalty() const { return m_penalty; }
       const QPolynomial& getPolynomial() const { return m_polynomial; }
       qcoeff_t getRhs() const { return m_rhs; }
