@@ -11,7 +11,7 @@ namespace
     auto& cons = *model.createConstraint(type, 1.0, penalty);
     cons.addTerms(vars, 1.0);
     auto reformulated = model.reformulate();
-    QEnumerationVerifier verifier{model, reformulated, penalty, true};
+    QEnumerationVerifier verifier{model, reformulated, penalty, true, true};
     ASSERT_TRUE(verifier.verify());
   }
 }

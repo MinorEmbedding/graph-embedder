@@ -146,13 +146,15 @@ namespace majorminer
 
   struct QRosenbergPoly
   {
-    QRosenbergPoly(QVariable* x1, QVariable* x2, QVariable* y, bool x1Neg, bool x2Neg)
-      : m_x1(x1), m_x2(x2), m_y(y), m_x1Negated(x1Neg), m_x2Negated(x2Neg) {}
+    QRosenbergPoly(QVariable* x1, QVariable* x2, QVariable* y, bool x1Neg, bool x2Neg, qcoeff_t penalty)
+      : m_x1(x1), m_x2(x2), m_y(y), m_x1Negated(x1Neg), m_x2Negated(x2Neg), m_penalty(penalty) {}
+
     QVariable* m_x1;
     QVariable* m_x2;
     QVariable* m_y;
     bool m_x1Negated;
     bool m_x2Negated;
+    qcoeff_t m_penalty;
   };
 
   class QModel
@@ -168,19 +170,26 @@ namespace majorminer
       graph_t operator()();
       QPolynomial reformulate();
 
+      template<bool x1Negated = false, bool x2Negated = false>
+      QVariable* addRosenbergPolynomial(QVariable* x1, QVariable* x2, qcoeff_t penalty)
+      {
+        auto* y = createBinaryVar();
+        m_rosenbergVec.push_back(QRosenbergPoly{x1,x2,y,x1Negated,x2Negated, penalty});
+        return y;
+      }
+
     private:
+      void reformulateRosenberg(QPolynomial& poly, const QRosenbergPoly& rosenberg) const;
       void reformulateConstraint(QConstraint& constraint, QPolynomial& poly);
       void reformulateAlternative(QConstraint& constraint, QPolynomial& poly, AlternativeConstraintType type, fuint32_t n);
       QVariable* normalRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty);
       QVariable* negatedRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty);
       QVariable* partialNegatedRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty);
       QVariable* smallAbsorptionConstraint(QVariable* x1, QVariable* x2, qcoeff_t penalty, QVariable* y = nullptr);
-
+      void insertInternalLEQ1Constraint(QVariable* x1, QVariable* x2, qcoeff_t penalty);
       template<bool x1Negated = false, bool x2Negated = false>
-      QVariable* addRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
+      void addRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, QVariable* y, qcoeff_t penalty) const
       { // normal rosenberg polynomial y = x1 * x2 <=> P * ( 3y + x1*x2 - 2yx1 - 2yx2 )
-        auto* y = createBinaryVar();
-        m_rosenbergVec.push_back(QRosenbergPoly{x1,x2,y,x1Negated,x2Negated});
         qcoeff_t yCoeff = 3 + (x1Negated ? -2 : 0) + (x2Negated ? -2 : 0);
         poly.addTerm(*y, yCoeff * penalty);
         if (x1Negated) poly.addTerm(*x1, *y, 2 * penalty);
@@ -199,6 +208,13 @@ namespace majorminer
         }
         else if (x1Negated) poly.addTerm(*x2, penalty);
         else if (x2Negated) poly.addTerm(*x1, penalty);
+      }
+
+      template<bool x1Negated = false, bool x2Negated = false>
+      QVariable* addRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
+      {
+        auto* y = addRosenbergPolynomial<x1Negated, x2Negated>(x1, x2, penalty);
+        addRosenbergPolynomial<x1Negated, x2Negated>(poly, x1, x2, y, penalty);
         return y;
       }
 
@@ -228,8 +244,8 @@ namespace majorminer
   class QEnumerationVerifier
   {
     public:
-      QEnumerationVerifier(QModel& model, const QPolynomial& reformulated, qcoeff_t minErrorVal, bool firstStop)
-        : m_model(&model), m_minErrorVal(minErrorVal), m_firstStop(firstStop)
+      QEnumerationVerifier(QModel& model, const QPolynomial& reformulated, qcoeff_t minErrorVal, bool firstStop, bool dumpOnError = false)
+        : m_model(&model), m_minErrorVal(minErrorVal), m_firstStop(firstStop), m_dumpOnError(dumpOnError)
         { copyReformulated(reformulated); }
 
       bool verify();
@@ -240,6 +256,7 @@ namespace majorminer
       bool testRosenberg(const QRosenbergPoly& rosenberg) const;
       qcoeff_t evaluateObjective() const;
       void copyReformulated(const QPolynomial& reformulated);
+      void dumpSetting() const;
 
     private:
       const QModel* m_model;
@@ -247,6 +264,7 @@ namespace majorminer
       qcoeff_t m_minErrorVal; // what should be the min error if constraint is violated
       bool m_firstStop; // stop on first error?
       Vector<bool> m_setting;
+      bool m_dumpOnError;
   };
 
 }

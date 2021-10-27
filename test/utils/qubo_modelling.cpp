@@ -102,6 +102,12 @@ QPolynomial QModel::reformulate()
 {
   QPolynomial qubo{};
   qubo += m_objective;
+  // DEBUG(OUT_S << m_variables.size() << std::endl;)
+  for (const auto& rosenberg : m_rosenbergVec)
+  {
+    reformulateRosenberg(qubo, rosenberg);
+  }
+
   for (auto cons : m_constraints)
   {
     reformulateConstraint(*cons, qubo);
@@ -111,6 +117,17 @@ QPolynomial QModel::reformulate()
     reformulateConstraint(*cons, qubo);
   }
   return qubo;
+}
+
+
+void QModel::reformulateRosenberg(QPolynomial& poly, const QRosenbergPoly& rosenberg) const
+{
+  #define ROSEN(x1Neg, x2Neg) addRosenbergPolynomial<x1Neg, x2Neg>(poly, rosenberg.m_x1, rosenberg.m_x2, rosenberg.m_y, rosenberg.m_penalty)
+  if (!rosenberg.m_x1Negated && !rosenberg.m_x2Negated) ROSEN(false, false);
+  else if (!rosenberg.m_x1Negated && rosenberg.m_x2Negated) ROSEN(false, true);
+  else if (rosenberg.m_x1Negated && !rosenberg.m_x2Negated) ROSEN(true, false);
+  else ROSEN(true, true);
+  #undef ROSEN
 }
 
 graph_t QModel::operator()()
@@ -181,7 +198,7 @@ void QModel::reformulateConstraint(QConstraint& constraint, QPolynomial& poly)
 
 void QModel::reformulateAlternative(QConstraint& constraint, QPolynomial& poly, AlternativeConstraintType type, fuint32_t n)
 {
-  DEBUG(OUT_S << "Alternative constraint reformulation." << std::endl;)
+  // DEBUG(OUT_S << "Alternative constraint reformulation." << std::endl;)
   QVariableVec nodes{};
   nodes.reserve(n);
   auto penalty = constraint.getPenalty();
@@ -255,18 +272,19 @@ void QModel::reformulateAlternative(QConstraint& constraint, QPolynomial& poly, 
       }
       case AlternativeConstraintType::LEQ_ONE:
       { // insert constraint x1 + x2 <= 1
-        m_internalConstraints.push_back(new QConstraint{QConstraintType::LOWER_EQUAL, 1, penalty});
-        auto& cons = *m_internalConstraints.back();
-        cons.addTerm(*nodes[0], 1.0);
-        cons.addTerm(*nodes[1], 1.0);
+        insertInternalLEQ1Constraint(nodes[0], nodes[1], penalty);
         break;
       }
       case AlternativeConstraintType::GEQ_ONE:
       { // insert high penalty for either x1*x2 or (if layer0Bad == x2) x1 * (not(x2)) = x1 - x1x2
         if (layer0Bad != nodes[1])
-        {
-          poly.addTerm(*nodes[0], *nodes[1], -1.0);
-          poly.addTerm(*nodes[0], 1.0);
+        { // normal case: prevent x1 * x2 != 0 (at most one constraint)
+          insertInternalLEQ1Constraint(nodes[0], nodes[1], penalty);
+        }
+        else
+        { // special case if a node from the lowest layer was not condensed yet (can happen for n = 2^k + 1, k integer, k > 0)
+          poly.addTerm(*nodes[0], *nodes[1], -1.0 * penalty);
+          poly.addTerm(*nodes[0], penalty);
         }
         break;
       }
@@ -277,7 +295,14 @@ void QModel::reformulateAlternative(QConstraint& constraint, QPolynomial& poly, 
       }
     }
   }
+}
 
+void QModel::insertInternalLEQ1Constraint(QVariable* x1, QVariable* x2, qcoeff_t penalty)
+{
+  m_internalConstraints.push_back(new QConstraint{QConstraintType::LOWER_EQUAL, 1, penalty});
+  auto& cons = *m_internalConstraints.back();
+  cons.addTerm(*x1, 1.0);
+  cons.addTerm(*x2, 1.0);
 }
 
 QVariable* QModel::normalRosenbergPolynomial(QPolynomial& poly, QVariable* x1, QVariable* x2, qcoeff_t penalty)
@@ -322,7 +347,9 @@ bool QEnumerationVerifier::verify()
     if (returned) --idx;
     if (idx == n)
     { // test
-      failed |= (!testSetting());
+      bool violated = (!testSetting());
+      failed |= violated;
+      if (violated && m_dumpOnError) dumpSetting();
       if (failed && m_firstStop) return false;
       returned = true;
     }
@@ -373,7 +400,7 @@ bool QEnumerationVerifier::testSetting() const
   }
 
   auto obj = evaluateObjective();
-  // DEBUG(OUT_S << satisfied << " and Value " << obj << std::endl;)
+  if (!satisfied && obj < m_minErrorVal) DEBUG(OUT_S << satisfied << " and Value " << obj << std::endl;)
   if (!satisfied) return obj >= m_minErrorVal;
   return obj < m_minErrorVal;
 }
@@ -406,7 +433,7 @@ bool QEnumerationVerifier::testRosenberg(const QRosenbergPoly& rosenberg) const
 {
   bool x1Val = m_setting[rosenberg.m_x1->getIdx()];
   bool x2Val = m_setting[rosenberg.m_x2->getIdx()];
-  return m_setting[rosenberg.m_y->getIdx()] == ((rosenberg.m_x1Negated ? !x1Val : x1Val) & (rosenberg.m_x2Negated ? !x2Val : x1Val));
+  return m_setting[rosenberg.m_y->getIdx()] == ((rosenberg.m_x1Negated ? !x1Val : x1Val) & (rosenberg.m_x2Negated ? !x2Val : x2Val));
 }
 
 qcoeff_t QEnumerationVerifier::evaluateObjective() const
@@ -436,6 +463,17 @@ qcoeff_t QEnumerationVerifier::evaluateObjective() const
 
 }
 
+
+void QEnumerationVerifier::dumpSetting() const
+{
+  for (fuint32_t i = 0; i < m_setting.size(); ++i)
+  {
+    OUT_S << m_setting[i];
+    if ((i + 1) % 5 == 0) OUT_S << " ";
+  }
+  OUT_S << std::endl;
+}
+
 void QEnumerationVerifier::copyReformulated(const QPolynomial& reformulated)
 {
   const auto terms = reformulated.getTermMap();
@@ -445,4 +483,3 @@ void QEnumerationVerifier::copyReformulated(const QPolynomial& reformulated)
     if (term.second != 0) m_reformulated.push_back(QTerm{term.first.first, term.first.second, term.second});
   }
 }
-
