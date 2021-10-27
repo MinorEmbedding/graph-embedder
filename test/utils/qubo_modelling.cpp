@@ -20,6 +20,12 @@ graph_t QPolynomial::getConnectivityGraph() const
   return connections;
 }
 
+qcoeff_t QPolynomial::getConstant() const
+{
+  auto findIt = m_terms.find(std::make_pair(nullptr, nullptr));
+  return (findIt == m_terms.end() ? 0 : findIt->second);
+}
+
 QVariablePairMap QPolynomial::square() const
 {
   for (const auto& term : m_terms)
@@ -482,4 +488,28 @@ void QEnumerationVerifier::copyReformulated(const QPolynomial& reformulated)
   {
     if (term.second != 0) m_reformulated.push_back(QTerm{term.first.first, term.first.second, term.second});
   }
+}
+
+
+void majorminer::dumpPoly(std::ostream& os, const QPolynomial& poly)
+{
+  os << "{";
+  const auto& terms = poly.getTermMap();
+  bool first = true;
+  for (const auto& term : terms)
+  {
+    const auto& vars = term.first;
+    if (vars.first == nullptr) continue;
+    else if (vars.second == nullptr)
+    {
+      os << (first ? "(" : ", (") << vars.first->getIdx() << ", " << vars.first->getIdx() << ") : " << term.second;
+    }
+    else
+    {
+      os << (first ? "(" : ", (") << vars.first->getIdx() << ", " << vars.second->getIdx() << ") : " << term.second;
+    }
+    first = false;
+  }
+  os << "}\n";
+  os << poly.getConstant();
 }

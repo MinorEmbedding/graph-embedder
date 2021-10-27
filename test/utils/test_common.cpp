@@ -70,3 +70,12 @@ void majorminer::assertGEQ1(fuint32_t n, qcoeff_t penalty)
 {
   assertSimpleConstraint(n, penalty, QConstraintType::GREATER_EQUAL);
 }
+
+
+void majorminer::dumpModel(const std::string& filename, const QPolynomial& poly)
+{
+  std::ofstream f(filename);
+  if (!f.is_open()) throw std::runtime_error("Could not open file...");
+  dumpPoly(f, poly);
+  f.close();
+}

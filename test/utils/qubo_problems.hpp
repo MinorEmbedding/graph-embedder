@@ -44,6 +44,7 @@ namespace majorminer
     return model();
   }
 
+  QModel createConstraintMatrix(fuint32_t n, QConstraintType type, qcoeff_t penalty);
 }
 
 

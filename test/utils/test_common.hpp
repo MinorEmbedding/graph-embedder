@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <tbb/parallel_for.h>
+#include <sstream>
 #include <majorminer.hpp>
 #include "qubo_modelling.hpp"
 
@@ -18,6 +19,8 @@ namespace majorminer
   void assertLEQ1(fuint32_t n, qcoeff_t penalty);
   void assertAbsorber(fuint32_t n, qcoeff_t penalty);
   void assertGEQ1(fuint32_t n, qcoeff_t penalty);
+
+  void dumpModel(const std::string& filename, const QPolynomial& poly);
 }
 
 

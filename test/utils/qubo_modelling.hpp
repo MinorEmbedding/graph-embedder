@@ -52,6 +52,7 @@ namespace majorminer
       void addTerm(QVariable& varI, QVariable& varJ, qcoeff_t coeff = 1.0) { updateTerm(&varI, &varJ, coeff); }
       void addTermMap(const QVariablePairMap& map, qcoeff_t multiplier = 1.0);
       void addTerms(QVariableVec& vars, qcoeff_t coeff = 1.0);
+      qcoeff_t getConstant() const;
       size_t nbTerms() const { return m_terms.size(); }
       QVariablePairMap square() const;
       graph_t getConnectivityGraph() const;
@@ -266,6 +267,8 @@ namespace majorminer
       Vector<bool> m_setting;
       bool m_dumpOnError;
   };
+
+  void dumpPoly(std::ostream& os, const QPolynomial& poly);
 
 }
 
