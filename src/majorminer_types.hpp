@@ -30,6 +30,19 @@ namespace majorminer
     }
   };
 
+  struct PrioNode
+  {
+    PrioNode() : m_id(-1), m_nbConnections(0) {}
+    PrioNode(fuint32_t id, fuint32_t nbConnections = 0)
+      : m_id(id), m_nbConnections(nbConnections) {}
+
+    friend bool operator<(const PrioNode& n1, const PrioNode& n2)
+    { return n1.m_nbConnections < n2.m_nbConnections; }
+
+    fuint32_t m_id;
+    fuint32_t m_nbConnections;
+  };
+
   template<typename T, typename Allocator = std::allocator<T>>
   using Vector = tbb::concurrent_vector<T, Allocator>;
 
@@ -42,6 +55,9 @@ namespace majorminer
   template<typename K, typename V, typename HashFunc = std::hash<K>, typename Allocator = std::allocator<std::pair<const K, V>>>
   using UnorderedMultiMap = tbb::concurrent_unordered_multimap<K, V, HashFunc, std::equal_to<K>, Allocator>;
 
+  template<typename T, typename Comparator = std::less<T>>
+  using PriorityQueue = tbb::concurrent_priority_queue<T, Comparator>;
+
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
 
@@ -49,6 +65,7 @@ namespace majorminer
   typedef UnorderedMultiMap<fuint32_t, fuint32_t> adjacency_list_t;
   typedef adjacency_list_t embedding_mapping_t;
   typedef UnorderedSet<fuint32_t> nodeset_t;
+  typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
 }
 
 

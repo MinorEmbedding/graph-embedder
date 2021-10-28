@@ -39,6 +39,7 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
   LemonNode t = m_graph.addNode();
   // define nodes for construction
   bool first = true;
+  fuint32_t sConnected = -1;
   for (auto adjacentNode = adjacentIt.first; adjacentNode != adjacentIt.second; ++adjacentNode)
   {
     auto embeddingPath = m_suite->m_mapping.equal_range(adjacentNode->second);
@@ -46,6 +47,7 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
     if (first)
     { // define s node connection
       auto toNode = m_nodeMap[embeddingPath.first->second];
+      sConnected = embeddingPath.first->second;
       auto arc = m_graph.addArc(s, toNode);
       costs[arc] = 0;
       caps[arc] = lowered;
@@ -78,13 +80,24 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
   {
     LemonArcMap<capacity_t> flows{m_graph};
     ns.flowMap(flows);
+    fuint32_t nbOutFlows = 0;
     for (const auto& arc : m_edgeMap)
     {
       // DEBUG(OUT_S << "(" << arc.first.first << "," << arc.first.second << "): " << flows[arc.second.first] << std::endl;)
       // DEBUG(OUT_S << "(" << arc.first.second << "," << arc.first.first << "): " << flows[arc.second.second] << std::endl;)
-      if (flows[arc.second.first] > 0) m_mapped.insert(arc.first.first);
-      if (flows[arc.second.second] > 0) m_mapped.insert(arc.first.second);
+      if (flows[arc.second.first] > 0)
+      {
+        m_mapped.insert(arc.first.first);
+        if (arc.first.first == sConnected) nbOutFlows++;
+      }
+      if (flows[arc.second.second] > 0)
+      {
+        if (arc.first.second == sConnected) nbOutFlows++;
+        m_mapped.insert(arc.first.second);
+      }
     }
+    OUT_S << "Number outflows " << nbOutFlows << std::endl;
+    if (nbOutFlows < 2) m_mapped.unsafe_erase(sConnected);
     m_suite->mapNode(node, m_mapped);
   }
   else if(status == NetworkSimplex::INFEASIBLE)

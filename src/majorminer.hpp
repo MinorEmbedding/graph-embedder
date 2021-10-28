@@ -16,7 +16,6 @@
 namespace majorminer
 {
   class NetworkSimplexWrapper;
-  std::vector<int> testTBB();
 
   class EmbeddingSuite
   {
@@ -32,6 +31,10 @@ namespace majorminer
 
       void mapNode(fuint32_t node, fuint32_t targetNode);
       void mapNode(fuint32_t node, const nodeset_t& targetNodes);
+      void updateConnections(fuint32_t node);
+
+      void embeddTrivialNode(fuint32_t node);
+      void embeddSimpleNode(fuint32_t node);
 
     private:
       const graph_t* m_sourceGraph;
@@ -42,6 +45,8 @@ namespace majorminer
       embedding_mapping_t m_mapping;
       nodeset_t m_nodesOccupied;
       nodeset_t m_targetNodesRemaining;
+      UnorderedMap<fuint32_t, fuint32_t> m_nodesRemaining;
+      PrioNodeQueue m_nodesToProcess;
 
       std::unique_ptr<NetworkSimplexWrapper> m_nsWrapper;
   };
