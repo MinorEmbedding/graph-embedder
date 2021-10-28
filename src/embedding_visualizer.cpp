@@ -3,27 +3,27 @@
 using namespace majorminer;
 
 const static std::string colors[] = {
-  "Lightgray","Wheat","Paleturquoise","Palegoldenrod","Powderblue","Thistle","Lightblue","Palegreen","Lightsteelblue","Aquamarine","Khaki","Lightgreen","Lightskyblue","Plum","Silver","Lightsalmon","Skyblue","Lightcoral","Violet","Hotpink","Salmon",
-  "Thistle","Lightblue","Palegreen","Lightsteelblue","Aquamarine","Khaki","Lightgreen","Lightskyblue","Plum","Silver","Lightsalmon","Skyblue","Lightcoral","Violet","Hotpink","Salmon","Burlywood","Darksalmon","Tan","Mediumslateblue","Sandybrown",
-  "Khaki","Lightgreen","Lightskyblue","Plum","Silver","Lightsalmon","Skyblue","Lightcoral","Violet","Hotpink","Salmon","Burlywood","Darksalmon","Tan","Mediumslateblue","Sandybrown","Coral","Cornflowerblue","Darkgray","Darkseagreen","Mediumpurple",
-  "Lightsalmon","Skyblue","Lightcoral","Violet","Hotpink","Salmon","Burlywood","Darksalmon","Tan","Mediumslateblue","Sandybrown","Coral","Cornflowerblue","Darkgray","Darkseagreen","Mediumpurple","Orchid","Palevioletred","Rosybrown","Tomato","Mediumaquamarine",
-  "Salmon","Burlywood","Darksalmon","Tan","Mediumslateblue","Sandybrown","Coral","Cornflowerblue","Darkgray","Darkseagreen","Mediumpurple","Orchid","Palevioletred","Rosybrown","Tomato","Mediumaquamarine","Greenyellow","Darkkhaki","Indianred","Mediumorchid","Slateblue",
-  "Sandybrown","Coral","Cornflowerblue","Darkgray","Darkseagreen","Mediumpurple","Orchid","Palevioletred","Rosybrown","Tomato","Mediumaquamarine","Greenyellow","Darkkhaki","Indianred","Mediumorchid","Slateblue","Royalblue","Dodgerblue","Turquoise","Mediumturquoise","Deeppink",
-  "Mediumpurple","Orchid","Palevioletred","Rosybrown","Tomato","Mediumaquamarine","Greenyellow","Darkkhaki","Indianred","Mediumorchid","Slateblue","Royalblue","Dodgerblue","Turquoise","Mediumturquoise","Deeppink","Blueviolet","Lightslategray","Peru","Aqua","Blue",
-  "Mediumaquamarine","Greenyellow","Darkkhaki","Indianred","Mediumorchid","Slateblue","Royalblue","Dodgerblue","Turquoise","Mediumturquoise","Deeppink","Blueviolet","Lightslategray","Peru","Aqua","Blue","Cadetblue","Chartreuse","Darkorange","Darkorchid","Deepskyblue",
-  "Slateblue","Royalblue","Dodgerblue","Turquoise","Mediumturquoise","Deeppink","Blueviolet","Lightslategray","Peru","Aqua","Blue","Cadetblue","Chartreuse","Darkorange","Darkorchid","Deepskyblue","Fuchsia","Gold","Gray","Lime","Limegreen",
-  "Deeppink","Blueviolet","Lightslategray","Peru","Aqua","Blue","Cadetblue","Chartreuse","Darkorange","Darkorchid","Deepskyblue","Fuchsia","Gold","Gray","Lime","Limegreen","Orange","Orangered","Red","Slategray","Springgreen",
-  "Blue","Cadetblue","Chartreuse","Darkorange","Darkorchid","Deepskyblue","Fuchsia","Gold","Gray","Lime","Limegreen","Orange","Orangered","Red","Slategray","Springgreen","Yellow","Yellowgreen","Goldenrod","Lawngreen","Mediumspringgreen",
-  "Deepskyblue","Fuchsia","Gold","Gray","Lime","Limegreen","Orange","Orangered","Red","Slategray","Springgreen","Yellow","Yellowgreen","Goldenrod","Lawngreen","Mediumspringgreen","Steelblue","Chocolate","Crimson","Mediumseagreen","Mediumvioletred",
-  "Limegreen","Orange","Orangered","Red","Slategray","Springgreen","Yellow","Yellowgreen","Goldenrod","Lawngreen","Mediumspringgreen","Steelblue","Chocolate","Crimson","Mediumseagreen","Mediumvioletred","Firebrick","Brown","Darkturquoise","Darkviolet","Dimgray",
-  "Springgreen","Yellow","Yellowgreen","Goldenrod","Lawngreen","Mediumspringgreen","Steelblue","Chocolate","Crimson","Mediumseagreen","Mediumvioletred","Firebrick","Brown","Darkturquoise","Darkviolet","Dimgray","Lightseagreen","Mediumblue","Sienna","Darkslateblue","Darkgoldenrod",
-  "Mediumspringgreen","Steelblue","Chocolate","Crimson","Mediumseagreen","Mediumvioletred","Firebrick","Brown","Darkturquoise","Darkviolet","Dimgray","Lightseagreen","Mediumblue","Sienna","Darkslateblue","Darkgoldenrod","Seagreen","Olivedrab","Forestgreen","Saddlebrown","Darkolivegreen",
-  "Mediumvioletred","Firebrick","Brown","Darkturquoise","Darkviolet","Dimgray","Lightseagreen","Mediumblue","Sienna","Darkslateblue","Darkgoldenrod","Seagreen","Olivedrab","Forestgreen","Saddlebrown","Darkolivegreen","Darkblue","Darkcyan","Darkmagenta","Darkred","Midnightblue",
-  "Dimgray","Lightseagreen","Mediumblue","Sienna","Darkslateblue","Darkgoldenrod","Seagreen","Olivedrab","Forestgreen","Saddlebrown","Darkolivegreen","Darkblue","Darkcyan","Darkmagenta","Darkred","Midnightblue","Darkslategray","Green","Indigo","Maroon","Navy",
-  "Darkgoldenrod","Seagreen","Olivedrab","Forestgreen","Saddlebrown","Darkolivegreen","Darkblue","Darkcyan","Darkmagenta","Darkred","Midnightblue","Darkslategray","Green","Indigo","Maroon","Navy","Olive","Purple","Teal","Darkgreen",
-  "Darkolivegreen","Darkblue","Darkcyan","Darkmagenta","Darkred","Midnightblue","Darkslategray","Green","Indigo","Maroon","Navy","Olive","Purple","Teal","Darkgreen",
-  "Midnightblue","Darkslategray","Green","Indigo","Maroon","Navy","Olive","Purple","Teal","Darkgreen",
-  "Navy","Olive","Purple","Teal","Darkgreen"
+  "Cyan", "purple", "green", "blue", "yellow", "magenta", "Navy","Aquamarine","Lawngreen","Violet","Darkslateblue","Darkblue","Sienna","Crimson","Tomato","Orangered","Mediumorchid","Mediumslateblue","Rosybrown","Skyblue","Cadetblue","Lightgreen","Springgreen","Paleturquoise","Firebrick","Gold","Blue",
+  "Darkblue","Sienna","Crimson","Tomato","Orangered","Mediumorchid","Mediumslateblue","Rosybrown","Skyblue","Cadetblue","Lightgreen","Springgreen","Paleturquoise","Firebrick","Gold","Blue","Darkturquoise","Midnightblue","Lightslategray","Red","Darkviolet",
+  "Mediumorchid","Mediumslateblue","Rosybrown","Skyblue","Cadetblue","Lightgreen","Springgreen","Paleturquoise","Firebrick","Gold","Blue","Darkturquoise","Midnightblue","Lightslategray","Red","Darkviolet","Royalblue","Lime","Plum","Darkorchid","Orange",
+  "Lightgreen","Springgreen","Paleturquoise","Firebrick","Gold","Blue","Darkturquoise","Midnightblue","Lightslategray","Red","Darkviolet","Royalblue","Lime","Plum","Darkorchid","Orange","Darksalmon","Salmon","Lightsalmon","Forestgreen","Darkseagreen",
+  "Blue","Darkturquoise","Midnightblue","Lightslategray","Red","Darkviolet","Royalblue","Lime","Plum","Darkorchid","Orange","Darksalmon","Salmon","Lightsalmon","Forestgreen","Darkseagreen","Mediumspringgreen","Turquoise","Coral","Mediumvioletred","Deeppink",
+  "Darkviolet","Royalblue","Lime","Plum","Darkorchid","Orange","Darksalmon","Salmon","Lightsalmon","Forestgreen","Darkseagreen","Mediumspringgreen","Turquoise","Coral","Mediumvioletred","Deeppink","Teal","Darkgoldenrod","Limegreen","Darkslategray","Darkcyan",
+  "Orange","Darksalmon","Salmon","Lightsalmon","Forestgreen","Darkseagreen","Mediumspringgreen","Turquoise","Coral","Mediumvioletred","Deeppink","Teal","Darkgoldenrod","Limegreen","Darkslategray","Darkcyan","Tan","Deepskyblue","Goldenrod","Gray","Yellow",
+  "Darkseagreen","Mediumspringgreen","Turquoise","Coral","Mediumvioletred","Deeppink","Teal","Darkgoldenrod","Limegreen","Darkslategray","Darkcyan","Tan","Deepskyblue","Goldenrod","Gray","Yellow","Khaki","Darkgreen","Dimgray","Mediumaquamarine","Cornflowerblue",
+  "Deeppink","Teal","Darkgoldenrod","Limegreen","Darkslategray","Darkcyan","Tan","Deepskyblue","Goldenrod","Gray","Yellow","Khaki","Darkgreen","Dimgray","Mediumaquamarine","Cornflowerblue","Darkorange","Lightgray","Palegoldenrod","Indianred","Slategray",
+  "Darkcyan","Tan","Deepskyblue","Goldenrod","Gray","Yellow","Khaki","Darkgreen","Dimgray","Mediumaquamarine","Cornflowerblue","Darkorange","Lightgray","Palegoldenrod","Indianred","Slategray","Silver","Seagreen","Lightblue","Hotpink","Dodgerblue",
+  "Yellow","Khaki","Dimgray","Mediumaquamarine","Cornflowerblue","Darkorange","Lightgray","Palegoldenrod","Indianred","Slategray","Silver","Seagreen","Lightblue","Hotpink","Dodgerblue","Indigo","Burlywood","Lightsteelblue","Yellowgreen","Peru",
+  "Cornflowerblue","Darkorange","Lightgray","Palegoldenrod","Indianred","Slategray","Silver","Seagreen","Lightblue","Hotpink","Dodgerblue","Indigo","Burlywood","Lightsteelblue","Yellowgreen","Peru","Greenyellow","Palegreen","Palevioletred","Mediumpurple","Darkmagenta",
+  "Slategray","Silver","Seagreen","Lightblue","Hotpink","Dodgerblue","Indigo","Burlywood","Lightsteelblue","Yellowgreen","Peru","Greenyellow","Palegreen","Palevioletred","Mediumpurple","Darkmagenta","Mediumblue","Mediumturquoise","Darkgray","Lightseagreen","Maroon",
+  "Dodgerblue","Indigo","Burlywood","Lightsteelblue","Yellowgreen","Peru","Greenyellow","Palegreen","Palevioletred","Mediumpurple","Darkmagenta","Mediumblue","Mediumturquoise","Darkgray","Lightseagreen","Maroon","Darkolivegreen","Lightskyblue","Lightcoral","Aqua","Mediumseagreen",
+  "Peru","Greenyellow","Palegreen","Palevioletred","Mediumpurple","Darkmagenta","Mediumblue","Mediumturquoise","Darkgray","Lightseagreen","Maroon","Darkolivegreen","Lightskyblue","Lightcoral","Aqua","Mediumseagreen","Darkred","Brown","Powderblue","Blueviolet","Steelblue",
+  "Darkmagenta","Mediumblue","Mediumturquoise","Darkgray","Lightseagreen","Maroon","Darkolivegreen","Lightskyblue","Lightcoral","Aqua","Mediumseagreen","Darkred","Brown","Powderblue","Blueviolet","Steelblue","Chartreuse","Olivedrab","Chocolate","Thistle","Green",
+  "Maroon","Darkolivegreen","Lightskyblue","Lightcoral","Aqua","Mediumseagreen","Darkred","Brown","Powderblue","Blueviolet","Steelblue","Chartreuse","Olivedrab","Chocolate","Thistle","Green","Darkkhaki","Wheat","Slateblue","Saddlebrown","Sandybrown",
+  "Mediumseagreen","Darkred","Brown","Powderblue","Blueviolet","Steelblue","Chartreuse","Olivedrab","Chocolate","Thistle","Green","Darkkhaki","Wheat","Slateblue","Saddlebrown","Sandybrown","Fuchsia","Purple","Olive","Orchid",
+  "Steelblue","Chartreuse","Olivedrab","Chocolate","Thistle","Green","Darkkhaki","Wheat","Slateblue","Saddlebrown","Sandybrown","Fuchsia","Purple","Olive","Orchid",
+  "Green","Darkkhaki","Wheat","Slateblue","Saddlebrown","Sandybrown","Fuchsia","Purple","Olive","Orchid",
+  "Sandybrown","Fuchsia","Purple","Olive","Orchid"
 };
 
 
@@ -44,13 +44,14 @@ void EmbeddingVisualizer::draw(const embedding_mapping_t& embedding)
     drawEdge(edge, color);
   }
 
-  drawChains();
   drawInterChainConnections();
+  drawChains();
 
   double radius = getRadius();
+  std::string none = "none";
   for (auto node : m_nodes)
   {
-    drawNode(node.first, radius, node.second);
+    drawNode(node.first, radius, node.second, none);
   }
 
   drawNodes();
@@ -129,7 +130,6 @@ void EmbeddingVisualizer::drawChains()
   {
     auto rangeIt = m_embedding->equal_range(groupIt->first);
     const auto& color = m_sourceNodeColors[groupIt->first];
-    std::cout << groupIt->first << " -> " << std::distance(rangeIt.first, rangeIt.second) << std::endl ;
     for (auto targetNodeIt = rangeIt.first; targetNodeIt != rangeIt.second; ++targetNodeIt)
     {
       auto innerIt = targetNodeIt;
@@ -138,13 +138,10 @@ void EmbeddingVisualizer::drawChains()
       {
         if (m_target.contains(edge_t{targetNodeIt->second, innerIt->second}))
         { // connection within a chain, draw it
-          std::cout << "CHAIN" << std::endl;
           drawEdge(edge_t{targetNodeIt->second, innerIt->second}, color, getStrokeWidth());
         }
         else if (m_target.contains(edge_t{innerIt->second, targetNodeIt->second}))
         { // connection within a chain, draw it
-          std::cout << "CHAIN" << std::endl;
-
           drawEdge(edge_t{innerIt->second, targetNodeIt->second}, color, getStrokeWidth());
         }
       }
@@ -186,16 +183,15 @@ void EmbeddingVisualizer::drawNodes()
   for (const auto& mapped : *m_embedding)
   {
     auto it = targetNodesUsed.find(mapped.second);
-    drawNode(mapped.second, radius + sizeDelta * it->second, m_nodes[mapped.second], true);
-    it->second--;
+    drawNode(mapped.second, radius + sizeDelta * (--it->second), m_nodes[mapped.second], m_sourceNodeColors[mapped.first], it->second + 2);
   }
 }
 
-void EmbeddingVisualizer::drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, bool fill)
+void EmbeddingVisualizer::drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, const std::string& color, fuint32_t n)
 {
-  m_svg << "<circle id=\"node_" << node << "\" r=\"" << radius << "\" cx=\"" << coordinate.first
+  m_svg << "<circle id=\"node_" << node << "_" << n << "\" r=\"" << radius << "\" cx=\"" << coordinate.first
          << "\" cy=\"" << coordinate.second << "\" fill=\""
-         << (fill ? m_sourceNodeColors[node] : "none") << "\" stroke=\"black\" />";
+         << color << "\" stroke=\"black\" />";
 }
 
 void EmbeddingVisualizer::drawEdge(const edge_t& edge, const std::string& color, double stroke)

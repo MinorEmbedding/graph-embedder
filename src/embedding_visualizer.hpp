@@ -28,12 +28,12 @@ namespace majorminer
 
       double getNodeSize() const { return 50; }
       double getRadius() const { return getNodeSize() / 2; }
-      double getStrokeWidth() const { return 5; }
+      double getStrokeWidth() const { return 6; }
 
     private:
       void initialize();
       void writeToFile();
-      void drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, bool fill = false);
+      void drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, const std::string& color, fuint32_t n = 0);
       void drawEdge(const edge_t& edge, const std::string& color, double stroke = 1);
       void drawChains();
       void drawInterChainConnections();
