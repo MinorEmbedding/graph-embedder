@@ -155,3 +155,18 @@ graph_t majorminer::import_graph(const char* edgeList, size_t length)
   }
   return graph;
 }
+
+
+graph_t majorminer::generate_cyclegraph(fuint32_t n)
+{
+  graph_t cycle{};
+  if (n < 2) return cycle;
+  tbb::parallel_for( tbb::blocked_range<fuint32_t>(0, n),
+    [&cycle, n](const tbb::blocked_range<fuint32_t>& range) {
+      for (auto i = range.begin(); i != range.end(); ++i)
+      {
+        cycle.insert(std::make_pair(i, (i +1) % n));
+      }
+  });
+  return cycle;
+}

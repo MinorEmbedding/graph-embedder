@@ -1,18 +1,36 @@
 #include <gtest/gtest.h>
 #include <majorminer.hpp>
 
+#include "utils/test_common.hpp"
+
 using namespace majorminer;
 
-TEST(SimpleTest, Basic)
+
+TEST(EmbeddingTest, Basic_Cycle_4)
 {
-  EXPECT_TRUE(majorminer::works());
+  graph_t cycle = generate_cyclegraph(4);
+  graph_t chimera = generate_chimera(1, 1);
+  printGraph(cycle);
+  EmbeddingSuite suite{cycle, chimera};
+  auto embedding = suite.find_embedding();
 }
 
-TEST(SimpleTBBTest, BasicSort)
+TEST(EmbeddingTest, Cycle_5_Extra_Edges)
 {
-  auto vec = majorminer::testTBB();
-  for (auto i = 0; i < vec.size(); ++i)
-  {
-    if (i + 1 < vec.size()) EXPECT_LE(vec[i], vec[i + 1]);
-  }
+  graph_t cycle = generate_cyclegraph(5);
+  graph_t chimera = generate_chimera(1, 1);
+  addEdges(cycle, { {0,2}, {2, 4}, {1,3}});
+  printGraph(cycle);
+  EmbeddingSuite suite{cycle, chimera};
+  auto embedding = suite.find_embedding();
+}
+
+TEST(EmbeddingTest, Cycle_5_Extra_Edges_On_2_2_Chimera)
+{
+  graph_t cycle = generate_cyclegraph(5);
+  graph_t chimera = generate_chimera(2, 2);
+  addEdges(cycle, { {0,2}, {2, 4}, {1,3}});
+  printGraph(cycle);
+  EmbeddingSuite suite{cycle, chimera};
+  auto embedding = suite.find_embedding();
 }

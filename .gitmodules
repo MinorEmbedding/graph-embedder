@@ -1,0 +1,6 @@
+[submodule "external/oneTBB"]
+	path = external/oneTBB
+	url = https://github.com/oneapi-src/oneTBB.git
+[submodule "external/eigen"]
+	path = external/eigen
+	url = https://gitlab.com/libeigen/eigen.git

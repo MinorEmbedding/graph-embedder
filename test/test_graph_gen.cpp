@@ -1,28 +1,8 @@
-#include <gtest/gtest.h>
-#include <tbb/parallel_for.h>
-#include <majorminer.hpp>
+#include "utils/test_common.hpp"
 
 using namespace majorminer;
 
-namespace
-{
-  void containsEdges(const graph_t& graph, std::initializer_list<edge_t> edges)
-  {
-    tbb::parallel_for_each(edges.begin(), edges.end(),
-      [&graph](const edge_t& edge) {
-        EXPECT_TRUE(graph.find(edge) != graph.end()
-          || graph.find(std::make_pair(edge.second, edge.first)) != graph.end());
-    });
-  }
 
-  void printGraph(const graph_t& graph)
-  {
-    for (const auto& p : graph)
-    {
-      std::cout << "(" << p.first << ", " << p.second << ")" << std::endl;
-    }
-  }
-}
 
 
 TEST(ChimeraGen, Simple_Chimera)
@@ -89,4 +69,27 @@ TEST(ImportGraphEdgeList, EmptyEdgeList)
 {
   auto graph = majorminer::import_graph("test/data/sample_edgelists/empty_edgelist.txt");
   EXPECT_EQ(graph.size(), 0);
+}
+
+TEST(CycleGraphGen, Cycle_5)
+{
+  auto graph = majorminer::generate_cyclegraph(5);
+  EXPECT_EQ(graph.size(), 5);
+  containsEdges(graph, {
+    { 0, 1 }, { 1, 2 }, { 2, 3 }, { 3, 4 }, { 4, 0 }
+  });
+}
+
+TEST(CycleGraphGen, Cycle_0)
+{
+  auto graph = majorminer::generate_cyclegraph(0);
+  EXPECT_EQ(graph.size(), 0);
+  containsEdges(graph, {});
+}
+
+TEST(CycleGraphGen, Cycle_1)
+{
+  auto graph = majorminer::generate_cyclegraph(1);
+  EXPECT_EQ(graph.size(), 0);
+  containsEdges(graph, {});
 }

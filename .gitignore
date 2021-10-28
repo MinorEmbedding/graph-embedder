@@ -2,7 +2,8 @@
 build/
 Makefile
 .vscode/
-external/oneTBB/
+external/lemon/
+external/lemon.tar.gz
 
 # Prerequisites
 *.d
