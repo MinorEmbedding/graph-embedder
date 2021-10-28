@@ -25,6 +25,9 @@ namespace majorminer
   /// Generate a simple cyclic graph C_n
   graph_t generate_cyclegraph(fuint32_t n);
 
+  /// Generate a complete graph on n vertices
+  graph_t generate_completegraph(fuint32_t n);
+
   /// Import an edge list from a file.
   graph_t import_graph(std::string filename);
 

@@ -1,8 +1,6 @@
 #ifndef __MAJORMINER_TYPES_HPP_
 #define __MAJORMINER_TYPES_HPP_
 
-#include <vector>
-#include <map>
 #include <tbb/concurrent_vector.h>
 #include <tbb/concurrent_set.h>
 #include <tbb/concurrent_map.h>
@@ -11,6 +9,7 @@
 #include <tbb/concurrent_priority_queue.h>
 
 #include <cinttypes>
+#include <atomic>
 
 #include "config.hpp"
 

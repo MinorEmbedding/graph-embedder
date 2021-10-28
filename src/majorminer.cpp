@@ -152,3 +152,16 @@ void EmbeddingSuite::embeddTrivialNode(fuint32_t node)
     throw std::runtime_error("Oooops...");
   }
 }
+
+bool EmbeddingSuite::isValid() const
+{
+  EmbeddingValidator validator{m_mapping, *m_sourceGraph, m_target};
+  return validator.isValid();
+}
+
+
+bool EmbeddingSuite::connectsNodes() const
+{
+  EmbeddingValidator validator{m_mapping, *m_sourceGraph, m_target};
+  return validator.nodesConnected();
+}

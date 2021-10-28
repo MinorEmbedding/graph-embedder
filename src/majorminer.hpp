@@ -12,6 +12,7 @@
 #include "graph_gen.hpp"
 #include "utils.hpp"
 #include "network_simplex.hpp"
+#include "embedding_validator.hpp"
 
 namespace majorminer
 {
@@ -24,6 +25,8 @@ namespace majorminer
       EmbeddingSuite(const graph_t& source, const graph_t& target);
 
       embedding_mapping_t find_embedding();
+      bool isValid() const;
+      bool connectsNodes() const;
 
     private:
       void embeddNode(fuint32_t node);
