@@ -7,6 +7,7 @@
 
 #include <majorminer.hpp>
 #include <embedding_validator.hpp>
+#include <embedding_visualizer.hpp>
 
 #include "qubo_modelling.hpp"
 

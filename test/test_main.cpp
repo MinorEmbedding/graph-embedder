@@ -43,3 +43,14 @@ TEST(EmbeddingTest, Complete_Graph_8_On_3_3_Chimera)
   auto embedding = suite.find_embedding();
   ASSERT_TRUE(suite.connectsNodes());
 }
+
+TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
+{
+  graph_t cycle = generate_cyclegraph(8);
+  graph_t chimera = generate_chimera(2, 2);
+  EmbeddingSuite suite{cycle, chimera};
+  auto embedding = suite.find_embedding();
+  printGraph(chimera);
+  ChimeraVisualizer visualizer{chimera, "chimera_cylce_8", 2, 2};
+  visualizer.draw(embedding);
+}

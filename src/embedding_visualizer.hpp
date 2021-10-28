@@ -1,0 +1,77 @@
+#ifndef __MAJORMINER_EMBEDDING_VISUALIZER_HPP_
+#define __MAJORMINER_EMBEDDING_VISUALIZER_HPP_
+
+#include "majorminer_types.hpp"
+
+#include <sstream>
+#include <fstream>
+
+namespace majorminer
+{
+  typedef std::pair<double, double> Coordinate_t;
+  typedef UnorderedMap<fuint32_t, Coordinate_t> VisualizerNodeCoordinateMap;
+
+  class EmbeddingVisualizer
+  {
+    public:
+      EmbeddingVisualizer(const graph_t& target, std::string filename)
+       : m_target(target), m_filename(filename) { }
+      virtual ~EmbeddingVisualizer() {}
+
+      void draw(const embedding_mapping_t& embedding);
+
+    protected:
+      virtual fuint32_t insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge) = 0;
+      virtual Coordinate_t insertNode(fuint32_t v) const = 0;
+      virtual double getWidth() const = 0;
+      virtual double getHeight() const = 0;
+
+      double getNodeSize() const { return 50; }
+      double getRadius() const { return getNodeSize() / 2; }
+
+    private:
+      void initialize();
+      void writeToFile();
+      void drawNode(fuint32_t node, const Coordinate_t& coordinate);
+      void drawEdge(const edge_t& edge);
+      void drawChain(const edge_t& edge);
+
+    private:
+      bool m_initialized = false;
+      const graph_t& m_target;
+      const embedding_mapping_t* m_embedding; // temporary pointer to the embedding
+      std::string m_filename;
+      fuint32_t m_iteration;
+      std::stringstream m_svg;
+
+      UnorderedMap<edge_t, fuint32_pair_t, PairHashFunc<fuint32_t>> m_edgePtrs;
+      Vector<Coordinate_t> m_edgeSamples;
+
+    protected:
+      VisualizerNodeCoordinateMap m_nodes;
+  };
+
+  class ChimeraVisualizer : public EmbeddingVisualizer
+  {
+    public:
+      ChimeraVisualizer(const graph_t& target, std::string filename, fuint32_t nbRows, fuint32_t nbCols)
+        : EmbeddingVisualizer(target, std::move(filename)),
+          m_nbRows(nbRows), m_nbCols(nbCols),
+          m_nbVerticesPerRow(8 * m_nbCols) {}
+      ~ChimeraVisualizer(){}
+
+    protected:
+      fuint32_t insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge) override;
+      Coordinate_t insertNode(fuint32_t v) const override;
+      double getWidth() const override;
+      double getHeight() const override;
+
+    private:
+      fuint32_t m_nbRows;
+      fuint32_t m_nbCols;
+      fuint32_t m_nbVerticesPerRow;
+  };
+}
+
+
+#endif
