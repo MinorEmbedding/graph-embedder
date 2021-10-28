@@ -187,3 +187,13 @@ graph_t majorminer::generate_completegraph(fuint32_t n)
   });
   return clique;
 }
+
+graph_t majorminer::generate_petersen()
+{
+  graph_t petersen{
+    {0, 1}, {1, 2}, {2, 3}, {3, 4}, {4, 0},
+    {0, 5}, {1, 6}, {2, 7}, {3, 8}, {4, 9},
+    {5, 7}, {7, 9}, {9, 6}, {6, 8}, {8, 5}
+  };
+  return petersen;
+}
