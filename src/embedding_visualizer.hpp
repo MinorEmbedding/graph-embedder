@@ -14,8 +14,8 @@ namespace majorminer
   class EmbeddingVisualizer
   {
     public:
-      EmbeddingVisualizer(const graph_t& target, std::string filename)
-       : m_target(target), m_filename(filename) { }
+      EmbeddingVisualizer(const graph_t& source, const graph_t& target, std::string filename)
+       : m_source(source), m_target(target), m_filename(filename) { }
       virtual ~EmbeddingVisualizer() {}
 
       void draw(const embedding_mapping_t& embedding);
@@ -28,24 +28,31 @@ namespace majorminer
 
       double getNodeSize() const { return 50; }
       double getRadius() const { return getNodeSize() / 2; }
+      double getStrokeWidth() const { return 5; }
 
     private:
       void initialize();
       void writeToFile();
-      void drawNode(fuint32_t node, const Coordinate_t& coordinate);
-      void drawEdge(const edge_t& edge);
-      void drawChain(const edge_t& edge);
+      void drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, bool fill = false);
+      void drawEdge(const edge_t& edge, const std::string& color, double stroke = 1);
+      void drawChains();
+      void drawInterChainConnections();
+      void drawNodes();
+      const std::string& getColor(fuint32_t node);
 
     private:
       bool m_initialized = false;
+      const graph_t& m_source;
       const graph_t& m_target;
       const embedding_mapping_t* m_embedding; // temporary pointer to the embedding
       std::string m_filename;
       fuint32_t m_iteration;
       std::stringstream m_svg;
+      std::stringstream m_colorFactory;
 
       UnorderedMap<edge_t, fuint32_pair_t, PairHashFunc<fuint32_t>> m_edgePtrs;
       Vector<Coordinate_t> m_edgeSamples;
+      UnorderedMap<fuint32_t, std::string> m_sourceNodeColors;
 
     protected:
       VisualizerNodeCoordinateMap m_nodes;
@@ -54,8 +61,8 @@ namespace majorminer
   class ChimeraVisualizer : public EmbeddingVisualizer
   {
     public:
-      ChimeraVisualizer(const graph_t& target, std::string filename, fuint32_t nbRows, fuint32_t nbCols)
-        : EmbeddingVisualizer(target, std::move(filename)),
+      ChimeraVisualizer(const graph_t& source, const graph_t& target, std::string filename, fuint32_t nbRows, fuint32_t nbCols)
+        : EmbeddingVisualizer(source, target, std::move(filename)),
           m_nbRows(nbRows), m_nbCols(nbCols),
           m_nbVerticesPerRow(8 * m_nbCols) {}
       ~ChimeraVisualizer(){}

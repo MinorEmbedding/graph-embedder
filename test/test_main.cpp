@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <majorminer.hpp>
+#include <embedding_visualizer.hpp>
 
 #include "utils/test_common.hpp"
 
@@ -42,6 +43,8 @@ TEST(EmbeddingTest, Complete_Graph_8_On_3_3_Chimera)
   EmbeddingSuite suite{clique, chimera};
   auto embedding = suite.find_embedding();
   ASSERT_TRUE(suite.connectsNodes());
+  ChimeraVisualizer visualizer{clique, chimera, "chimera_clique_8", 3, 3};
+  visualizer.draw(embedding);
 }
 
 TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
@@ -51,6 +54,6 @@ TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
   EmbeddingSuite suite{cycle, chimera};
   auto embedding = suite.find_embedding();
   printGraph(chimera);
-  ChimeraVisualizer visualizer{chimera, "chimera_cylce_8", 2, 2};
+  ChimeraVisualizer visualizer{cycle, chimera, "chimera_cycle_8", 2, 2};
   visualizer.draw(embedding);
 }
