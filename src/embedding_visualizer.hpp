@@ -78,6 +78,25 @@ namespace majorminer
       fuint32_t m_nbCols;
       fuint32_t m_nbVerticesPerRow;
   };
+
+  class KingsVisualizer : public EmbeddingVisualizer
+  {
+    public:
+      KingsVisualizer(const graph_t& source, const graph_t& target, std::string filename, fuint32_t nbRows, fuint32_t nbCols)
+        : EmbeddingVisualizer(source, target, std::move(filename)),
+          m_nbRows(nbRows), m_nbCols(nbCols) {}
+      ~KingsVisualizer(){}
+
+    protected:
+      fuint32_t insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge) override;
+      Coordinate_t insertNode(fuint32_t v) const override;
+      double getWidth() const override;
+      double getHeight() const override;
+
+    private:
+      fuint32_t m_nbRows;
+      fuint32_t m_nbCols;
+  };
 }
 
 

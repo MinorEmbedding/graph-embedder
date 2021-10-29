@@ -53,7 +53,6 @@ TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
   graph_t chimera = generate_chimera(2, 2);
   EmbeddingSuite suite{cycle, chimera};
   auto embedding = suite.find_embedding();
-  printGraph(chimera);
   ChimeraVisualizer visualizer{cycle, chimera, "chimera_cycle_8", 2, 2};
   visualizer.draw(embedding);
 }
@@ -64,7 +63,17 @@ TEST(EmbeddingTest, Petersen_Chimera)
   graph_t chimera = generate_chimera(2, 2);
   EmbeddingSuite suite{petersen, chimera};
   auto embedding = suite.find_embedding();
-  printGraph(chimera);
   ChimeraVisualizer visualizer{petersen, chimera, "chimera_petersen", 2, 2};
+  visualizer.draw(embedding);
+}
+
+
+TEST(EmbeddingTest, Petersen_KingsGraph)
+{
+  graph_t petersen = generate_petersen();
+  graph_t king = generate_king(10, 10);
+  EmbeddingSuite suite{petersen, king};
+  auto embedding = suite.find_embedding();
+  KingsVisualizer visualizer{petersen, king, "king_petersen", 10, 10};
   visualizer.draw(embedding);
 }

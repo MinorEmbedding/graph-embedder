@@ -260,3 +260,25 @@ double ChimeraVisualizer::getHeight() const
   return m_nbRows * Y_CELL * getNodeSize();
 }
 
+fuint32_t KingsVisualizer::insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge)
+{
+  return 0;
+}
+
+Coordinate_t KingsVisualizer::insertNode(fuint32_t v) const
+{
+  double nodeSize = getNodeSize();
+  fuint32_t row = v / m_nbCols;
+  fuint32_t col = v % m_nbCols;
+  return std::make_pair((1 + 2 * col) * nodeSize, (1 + 2 * row) * nodeSize);
+}
+
+double KingsVisualizer::getWidth() const
+{
+  return ((1 + m_nbCols * 2) * getNodeSize());
+}
+
+double KingsVisualizer::getHeight() const
+{
+  return ((1 + m_nbRows * 2) * getNodeSize());
+}
