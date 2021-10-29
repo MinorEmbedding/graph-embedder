@@ -1,17 +1,19 @@
-
+#include <filesystem>
 #include "utils/test_common.hpp"
 #include "utils/qubo_problems.hpp"
 
 using namespace majorminer;
+namespace fs = std::filesystem;
 
 #define PENALTY 10000
 
 namespace
 {
-  void createMatrixFile(QConstraintType type, size_t n, std::string tName)
+  void createMatrixFile(QConstraintType type, size_t n, std::string tName, std::string folder)
   {
+    fs::create_directories(folder);
     std::stringstream ss;
-    ss << "consmatrix_" << tName << "_" << n << ".txt";
+    ss  << folder << "consmatrix_" << tName << "_" << n << ".txt";
     std::string filename = ss.str();
     auto model = createConstraintMatrix(n, type, PENALTY);
     auto reformulated = model.reformulate();
@@ -29,7 +31,7 @@ TEST(QuboProblem, Matrix_EQ)
 {
   for (fuint32_t i = 8; i <= 20; ++i)
   {
-    createMatrixFile(QConstraintType::EQUAL, i, "EQ");
+    createMatrixFile(QConstraintType::EQUAL, i, "EQ", "consmatrices/EQ/");
   }
 }
 
@@ -37,7 +39,7 @@ TEST(QuboProblem, Matrix_LEQ)
 {
   for (fuint32_t i = 8; i <= 20; ++i)
   {
-    createMatrixFile(QConstraintType::LOWER_EQUAL, i, "LEQ");
+    createMatrixFile(QConstraintType::LOWER_EQUAL, i, "LEQ", "consmatrices/LEQ/");
   }
 }
 
@@ -45,6 +47,6 @@ TEST(QuboProblem, Matrix_GEQ)
 {
   for (fuint32_t i = 8; i <= 20; ++i)
   {
-    createMatrixFile(QConstraintType::GREATER_EQUAL, i, "GEQ");
+    createMatrixFile(QConstraintType::GREATER_EQUAL, i, "GEQ", "consmatrices/GEQ/");
   }
 }

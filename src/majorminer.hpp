@@ -13,6 +13,7 @@
 #include "utils.hpp"
 #include "network_simplex.hpp"
 #include "embedding_validator.hpp"
+#include "embedding_visualizer.hpp"
 
 namespace majorminer
 {
@@ -22,7 +23,7 @@ namespace majorminer
   {
     friend NetworkSimplexWrapper;
     public:
-      EmbeddingSuite(const graph_t& source, const graph_t& target);
+      EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer = nullptr);
 
       embedding_mapping_t find_embedding();
       bool isValid() const;
@@ -52,6 +53,7 @@ namespace majorminer
       PrioNodeQueue m_nodesToProcess;
 
       std::unique_ptr<NetworkSimplexWrapper> m_nsWrapper;
+      EmbeddingVisualizer* m_visualizer;
   };
 
 }

@@ -1,6 +1,7 @@
 #include "embedding_visualizer.hpp"
 
 using namespace majorminer;
+namespace fs = std::filesystem;
 
 const static std::string colors[] = {
   "Cyan", "purple", "green", "blue", "yellow", "magenta", "Navy","Aquamarine","Lawngreen","Violet","Darkslateblue","Darkblue","Sienna","Crimson","Tomato","Orangered","Mediumorchid","Mediumslateblue","Rosybrown","Skyblue","Cadetblue","Lightgreen","Springgreen","Paleturquoise","Firebrick","Gold","Blue",
@@ -26,39 +27,39 @@ const static std::string colors[] = {
   "Sandybrown","Fuchsia","Purple","Olive","Orchid"
 };
 
+#define Y_OFFSET 100
 
-void EmbeddingVisualizer::draw(const embedding_mapping_t& embedding)
+void EmbeddingVisualizer::setupDrawing(const embedding_mapping_t& embedding)
 {
   if (!m_initialized) initialize();
 
   m_embedding = &embedding;
-  auto width = getWidth();
-  auto height = getHeight();
-  m_svg << "<svg height=\"" << height
-     << "\" width=\"" << width << "\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 "
-     << width << " " << height << "\">";
+  m_svg << m_prepared;
 
-  std::string color = "black";
-  for (const auto& edge : m_target)
-  {
-    drawEdge(edge, color);
-  }
+  double fontSize = getWidth() / 30;
 
+  std::stringstream titleText {};
+  titleText << "Iteration " << (m_iteration + 1) << ": ";
+  m_svg << "<text x=\"" << getRadius() << "\" y=\"50\" font-size=\"" << fontSize << "\">" << titleText.str();
+}
+
+void EmbeddingVisualizer::draw(const embedding_mapping_t& embedding, const char* title)
+{
+  setupDrawing(embedding);
+  if (title != nullptr) m_svg << title;
+  finishDrawing();
+}
+
+void EmbeddingVisualizer::finishDrawing()
+{
+  m_svg << "</text>";
   drawInterChainConnections();
   drawChains();
-
-  double radius = getRadius();
-  std::string none = "none";
-  for (auto node : m_nodes)
-  {
-    drawNode(node.first, radius, node.second, none);
-  }
-
   drawNodes();
-
 
   m_svg << "</svg>";
   writeToFile();
+  m_embedding = nullptr;
 }
 
 const std::string& EmbeddingVisualizer::getColor(fuint32_t node)
@@ -99,6 +100,9 @@ void EmbeddingVisualizer::drawInterChainConnections()
 
 void EmbeddingVisualizer::initialize()
 {
+  fs::path path = m_filename;
+  auto parent = path.parent_path();
+  fs::create_directories(parent);
   for (const auto& edge : m_target)
   {
     // initialize node positions
@@ -118,6 +122,30 @@ void EmbeddingVisualizer::initialize()
     fuint32_t nbSamples = insertEdge(m_edgeSamples, edge);
     m_edgePtrs.insert(std::make_pair(edge, std::make_pair(size, nbSamples)));
   }
+
+  auto width = getWidth();
+  auto height = getHeight() + Y_OFFSET;
+  m_svg << "<svg height=\"" << height
+     << "\" width=\"" << width << "\" xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 "
+     << width << " " << height << "\">"
+     << "<rect x=\"0\" y=\"0\" width=\"" << width
+     << "\" height=\"" << height << "\" fill=\"white\"/>";
+
+  std::string color = "black";
+  for (const auto& edge : m_target)
+  {
+    drawEdge(edge, color);
+  }
+
+  double radius = getRadius();
+  std::string none = "white";
+  for (auto node : m_nodes)
+  {
+    drawNode(node.first, radius, node.second, none);
+  }
+  m_prepared = m_svg.str();
+  m_svg.str(std::string());
+
   m_initialized = true;
 }
 
@@ -190,7 +218,7 @@ void EmbeddingVisualizer::drawNodes()
 void EmbeddingVisualizer::drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, const std::string& color, fuint32_t n)
 {
   m_svg << "<circle id=\"node_" << node << "_" << n << "\" r=\"" << radius << "\" cx=\"" << coordinate.first
-         << "\" cy=\"" << coordinate.second << "\" fill=\""
+         << "\" cy=\"" << (coordinate.second + Y_OFFSET) << "\" fill=\""
          << color << "\" stroke=\"black\" />";
 }
 
@@ -199,7 +227,7 @@ void EmbeddingVisualizer::drawEdge(const edge_t& edge, const std::string& color,
   auto edgePtr = m_edgePtrs[edge];
   const auto& startPos = m_nodes[edge.first];
   const auto& endPos = m_nodes[edge.second];
-  #define COORD(c) c.first << "," << c.second << " "
+  #define COORD(c) c.first << "," << (c.second + Y_OFFSET) << " "
   m_svg << "<polyline points=\"" <<  COORD(startPos);
   for (fuint32_t i = edgePtr.first; i < (edgePtr.first + edgePtr.second); ++i)
   {
@@ -260,7 +288,7 @@ double ChimeraVisualizer::getHeight() const
   return m_nbRows * Y_CELL * getNodeSize();
 }
 
-fuint32_t KingsVisualizer::insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge)
+fuint32_t KingsVisualizer::insertEdge(Vector<Coordinate_t>& /* coords */, const edge_t& /* edge */)
 {
   return 0;
 }

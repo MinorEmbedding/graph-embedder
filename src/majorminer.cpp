@@ -2,8 +2,8 @@
 
 using namespace majorminer;
 
-EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target)
-  : m_sourceGraph(&source), m_targetGraph(&target) {
+EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer)
+  : m_sourceGraph(&source), m_targetGraph(&target), m_visualizer(visualizer) {
   convertToAdjacencyList(m_source, source);
   convertToAdjacencyList(m_target, target);
   for (const auto& arc : target)
@@ -33,11 +33,23 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
       {
         DEBUG(OUT_S << "Complex node to embedd: " << node.m_id << " (" << node.m_nbConnections << ")" << std::endl;)
         embeddNode(node.m_id);
+        if (m_visualizer != nullptr)
+        {
+          m_visualizer->draw(m_mapping, [&](std::ostream& os)
+            { os << "Complex adjacent node " << node.m_id << " (" << node.m_nbConnections << ")";}
+          );
+        }
       }
       else
       { // nbConnections = 1
         DEBUG(OUT_S << "Simple adjacent node to embedd: " << node.m_id << std::endl;)
         embeddSimpleNode(node.m_id);
+        if (m_visualizer != nullptr)
+        {
+          m_visualizer->draw(m_mapping, [&](std::ostream& os)
+            { os << "Simple adjacent node " << node.m_id << " (1).";}
+          );
+        }
       }
       updateConnections(node.m_id);
     }
@@ -48,6 +60,12 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
       m_nodesRemaining.unsafe_erase(m_nodesRemaining.begin());
       DEBUG(OUT_S << "Trivial node to embedd: " << node.first << std::endl;)
       embeddTrivialNode(node.first);
+      if (m_visualizer != nullptr)
+      {
+        m_visualizer->draw(m_mapping, [&](std::ostream& os)
+            { os << "Trivial node " << node.first;}
+        );
+      }
     }
   }
   return m_mapping;
@@ -136,6 +154,7 @@ void EmbeddingSuite::embeddSimpleNode(fuint32_t node)
   }
   // map "node" to "bestNodeFound"
   mapNode(node, bestNodeFound);
+
 }
 
 void EmbeddingSuite::embeddTrivialNode(fuint32_t node)
