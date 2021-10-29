@@ -9,11 +9,11 @@
 #include <memory>
 
 #include "config.hpp"
-#include "graph_gen.hpp"
-#include "utils.hpp"
-#include "network_simplex.hpp"
-#include "embedding_validator.hpp"
-#include "embedding_visualizer.hpp"
+#include "common/graph_gen.hpp"
+#include "common/utils.hpp"
+#include "initial/network_simplex.hpp"
+#include "common/embedding_validator.hpp"
+#include "common/embedding_visualizer.hpp"
 
 namespace majorminer
 {

@@ -6,7 +6,7 @@
 #include <sstream>
 
 #include <majorminer.hpp>
-#include <embedding_validator.hpp>
+#include <common/embedding_validator.hpp>
 
 #include "qubo_modelling.hpp"
 

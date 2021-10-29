@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 #include <majorminer.hpp>
-#include <embedding_visualizer.hpp>
+#include <common/embedding_visualizer.hpp>
 
 #include "utils/test_common.hpp"
 

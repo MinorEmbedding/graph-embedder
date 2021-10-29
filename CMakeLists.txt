@@ -7,7 +7,7 @@ enable_language(C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
-set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/)
+set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/ src/)
 
 # do not build tests in oneTBB
 set(TBB_TEST CACHE BOOL OFF)
