@@ -20,7 +20,7 @@ make
 
 
 # Libraries used in the C++-Project
-### [oneTBB](https://github.com/oneapi-src/oneTBB) (License: [Apache 2.0](https://choosealicense.com/licenses/apache-2.0/))
-### [GoogleTest](https://github.com/google/googletest) (License: [BSD 3-Clause "New" or "Revised"](https://choosealicense.com/licenses/bsd-3-clause/))
-### [LEMON](https://lemon.cs.elte.hu/trac/lemon) (License: [Boost Software License 1.0](https://choosealicense.com/licenses/bsl-1.0/))
-### [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) (License: [MPL2](https://choosealicense.com/licenses/mpl-2.0/), disabled LGPL features.)
+#### [oneTBB](https://github.com/oneapi-src/oneTBB) (License: [Apache 2.0](https://choosealicense.com/licenses/apache-2.0/))
+#### [GoogleTest](https://github.com/google/googletest) (License: [BSD 3-Clause "New" or "Revised"](https://choosealicense.com/licenses/bsd-3-clause/))
+#### [LEMON](https://lemon.cs.elte.hu/trac/lemon) (License: [Boost Software License 1.0](https://choosealicense.com/licenses/bsl-1.0/))
+#### [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) (License: [MPL2](https://choosealicense.com/licenses/mpl-2.0/), disabled LGPL features.)

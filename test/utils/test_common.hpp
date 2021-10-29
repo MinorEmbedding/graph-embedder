@@ -4,7 +4,10 @@
 #include <gtest/gtest.h>
 #include <tbb/parallel_for.h>
 #include <sstream>
+
 #include <majorminer.hpp>
+#include <embedding_validator.hpp>
+
 #include "qubo_modelling.hpp"
 
 namespace majorminer
