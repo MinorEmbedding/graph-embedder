@@ -9,7 +9,6 @@ from src.graphs.undirected_graphs import UndirectedGraphAdjList
 
 def define_minor():
     # in this case: Haus vom Nikolaus
-
     h_nodes = [0, 1, 2, 3, 4]
     h_edges = [(0, 1), (0, 4), (1, 2), (1, 3), (2, 3), (3, 4), (4, 0)]
 
@@ -34,14 +33,24 @@ def main():
     # h, pos = define_minor()
     # nx.draw_networkx(h, pos=pos)
 
-    # Define minor H
-    H = UndirectedGraphAdjList(5)
+    # --- Define minor H
+    # House graph
+    # H = UndirectedGraphAdjList(5)
+    # H._set_edge(0, 1)
+    # H._set_edge(1, 2)
+    # H._set_edge(1, 3)
+    # H._set_edge(2, 3)
+    # H._set_edge(3, 4)
+    # H._set_edge(4, 0)
+
+    # K4 graph
+    H = UndirectedGraphAdjList(4)
     H._set_edge(0, 1)
+    H._set_edge(0, 2)
+    H._set_edge(0, 3)
     H._set_edge(1, 2)
     H._set_edge(1, 3)
     H._set_edge(2, 3)
-    H._set_edge(3, 4)
-    H._set_edge(4, 0)
 
     # --- Draw one unit cell of a Chimera graph
     g = dnx.chimera_graph(1, 1, 4)
@@ -49,21 +58,43 @@ def main():
 
     ############################################################################
     solver = EmbeddingSolver(H)
+    found_embedding = False
+
     solver.init_basic_path()
+    found_embedding = solver.found_embedding()
+
+    if found_embedding:
+        print('PARTYYYYYYYYYYYYYYYYY')
+        return
 
     # --- Epochs
-    while True:
+    while not found_embedding:
         # --- Mutations
         # Strategy1: Pick the best mutation from 5
         # Strategy2 (for now): Take the first mutation that yields better costs
-        while True:
-            mutation = solver.mutate()
-            cost = solver.calculate_cost()
-            break  # go on with next epoch
+        while not found_embedding:
+            G_embedding_playground = solver.mutate()
+            # print(f'Is viable mutation? {G_embedding_playground}')
+
+            nodes, edges = G_embedding_playground.get_embedding()
+            draw_embedding(nodes, edges)
+            return
+
+            # --- Cost
+            # cost = solver.calculate_mutation_cost(mutation)
+            # print(f'COST: {cost}')
+            # cost = solver.calculate_cost()
+            # if cost <= 0:
+            #     print('Found embedding (!)')
+            #     found_embedding = True
+            #     break
+
+            break  # go on with next epoch (TODO: remove this line)
 
         # Draw
         nodes, edges = solver.get_embedding()
         draw_embedding(nodes, edges)
+        break
 
     ############################################################################
 

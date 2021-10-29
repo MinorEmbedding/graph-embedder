@@ -31,6 +31,9 @@ class ChimeraGraphLayout(UndirectedGraphAdjList):
     def get_neighbor_nodes(self, from_node):
         return super()._get_neighbor_nodes(from_node)
 
+    def exists_edge(self, frm, to):
+        return to in super()._get_neighbor_nodes(frm)
+
 
 class GraphEmbedding(UndirectedGraphAdjList):
     """
@@ -38,7 +41,7 @@ class GraphEmbedding(UndirectedGraphAdjList):
     """
 
     def __init__(self, nodes_count):
-        self._chain_last = 1
+        self._chain_last = 0
         super().__init__(nodes_count)
 
     def get_neighbor_nodes(self, from_node):
@@ -47,6 +50,10 @@ class GraphEmbedding(UndirectedGraphAdjList):
     def embed_edge(self, frm, to, chain=0):
         # Chain=0 means no chain, just a "normal" edge
         super()._set_edge(frm, to, cost=chain)
+
+    def add_chain(self, node1, node2):
+        self._chain_last += 1
+        self.embed_edge(node1, node2, chain=self._chain_last)
 
     def add_node(self):
         super()._add_node()
@@ -57,8 +64,17 @@ class GraphEmbedding(UndirectedGraphAdjList):
         nodes = [node for node in nodes if self._adj_list[node].get()]
         return nodes
 
+    def get_free_nodes(self):
+        nodes = super()._get_nodes()
+        # Filter for nodes that dont have an edge
+        nodes = [node for node in nodes if not self._adj_list[node].get()]
+        return nodes
+
     def get_embedded_edges(self):
         return super()._get_edges()
+
+    def get_neighbor_nodes(self, from_node):
+        return super()._get_neighbor_nodes(from_node)
 
     def get_embedding(self):
         nodes = self.get_embedded_nodes()
