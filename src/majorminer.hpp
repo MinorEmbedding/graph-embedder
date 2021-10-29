@@ -39,6 +39,7 @@ namespace majorminer
 
       void embeddTrivialNode(fuint32_t node);
       void embeddSimpleNode(fuint32_t node);
+      void identifyAffected(fuint32_t node);
 
     private:
       const graph_t* m_sourceGraph;
@@ -51,6 +52,9 @@ namespace majorminer
       nodeset_t m_targetNodesRemaining;
       UnorderedMap<fuint32_t, fuint32_t> m_nodesRemaining;
       PrioNodeQueue m_nodesToProcess;
+
+      UnorderedMap<fuint32_t, std::atomic<int>> m_sourceFreeNeighbors;
+      UnorderedSet<fuint32_t> m_sourceNodesAffected;
 
       std::unique_ptr<NetworkSimplexWrapper> m_nsWrapper;
       EmbeddingVisualizer* m_visualizer;

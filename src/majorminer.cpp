@@ -184,3 +184,28 @@ bool EmbeddingSuite::connectsNodes() const
   EmbeddingValidator validator{m_mapping, *m_sourceGraph, m_target};
   return validator.nodesConnected();
 }
+
+// TODO
+void EmbeddingSuite::identifyAffected(fuint32_t node)
+{
+  m_sourceNodesAffected.clear();
+
+  // "node" (from source graph) is now mapped to at least one
+  // target node. Iterate over those, to iterate over their neighbors
+  // that might be mapped to other source nodes
+  // TODO: create reverse mapping
+  auto& sourceNodesAffected = m_sourceNodesAffected;
+  auto& sourceFreeNeighbors = m_sourceFreeNeighbors;
+  auto& target = m_target;
+  auto& mapping = m_mapping;
+  m_sourceFreeNeighbors[node] = 0;
+  auto mappedRange = m_mapping.equal_range(node);
+  tbb::parallel_for_each(mappedRange.first, mappedRange.second,
+    [&, this] (const fuint32_pair_t& p){
+      auto adjacentRange = target.equal_range(p.second);
+      for (auto targetAdjacent = adjacentRange.first; targetAdjacent !=  adjacentRange.second; ++targetAdjacent)
+      { // if that node is free, increment sourceFreeNeighbors[node], else decrement from all mapped
+
+      }
+  });
+}
