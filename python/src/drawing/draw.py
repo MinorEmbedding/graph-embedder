@@ -22,10 +22,17 @@ class Draw():
     def draw_chimera_graph(self, m, n, t):
         """Draws a Chimera graph."""
         G = dnx.chimera_graph(m, n, t)
-        dnx.draw_chimera(G,
+        pos_chimera = dnx.chimera_layout(G)
+        nx.draw_networkx(G,
+                         pos=pos_chimera,
                          width=2,
+                         with_labels=False,
                          node_color='#858585',
                          edge_color='#BABABA')
+        # dnx.draw_chimera(G,
+        #                  width=2,
+        #                  node_color='#858585',
+        #                  edge_color='#BABABA')
 
     def _draw(self, nodes, edges, mapping_G_to_H):
         """Draws the embedding onto the Chimera graph.
@@ -74,11 +81,12 @@ class Draw():
         plt.axis('off')
         plt.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,
                             wspace=0.0, hspace=0.0)
-        self.big_plot_index = 1
+        self.big_plot_index = 1  # to start with (gets incremented later)
 
     def draw_to_big_plot(self, nodes, edges, mapping_G_to_H):
         plt.subplot(self.big_plot_row_count,
                     self.big_plot_row_count, self.big_plot_index)
+        self.draw_chimera_graph(1, 1, 4)
         self._draw(nodes, edges, mapping_G_to_H)
         plt.draw()
         self.big_plot_index += 1
