@@ -14,15 +14,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v2
+    - name: Checkout repository and submodules
+      uses: actions/checkout@v2
+      with:
+        submodules: recursive
 
     - name: Build project
       run: |
         bash prepare.sh
         mkdir build
-        cd build 
+        cd build
         cmake ..
         make
-    - name: Run GTest
-      run: ./build/test_majorminer
+    - name: Run GoogleTest
+      run: ./build/majorminer_test
 
