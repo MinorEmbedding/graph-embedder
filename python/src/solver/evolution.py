@@ -49,7 +49,7 @@ def main():
     print(nodes)
     print(edges)
     print(f'Is correct: {playground.is_valid_embedding()}')
-    
+
     mapping_G_to_H = playground.get_mapping_G_to_H()
     d.draw_embedding(nodes, edges, mapping_G_to_H)
 

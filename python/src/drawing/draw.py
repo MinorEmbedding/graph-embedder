@@ -27,7 +27,7 @@ class Draw():
                          node_color='#858585',
                          edge_color='#BABABA')
 
-    def draw_embedding(self, nodes, edges, mapping_G_to_H):
+    def _draw(self, nodes, edges, mapping_G_to_H):
         """Draws the embedding onto the Chimera graph.
 
         Arguments
@@ -60,4 +60,28 @@ class Draw():
                              font_size=15,
                              font_family='serif')
 
+    def draw_embedding(self, nodes, edges, mapping_G_to_H):
+        self._draw(nodes, edges, mapping_G_to_H)
         plt.show()
+
+    ############################ Big Plot ######################################
+
+    def init_big_plot(self, row_count):
+        self.big_plot_row_count = row_count
+        # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/figure_size_units.html
+        px = 1/plt.rcParams['figure.dpi']  # pixel in inches
+        fig = plt.figure(figsize=(row_count*200*px*3, row_count*200*px*3))
+        plt.axis('off')
+        plt.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,
+                            wspace=0.0, hspace=0.0)
+        self.big_plot_index = 1
+
+    def draw_to_big_plot(self, nodes, edges, mapping_G_to_H):
+        plt.subplot(self.big_plot_row_count,
+                    self.big_plot_row_count, self.big_plot_index)
+        self._draw(nodes, edges, mapping_G_to_H)
+        plt.draw()
+        self.big_plot_index += 1
+
+    def save_big_plot(self, filename):
+        plt.savefig(f'./{filename}.svg')

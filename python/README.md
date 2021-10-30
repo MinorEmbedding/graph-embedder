@@ -1,21 +1,19 @@
 # Python evolutionary embedding
 
-## How to use?
-From within the python folder, execute
-(exact command will probably change frequently in the near future):
+## Usage
+Execute (from within the python folder):
 
 ```
-python -m src.evolution
+python -m src.solver.evolution
 ```
 
-## Inputs
-- `H`: Minor to embed
-- `G`: Graph, e.g. a Chimera or Pegasus graph
+---
 
-## Algorithm
-- First step: init basic path with length `n`
-<br>(`n` is the number of nodes in the minor H)
+## K4 embeddings
+In order to get **144 unique K4 embeddings on a single chimera cell**, execute (from within the python folder):
 
-![Init basic path](./images/init_path.svg)
+```
+python -m src.solver.k4_results
+```
 
-- More to come
+![144 unique K4 embeddings on a single chimera cell](./k4_embedding.svg)
