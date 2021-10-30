@@ -7,6 +7,7 @@
 #include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_priority_queue.h>
+#include <tbb/concurrent_queue.h>
 
 #include <cinttypes>
 #include <atomic>
@@ -56,6 +57,9 @@ namespace majorminer
 
   template<typename T, typename Comparator = std::less<T>>
   using PriorityQueue = tbb::concurrent_priority_queue<T, Comparator>;
+
+  template<typename T>
+  using Queue = tbb::concurrent_queue<T>;
 
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;

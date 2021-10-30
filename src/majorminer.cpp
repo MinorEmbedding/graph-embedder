@@ -15,6 +15,8 @@ EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target, Emb
   {
     m_nodesRemaining[arc.first] = 0;
     m_nodesRemaining[arc.second] = 0;
+    m_sourceNeededNeighbors[arc.first]++;
+    m_sourceNeededNeighbors[arc.second]++;
   }
 }
 
@@ -52,6 +54,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
         }
       }
       updateConnections(node.m_id);
+      tryMutations();
     }
     else
     {
@@ -66,6 +69,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
             { os << "Trivial node " << node.first;}
         );
       }
+      tryMutations();
     }
   }
   return m_mapping;
@@ -91,7 +95,9 @@ void EmbeddingSuite::mapNode(fuint32_t node, fuint32_t targetNode)
   DEBUG(std::cout << node << " -> " << targetNode << std::endl;)
   m_nodesOccupied.insert(targetNode);
   m_mapping.insert(std::make_pair(node, targetNode));
+  m_reverseMapping.insert(std::make_pair(targetNode, node));
   m_targetNodesRemaining.unsafe_extract(targetNode);
+  updateNeededNeighbors(node);
 }
 
 void EmbeddingSuite::mapNode(fuint32_t node, const nodeset_t& targetNodes)
@@ -102,9 +108,26 @@ void EmbeddingSuite::mapNode(fuint32_t node, const nodeset_t& targetNodes)
     DEBUG(OUT_S << " " << targetNode;)
     m_nodesOccupied.insert(targetNode);
     m_mapping.insert(std::make_pair(node, targetNode));
+    m_reverseMapping.insert(std::make_pair(targetNode, node));
     m_targetNodesRemaining.unsafe_extract(targetNode);
   }
+  updateNeededNeighbors(node);
   DEBUG(OUT_S << " }" << std::endl;)
+}
+
+void EmbeddingSuite::updateNeededNeighbors(fuint32_t node)
+{
+  auto range = m_source.equal_range(node);
+  fuint32_t nbNodes = 0;
+  for (auto it = range.first; it != range.second; ++it)
+  {
+    if (!m_nodesRemaining.contains(it->second))
+    {
+      nbNodes++;
+      m_sourceNeededNeighbors[it->second]--;
+    }
+  }
+  m_sourceNeededNeighbors[node] -= nbNodes;
 }
 
 void EmbeddingSuite::updateConnections(fuint32_t node)
@@ -119,6 +142,7 @@ void EmbeddingSuite::updateConnections(fuint32_t node)
       m_nodesToProcess.push(PrioNode{findIt->first, findIt->second});
     }
   }
+  identifyAffected(node);
 }
 
 void EmbeddingSuite::embeddSimpleNode(fuint32_t node)
@@ -154,7 +178,6 @@ void EmbeddingSuite::embeddSimpleNode(fuint32_t node)
   }
   // map "node" to "bestNodeFound"
   mapNode(node, bestNodeFound);
-
 }
 
 void EmbeddingSuite::embeddTrivialNode(fuint32_t node)
@@ -185,7 +208,6 @@ bool EmbeddingSuite::connectsNodes() const
   return validator.nodesConnected();
 }
 
-// TODO
 void EmbeddingSuite::identifyAffected(fuint32_t node)
 {
   m_sourceNodesAffected.clear();
@@ -193,19 +215,53 @@ void EmbeddingSuite::identifyAffected(fuint32_t node)
   // "node" (from source graph) is now mapped to at least one
   // target node. Iterate over those, to iterate over their neighbors
   // that might be mapped to other source nodes
-  // TODO: create reverse mapping
+  const auto& reverseMapping = m_reverseMapping;
   auto& sourceNodesAffected = m_sourceNodesAffected;
   auto& sourceFreeNeighbors = m_sourceFreeNeighbors;
+  const auto& targetNodesRemaining = m_targetNodesRemaining;
   auto& target = m_target;
-  auto& mapping = m_mapping;
   m_sourceFreeNeighbors[node] = 0;
+  sourceNodesAffected.insert(node);
   auto mappedRange = m_mapping.equal_range(node);
   tbb::parallel_for_each(mappedRange.first, mappedRange.second,
     [&, this] (const fuint32_pair_t& p){
       auto adjacentRange = target.equal_range(p.second);
       for (auto targetAdjacent = adjacentRange.first; targetAdjacent !=  adjacentRange.second; ++targetAdjacent)
       { // if that node is free, increment sourceFreeNeighbors[node], else decrement from all mapped
-
+        if (targetNodesRemaining.contains(targetAdjacent->second)) sourceFreeNeighbors[node]++;
+        else
+        {
+          auto revMapRange = reverseMapping.equal_range(targetAdjacent->second);
+          for (auto revIt = revMapRange.first; revIt != revMapRange.second; ++revIt)
+          {
+            sourceNodesAffected.insert(revIt->second);
+            sourceFreeNeighbors[revIt->second]--;
+          }
+        }
       }
   });
+}
+
+int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
+{
+  std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and needs " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
+  return 2 * m_sourceNeededNeighbors[sourceNode].load()
+    - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
+}
+
+void EmbeddingSuite::tryMutations()
+{
+  auto& queue = m_taskQueue;
+  tbb::parallel_for_each(m_sourceNodesAffected.begin(), m_sourceNodesAffected.end(),
+    [&, this](fuint32_t node){
+       queue.push(std::make_unique<MutationExtend>(this, node));
+  });
+
+  while(!m_taskQueue.empty())
+  {
+    std::unique_ptr<GenericMutation> task;
+    bool worked = m_taskQueue.try_pop(task);
+    if (!worked) continue;
+    task->execute();
+  }
 }

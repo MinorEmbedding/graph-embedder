@@ -9,8 +9,9 @@ set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
 set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/ src/)
 
-# do not build tests in oneTBB
+# neither build tests nor tbbmalloc in oneTBB
 set(TBB_TEST CACHE BOOL OFF)
+set(TBBMALLOC_BUILD CACHE BOOL OFF)
 
 # build NetworkSimplex, gtest and oneTBB
 add_subdirectory(external)

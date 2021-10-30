@@ -5,9 +5,12 @@
 
 namespace majorminer
 {
-
-  
-
+  class GenericMutation
+  {
+    public:
+      virtual ~GenericMutation() {}
+      virtual void execute() = 0;
+  };
 }
 
 
