@@ -28,7 +28,6 @@ bool EmbeddingValidator::nodesConnected() const
     reverseMapping.insert(std::make_pair(mapped.second, mapped.first));
   }
 
-  Vector<fuint32_t> mappedNodes{};
   UnorderedMap<fuint32_t, std::atomic<bool>> adjacentNodes{};
   auto groupIt = adjacencies.begin();
   fuint32_t idx;
@@ -42,17 +41,11 @@ bool EmbeddingValidator::nodesConnected() const
       adjacentNodes.insert(std::make_pair(it->second, false));
     }
     auto mappedRange = m_embedding.equal_range(groupIt->first);
-    mappedNodes.resize(std::distance(mappedRange.first, mappedRange.second));
-    idx = 0;
-    for (auto it = mappedRange.first; it != mappedRange.second; ++it)
-    {
-      mappedNodes[idx++] = it->second;
-    }
 
     // for each node in adjacentNodes search for adjacency to mappedNodes
-    tbb::parallel_for_each(mappedNodes.begin(), mappedNodes.end(),
-      [&adjacentNodes, &reverseMapping, this](fuint32_t targetNode) {
-        auto targetNodeMapped = reverseMapping.equal_range(targetNode);
+    tbb::parallel_for_each(mappedRange.first, mappedRange.second,
+      [&adjacentNodes, &reverseMapping, this](fuint32_pair_t targetNodeP) {
+        auto targetNodeMapped = reverseMapping.equal_range(targetNodeP.second);
         for (auto it = targetNodeMapped.first; it != targetNodeMapped.second; ++it)
         {
           if (adjacentNodes.contains(it->second))
@@ -60,7 +53,7 @@ bool EmbeddingValidator::nodesConnected() const
             adjacentNodes[it->second] = true;
           }
         }
-        auto adjacentIt = this->m_target.equal_range(targetNode);
+        auto adjacentIt = this->m_target.equal_range(targetNodeP.second);
         for (auto it = adjacentIt.first; it != adjacentIt.second; ++it)
         {
           auto revMappedIt = reverseMapping.equal_range(it->second);
@@ -73,9 +66,10 @@ bool EmbeddingValidator::nodesConnected() const
           }
         }
     });
+
     for (const auto& adjNode : adjacentNodes)
     {
-      if (adjNode.second == 0) return false;
+      if (!adjNode.second) return false;
     }
     groupIt = adjRange.second;
   }

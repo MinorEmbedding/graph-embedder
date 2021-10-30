@@ -223,28 +223,35 @@ void EmbeddingSuite::identifyAffected(fuint32_t node)
   m_sourceFreeNeighbors[node] = 0;
   sourceNodesAffected.insert(node);
   auto mappedRange = m_mapping.equal_range(node);
+  nodeset_t freeAdjNodes {};
   tbb::parallel_for_each(mappedRange.first, mappedRange.second,
     [&, this] (const fuint32_pair_t& p){
       auto adjacentRange = target.equal_range(p.second);
+      nodeset_t nodes{}; // TODO: awful!
       for (auto targetAdjacent = adjacentRange.first; targetAdjacent !=  adjacentRange.second; ++targetAdjacent)
-      { // if that node is free, increment sourceFreeNeighbors[node], else decrement from all mapped
-        if (targetNodesRemaining.contains(targetAdjacent->second)) sourceFreeNeighbors[node]++;
+      { // if that node is free, note that, else decrement from all mapped
+        if (targetNodesRemaining.contains(targetAdjacent->second)) freeAdjNodes.insert(targetAdjacent->second);
         else
         {
           auto revMapRange = reverseMapping.equal_range(targetAdjacent->second);
           for (auto revIt = revMapRange.first; revIt != revMapRange.second; ++revIt)
           {
-            sourceNodesAffected.insert(revIt->second);
-            sourceFreeNeighbors[revIt->second]--;
+            if (!nodes.contains(revIt->second))
+            {
+              sourceNodesAffected.insert(revIt->second);
+              sourceFreeNeighbors[revIt->second]--;
+              nodes.insert(revIt->second);
+            }
           }
         }
       }
   });
+  m_sourceFreeNeighbors[node] = freeAdjNodes.size();
 }
 
 int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
 {
-  std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and needs " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
+  std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and has " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
   return 2 * m_sourceNeededNeighbors[sourceNode].load()
     - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
 }
@@ -261,7 +268,8 @@ void EmbeddingSuite::tryMutations()
   {
     std::unique_ptr<GenericMutation> task;
     bool worked = m_taskQueue.try_pop(task);
-    if (!worked) continue;
+    if (!worked) break;
     task->execute();
   }
+  //m_taskQueue.clear();
 }

@@ -33,7 +33,7 @@ TEST(EmbeddingTest, Cycle_5_Extra_Edges_On_2_2_Chimera)
   graph_t cycle = generate_cyclegraph(5);
   graph_t chimera = generate_chimera(2, 2);
   addEdges(cycle, { {0,2}, {2, 4}, {1,3}});
-  auto visualizer = std::make_unique<ChimeraVisualizer>(cycle, chimera, "imgs/Cycle_5_Extra_Edges_On_2_2_Chimera/chimera_cycle_5_ExtraEdges_Larger", 10, 10);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(cycle, chimera, "imgs/Cycle_5_Extra_Edges_On_2_2_Chimera/chimera_cycle_5_ExtraEdges_Larger", 2, 2);
   EmbeddingSuite suite{cycle, chimera, visualizer.get()};
   auto embedding = suite.find_embedding();
   ASSERT_TRUE(suite.isValid());

@@ -6,9 +6,7 @@ using namespace majorminer;
 MutationExtend::MutationExtend(EmbeddingSuite* suite, fuint32_t sourceNode)
   : m_suite(*suite) {
   // check whether node needs more
-  std::cout << "In mUtation extend" << std::endl;
   int delta = std::max(suite->numberFreeNeighborsNeeded(sourceNode), 0);
-  std::cout << delta << std::endl;
   if (delta == 0) return;
 
   // find adjacent target node with highest number
@@ -54,10 +52,10 @@ double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode
   double improvement = 0;
 
   auto adjRange = m_suite.m_target.equal_range(extendNode);
-  m_nbFree = 0;
+  int nbFree = 0;
   for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
   {
-    if (m_suite.m_targetNodesRemaining.contains(adj->second)) m_nbFree++;
+    if (m_suite.m_targetNodesRemaining.contains(adj->second)) nbFree++;
     else
     { // already mapped to
       // go over each that was mapped to this node and add to degraded
@@ -68,8 +66,8 @@ double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode
       }
     }
   }
-  if (m_nbFree == 0) return MAXFLOAT;
-  improvement = - std::min(delta, m_nbFree) + 1;
+  if (nbFree == 0) return MAXFLOAT;
+  improvement = - std::min(delta, nbFree) + 1;
   for (auto deg : m_degraded)
   {
     if (improvement >= 0) return MAXFLOAT;
@@ -85,13 +83,10 @@ double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode
 
 void MutationExtend::execute()
 {
-  std::cout << "MutationExtend  " << m_sourceVertex << " " << m_targetVertex << " " << m_extendedTarget << " valid" << m_valid << std::endl;
   if(!m_valid || !m_suite.m_targetNodesRemaining.contains(m_extendedTarget)) return;
   int delta = m_suite.numberFreeNeighborsNeeded(m_sourceVertex);
-  std::cout << "Delta " << delta <<std::endl;
   if (delta <= 0) return;
   double improvement = checkCandidate(m_extendedTarget, m_sourceVertex, delta);
-  std::cout << "Improvement " << improvement << std::endl;
   if (improvement < 0)
   { // adopt mutation
     m_suite.m_targetNodesRemaining.unsafe_erase(m_extendedTarget);
@@ -103,7 +98,19 @@ void MutationExtend::execute()
     {
       if (deg != m_sourceVertex) m_suite.m_sourceFreeNeighbors[deg]--;
     }
-    m_suite.m_sourceFreeNeighbors[m_sourceVertex] -= (m_nbFree);
+    m_degraded.clear();
+    auto embRange = m_suite.m_mapping.equal_range(m_sourceVertex);
+    for (auto embIt = embRange.first; embIt != embRange.second; ++embIt)
+    {
+      auto adjRange = m_suite.m_target.equal_range(embIt->second);
+      for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
+      {
+        if (m_suite.m_targetNodesRemaining.contains(adjIt->second))
+        { m_degraded.insert(adjIt->second); }
+      }
+    }
+    m_suite.m_sourceFreeNeighbors[m_sourceVertex] = m_degraded.size();
+
     if (m_suite.m_visualizer != nullptr)
     {
       std::stringstream ss;

@@ -27,8 +27,6 @@ namespace majorminer
       fuint32_t m_sourceVertex;
       fuint32_t m_targetVertex;
       fuint32_t m_extendedTarget;
-      int m_nbFree;
-
       bool m_valid = false;
   };
 
