@@ -16,4 +16,4 @@ In order to get **144 unique K4 embeddings on a single chimera cell**, execute (
 python -m src.solver.k4_results
 ```
 
-![144 unique K4 embeddings on a single chimera cell](./k4_embedding.svg)
+![144 unique K4 embeddings on a single chimera cell](./images/k4_embedding.svg)
