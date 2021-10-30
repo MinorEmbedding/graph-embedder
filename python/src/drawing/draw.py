@@ -27,7 +27,7 @@ class Draw():
                          node_color='#858585',
                          edge_color='#BABABA')
 
-    def draw_embedding(self, nodes, edges):
+    def draw_embedding(self, nodes, edges, mapping_G_to_H):
         """Draws the embedding onto the Chimera graph.
 
         Arguments
@@ -35,6 +35,10 @@ class Draw():
         - nodes: nodes list
         - edges: tuple (from, to, chain)
         """
+        labels = {}
+        for node in nodes:
+            labels[node] = mapping_G_to_H[node]
+
         chains = [edge[2] for edge in edges]
         for chain in range(max(chains)+1):
             chain_edges = [(edge[0], edge[1])
@@ -46,6 +50,7 @@ class Draw():
 
             chain_color = self.chain_colors[chain % len(self.chain_colors)]
             nx.draw_networkx(graph,
+                             labels=labels,
                              pos=self.pos,
                              width=3,
                              style='solid',

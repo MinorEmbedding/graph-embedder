@@ -16,16 +16,20 @@ class GraphMapping():
         # we explicitly do NOT handle KeyErrors here as they should never happen
         return self.G_to_H[node_G]
 
-    def set_mapping(self, node_H: int, node_G: int):
+    def __set_mapping(self, node_H: int, node_G: int):
         self.H_to_G[node_H] = set([node_G])
         self.G_to_H[node_G] = node_H
 
-    def add_mapping(self, node_H: int, node_G: int):
+    def extend_mapping(self, node_H: int, node_G: int):
         try:
             self.H_to_G[node_H].add(node_G)
         except KeyError:
             self.H_to_G[node_H] = set([node_G])
         self.G_to_H[node_G] = node_H
+
+    def remove_mapping(self, node_H: int, node_G: int):
+        self.H_to_G[node_H].remove(node_G)
+        del self.G_to_H[node_G]
 
     def add_mapping_new_node_H(self, node_G: int):
         # Check if there exists already a mapping
@@ -35,8 +39,11 @@ class GraphMapping():
         except KeyError:
             # Make new mapping to new node
             node_H = len(self.H_to_G.keys())
-            self.set_mapping(node_H, node_G)
+            self.__set_mapping(node_H, node_G)
             return node_H
 
     def get_mapping_H_to_G(self):
         return self.H_to_G
+    
+    def get_mapping_G_to_H(self):
+        return self.G_to_H

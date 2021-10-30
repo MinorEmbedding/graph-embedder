@@ -55,8 +55,21 @@ class UndirectedGraphAdjList:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
 
+    def _remove_edge(self, frm, to):
+        self._adj_list[frm].remove(to)
+        self._adj_list[to].remove(frm)
+
     def _delete_all_edges_from_node(self, frm):
-        self._adj_list[frm] = AdjListEntryWithCosts()  # reset to init value
+        tos = self._adj_list[frm].get_to_nodes()
+        if not tos:
+            return
+
+        # Delete all outgoing edges
+        self._adj_list[frm] = AdjListEntryWithCosts()
+
+        # Delete specific incoming edges
+        for to in tos:
+            self._adj_list[to].remove(frm)
 
     def _get_edges_from_node(self, from_node):
         try:
@@ -70,6 +83,9 @@ class UndirectedGraphAdjList:
         # We only need the neighbor nodes, no costs
         neighbors = [neighbor[0] for neighbor in neighbors]
         return neighbors
+
+    def _has_node_edges(self, node):
+        return len(self._adj_list[node].get()) > 0
 
     def _get_nodes(self):
         return self._adj_list.keys()
@@ -104,6 +120,13 @@ class AdjListEntryWithCosts():
     def add(self, to, cost):
         self.to_nodes.add(to)
         self.costs[to] = cost  # may alter the costs for an existing edge
+
+    def remove(self, to):
+        self.to_nodes.remove(to)
+        del self.costs[to]
+
+    def get_to_nodes(self):
+        return self.to_nodes
 
     def get(self):
         return [(to, self.costs[to]) for to in self.to_nodes]

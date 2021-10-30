@@ -1,5 +1,4 @@
 import random
-from typing import List
 
 from src.embedding.embedding import Embedding
 from src.graphs.undirected_graphs import UndirectedGraphAdjList
@@ -63,34 +62,41 @@ class EmbeddingSolver():
             node_to_new_reachable_neighbors = self.embedding.get_reachable_neighbors(
                 to_node_new)
             can_reach = [neighbor in node_to_new_reachable_neighbors
-                         for neighbor in to_node_connected_neighbors]
+                         for neighbor in to_node_connected_neighbors if neighbor != from_node]
             if all(can_reach):
                 # Try out on playground
                 playground = self.embedding.get_playground()
-                playground.add_chain(from_node, to_node, to_node_new)
+                playground.add_chain_to_used_nodes(
+                    from_node, to_node, to_node_new)
                 playground.try_to_add_missing_edges()
                 return playground
 
-        # --- 2) If step 1) did not work, try to construct another new chain
+        # --- 2) If step 1) did not work, try to construct another new chain (-> two chains in total)
         to_node_new = to_node_free_neighbors[0]
         to_node_new_free_neighbors = self.embedding.get_free_neighbors(
             to_node_new)
         to_node_new_chain_partner = to_node_new_free_neighbors[0]
 
-        # From to_node_new AND to_node_new_chain_partner:
+        # from to_node_new AND to_node_new_chain_partner:
         # Can we now reach all nodes previously connected to node_to
         chain_reachable_nodes = self.embedding.get_reachable_neighbors(
             to_node_new)
         chain_reachable_nodes.extend(
             self.embedding.get_reachable_neighbors(to_node_new_chain_partner))
         can_reach = [neighbor in chain_reachable_nodes
-                     for neighbor in to_node_connected_neighbors]
+                     for neighbor in to_node_connected_neighbors if neighbor != from_node]
         if all(can_reach):
             # Try out on playground
             playground = self.embedding.get_playground()
-            playground.add_chain_unconnected(
-                to_node_new, to_node_new_chain_partner, replace_G=to_node)
-            playground.add_chain(from_node, to_node, to_node_new)
+
+            playground.extend_one_node_to_chain(
+                to_node_new, to_node_new_chain_partner, extend_G=to_node)
+
+            # edge to_node---to_node_new
+            # will be removed when adding this chain:
+            playground.add_chain_to_used_nodes(
+                from_node, to_node, to_node_new)
+
             print(
                 f'to_node_new to chain partner: {to_node_new}---{to_node_new_chain_partner}')
             playground.try_to_add_missing_edges()
