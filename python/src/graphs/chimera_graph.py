@@ -51,6 +51,9 @@ class GraphEmbedding(UndirectedGraphAdjList):
         # Chain=0 means no chain, just a "normal" edge
         super()._set_edge(frm, to, cost=chain)
 
+    def delete_all_edges_from_node(self, frm):
+        super()._delete_all_edges_from_node(frm)
+
     def add_chain(self, node1, node2):
         self._chain_last += 1
         self.embed_edge(node1, node2, chain=self._chain_last)

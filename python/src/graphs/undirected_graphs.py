@@ -55,6 +55,9 @@ class UndirectedGraphAdjList:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
 
+    def _delete_all_edges_from_node(self, frm):
+        self._adj_list[frm] = AdjListEntryWithCosts()  # reset to init value
+
     def _get_edges_from_node(self, from_node):
         try:
             return self._adj_list[from_node].get()
