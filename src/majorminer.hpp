@@ -6,22 +6,27 @@
 #include "config.hpp"
 #include "common/graph_gen.hpp"
 #include "common/utils.hpp"
-#include "initial/network_simplex.hpp"
 #include "common/embedding_validator.hpp"
 #include "common/embedding_visualizer.hpp"
+#include "common/cut_vertex.hpp"
+
+#include "initial/network_simplex.hpp"
 
 #include "evolutionary/mutation_extend.hpp"
+#include "evolutionary/mutation_frontier_shifting.hpp"
 
 namespace majorminer
 {
   class NetworkSimplexWrapper;
   class GenericMutation;
   class MutationExtend;
+  class MuationFrontierShifting;
 
   class EmbeddingSuite
   {
     friend NetworkSimplexWrapper;
     friend MutationExtend;
+    friend MuationFrontierShifting;
     public:
       EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer = nullptr);
 
@@ -71,8 +76,13 @@ namespace majorminer
       UnorderedMap<fuint32_t, std::atomic<int>> m_sourceFreeNeighbors;
       nodeset_t m_sourceNodesAffected;
 
+      fuint32_t m_victimSourcNode;
       adjacency_list_t m_victimSubgraph; // needed for frontier shifting
-      nodeset_t m_nonCutVertices;
+      nodeset_t m_cutVertices;
+
+      // source node (connected to victim) --> target node mapped to from victim
+      adjacency_list_t m_victimConnections; // all connections other nodes have to the victim's chain
+      adjacency_list_t m_reverseConnections; // reverse m_victimConnections
 
       std::unique_ptr<NetworkSimplexWrapper> m_nsWrapper;
       EmbeddingVisualizer* m_visualizer;
