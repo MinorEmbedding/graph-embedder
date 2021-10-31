@@ -37,6 +37,8 @@ namespace majorminer
       void mapNode(fuint32_t node, const nodeset_t& targetNodes);
       void updateConnections(fuint32_t node);
 
+      void prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo);
+
       void embeddTrivialNode(fuint32_t node);
       void embeddSimpleNode(fuint32_t node);
       void identifyAffected(fuint32_t node);
@@ -68,6 +70,9 @@ namespace majorminer
       UnorderedMap<fuint32_t, std::atomic<int>> m_sourceNeededNeighbors;
       UnorderedMap<fuint32_t, std::atomic<int>> m_sourceFreeNeighbors;
       nodeset_t m_sourceNodesAffected;
+
+      adjacency_list_t m_victimSubgraph; // needed for frontier shifting
+      nodeset_t m_nonCutVertices;
 
       std::unique_ptr<NetworkSimplexWrapper> m_nsWrapper;
       EmbeddingVisualizer* m_visualizer;

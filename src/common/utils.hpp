@@ -24,6 +24,11 @@ namespace majorminer
     return orderedPair(p.first, p.second);
   }
 
+  template<typename T>
+  void setMin(T& val, const T& v) { if (v < val) val = v; }
+  template<typename T>
+  void setMax(T& val, const T& v) { if (v > val) val = v; }
+
 }
 
 

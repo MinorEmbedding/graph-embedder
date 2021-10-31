@@ -3,6 +3,7 @@
 
 #include <gtest/gtest.h>
 #include <tbb/parallel_for.h>
+#include <tbb/parallel_sort.h>
 #include <sstream>
 
 #include <majorminer.hpp>
@@ -24,6 +25,10 @@ namespace majorminer
   void assertGEQ1(fuint32_t n, qcoeff_t penalty);
 
   void dumpModel(const std::string& filename, const QPolynomial& poly);
+
+  nodeset_t getNodeset(const graph_t& graph);
+
+  void printNodeset(const nodeset_t& nodes);
 }
 
 

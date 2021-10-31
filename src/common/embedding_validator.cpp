@@ -30,7 +30,6 @@ bool EmbeddingValidator::nodesConnected() const
 
   UnorderedMap<fuint32_t, std::atomic<bool>> adjacentNodes{};
   auto groupIt = adjacencies.begin();
-  fuint32_t idx;
 
   while(groupIt != adjacencies.end())
   {

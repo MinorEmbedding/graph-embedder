@@ -251,9 +251,32 @@ void EmbeddingSuite::identifyAffected(fuint32_t node)
 
 int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
 {
-  std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and has " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
+  // std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and has " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
   return 2 * m_sourceNeededNeighbors[sourceNode].load()
     - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
+}
+
+void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo)
+{
+  auto mapped = m_mapping.equal_range(victimNode);
+  auto nbMapped = std::distance(mapped.first, mapped.second);
+  if (nbMapped < 4) return; // Bascially useless (or not possible)
+  for (auto mapIt = mapped.first; mapIt != mapped.second; ++mapIt)
+  {
+    auto innerIt = mapIt;
+    ++innerIt;
+    for (; innerIt != mapped.second; ++innerIt)
+    {
+      edge_t uv{mapIt->second, innerIt->second};
+      edge_t vu{mapIt->second, innerIt->second};
+      if (m_targetGraph->contains(uv) ||
+        m_targetGraph->contains(vu))
+      {
+        m_victimSubgraph.insert(uv);
+        m_victimSubgraph.insert(vu);
+      }
+    }
+  }
 }
 
 void EmbeddingSuite::tryMutations()
