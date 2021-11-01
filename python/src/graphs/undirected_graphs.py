@@ -74,7 +74,7 @@ class UndirectedGraphAdjList:
     def _get_edges_from_node(self, from_node):
         try:
             return self._adj_list[from_node].get()
-        except:
+        except IndexError:
             raise IndexError(
                 f'Graph only contains {self.nodes_count} vertices')
 

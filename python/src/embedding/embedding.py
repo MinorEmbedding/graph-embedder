@@ -43,8 +43,17 @@ class Embedding():
         node_to_H = self.mapping.add_mapping_new_node_H(node_to)
         self.G_embedding_view.embed_edge(node_from_H, node_to_H)
 
+    def embed_edge_with_mapping(self, from_H, from_G, to_H, to_G) -> None:
+        self.G_embedding.embed_edge(from_G, to_G)
+        self.mapping.set_mapping(from_H, from_G)
+        self.mapping.set_mapping(to_H, to_G)
+        self.G_embedding_view.embed_edge(from_H, to_H)
+
     def remove_edge_inconsistently(self, from_node, to_node):
         self.G_embedding.remove_edge(from_node, to_node)
+
+    def exists_edge(self, frm, to):
+        return self.G_layout.exists_edge(frm, to)
 
     def add_chain_to_used_nodes(self, from_node, to_node, to_node_new=None):
         """
@@ -114,14 +123,25 @@ class Embedding():
     def get_playground(self):
         return deepcopy(self)
 
-    def get_embedding(self):
-        return self.G_embedding.get_embedding()
+    def get_embedding(self, G_to_H_mapping=True):
+        nodes, edges = self.G_embedding.get_embedding()
+        if G_to_H_mapping:
+            mapping = self.get_mapping_G_to_H()
+        else:
+            mapping = self.get_mapping_H_to_G()
+        return nodes, edges, mapping
 
     def get_mapping_H_to_G(self):
         return self.mapping.get_mapping_H_to_G()
 
     def get_mapping_G_to_H(self):
         return self.mapping.get_mapping_G_to_H()
+
+    def get_mapping_H_to_G_node(self, node_H) -> set:
+        try:
+            return self.mapping.get_mapping_H_to_G()[node_H]
+        except KeyError:
+            return set()
 
     def try_to_add_missing_edges(self) -> int:
         """
