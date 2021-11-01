@@ -13,6 +13,7 @@
 #include "initial/network_simplex.hpp"
 
 #include "evolutionary/mutation_extend.hpp"
+#include "evolutionary/frontier_shifting_data.hpp"
 #include "evolutionary/mutation_frontier_shifting.hpp"
 
 namespace majorminer
@@ -21,6 +22,7 @@ namespace majorminer
   class GenericMutation;
   class MutationExtend;
   class MuationFrontierShifting;
+  struct FrontierShiftingData;
 
   class EmbeddingSuite
   {
@@ -76,13 +78,7 @@ namespace majorminer
       UnorderedMap<fuint32_t, std::atomic<int>> m_sourceFreeNeighbors;
       nodeset_t m_sourceNodesAffected;
 
-      fuint32_t m_victimSourcNode;
-      adjacency_list_t m_victimSubgraph; // needed for frontier shifting
-      nodeset_t m_cutVertices;
-
-      // source node (connected to victim) --> target node mapped to from victim
-      adjacency_list_t m_victimConnections; // all connections other nodes have to the victim's chain
-      adjacency_list_t m_reverseConnections; // reverse m_victimConnections
+      FrontierShiftingData m_frontierData;
 
       std::unique_ptr<NetworkSimplexWrapper> m_nsWrapper;
       EmbeddingVisualizer* m_visualizer;

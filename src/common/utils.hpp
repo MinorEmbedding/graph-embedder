@@ -29,6 +29,21 @@ namespace majorminer
   template<typename T>
   void setMax(T& val, const T& v) { if (v > val) val = v; }
 
+  void printAdjacencyList(const adjacency_list_t& adj);
+
+  template<typename K, typename V>
+  void eraseSinglePair(UnorderedMultiMap<K, V>& umap, const K& key, const V& val)
+  {
+    auto range = umap.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it)
+    {
+      if (it->second == val)
+      {
+        umap.unsafe_erase(it);
+        return;
+      }
+    }
+  }
 }
 
 

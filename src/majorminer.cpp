@@ -41,7 +41,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
             { os << "Complex adjacent node " << node.m_id << " (" << node.m_nbConnections << ")";}
           );
         }
-        // prepareFrontierShifting(node.m_id, node.m_nbConnections);
+        prepareFrontierShifting(node.m_id, node.m_nbConnections);
       }
       else
       { // nbConnections = 1
@@ -259,20 +259,17 @@ int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
 
 void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo)
 {
-  m_cutVertices.clear();
-  m_victimSubgraph.clear();
-  m_victimConnections.clear();
-  m_reverseConnections.clear();
+  m_frontierData.clear();
 
   auto mapped = m_mapping.equal_range(victimNode);
-  auto nbMapped = std::distance(mapped.first, mapped.second);
+  auto nbMapped = m_mapping.count(victimNode);
   if (nbMapped < 4) return; // Bascially useless (or not possible)
 
   nodeset_t connected{};
   auto adjRange = m_source.equal_range(victimNode);
   for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
-  { if (!m_nodesRemaining.contains(adj->second)) connected.insert(adj->second); }
-
+  { if (!m_nodesRemaining.contains(adj->second))
+  { connected.insert(adj->second); std::cout << "Connected " << adj->second << std::endl;} }
   for (auto mapIt = mapped.first; mapIt != mapped.second; ++mapIt)
   {
     auto innerIt = mapIt;
@@ -280,12 +277,12 @@ void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbC
     for (; innerIt != mapped.second; ++innerIt)
     {
       edge_t uv{mapIt->second, innerIt->second};
-      edge_t vu{mapIt->second, innerIt->second};
+      edge_t vu{innerIt->second, mapIt->second};
       if (m_targetGraph->contains(uv) ||
         m_targetGraph->contains(vu))
       {
-        m_victimSubgraph.insert(uv);
-        m_victimSubgraph.insert(vu);
+        m_frontierData.m_victimSubgraph.insert(uv);
+        m_frontierData.m_victimSubgraph.insert(vu);
       }
     }
     auto adj = m_target.equal_range(mapIt->second);
@@ -296,33 +293,31 @@ void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbC
       {
         if (connected.contains(revIt->second))
         {
-          m_victimConnections.insert(edge_t{ revIt->second, mapIt->second });
-          m_reverseConnections.insert(edge_t{ mapIt->second, revIt->second });
+          m_frontierData.addConnection(revIt->second, mapIt->second);
         }
       }
     }
   }
-  // frontiershifting is not allowed on cut vertices as removing them would
-  // disconnect the chain. Therefore, identify cut vertices beforehand
-  majorminer::identifiyCutVertices(m_cutVertices, m_victimSubgraph, nbMapped);
-  m_victimSourcNode = victimNode;
+  m_frontierData.setNbNodes(nbMapped);
+  m_frontierData.setVictimSource(victimNode);
+  m_frontierData.findCutVertices();
 }
 
 void EmbeddingSuite::tryMutations()
 {
   auto& queue = m_taskQueue;
-  if (m_victimSubgraph.size() > 0)
+  if (m_frontierData.m_victimSubgraph.size() > 0)
   {
     const auto& nodesRemaining = m_nodesRemaining;
-    auto victimAdjRange = m_source.equal_range(m_victimSourcNode);
+    auto victimAdjRange = m_source.equal_range(m_frontierData.m_victimSourceNode);
     tbb::parallel_for_each(victimAdjRange.first, victimAdjRange.second,
       [&](const edge_t& edge){
-        if (nodesRemaining.contains(edge.second))
+        if (!nodesRemaining.contains(edge.second))
         {
           queue.push(std::make_unique<MuationFrontierShifting>(this, edge.second, edge.first));
         }
     });
-    m_sourceNodesAffected.unsafe_erase(m_victimSourcNode);
+    m_sourceNodesAffected.unsafe_erase(m_frontierData.m_victimSourceNode);
   }
   tbb::parallel_for_each(m_sourceNodesAffected.begin(), m_sourceNodesAffected.end(),
     [&, this](fuint32_t node){
@@ -336,8 +331,5 @@ void EmbeddingSuite::tryMutations()
     if (!worked) break;
     task->execute();
   }
-  m_sourceNodesAffected.clear();
-  m_victimSubgraph.clear();
-  m_cutVertices.clear();
-  m_victimSourcNode = -1;
+  m_frontierData.clear();
 }

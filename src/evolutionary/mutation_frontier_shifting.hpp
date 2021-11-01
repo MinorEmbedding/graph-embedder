@@ -8,7 +8,6 @@
 
 namespace majorminer
 {
-
   class MuationFrontierShifting : public GenericMutation
   {
     public:
@@ -16,6 +15,9 @@ namespace majorminer
       ~MuationFrontierShifting() {}
 
       void execute() override;
+      fuint32_t getConqueror() const { return m_conqueror; }
+      fuint32_t getVictim() const { return m_victim; }
+      fuint32_t getContested() const { return m_bestContested; }
 
     private:
       bool isCrucial(fuint32_t candidateNode);
