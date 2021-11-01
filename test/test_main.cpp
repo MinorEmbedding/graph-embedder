@@ -1,8 +1,10 @@
 #include <gtest/gtest.h>
 #include <majorminer.hpp>
 #include <common/embedding_visualizer.hpp>
+#include <common/embedding_analyzer.hpp>
 
 #include "utils/test_common.hpp"
+#include "utils/qubo_problems.hpp"
 
 using namespace majorminer;
 
@@ -75,4 +77,18 @@ TEST(EmbeddingTest, Petersen_KingsGraph)
   auto visualizer = std::make_unique<KingsVisualizer>(petersen, king, "imgs/Petersen_KingsGraph/king_petersen", 10, 10);
   EmbeddingSuite suite{petersen, king, visualizer.get()};
   auto embedding = suite.find_embedding();
+}
+
+TEST(EmbeddingTest, DISABLED_TSP_7)
+{
+  graph_t tsp = majorminer::quboTSP(7, [](fuint32_t, fuint32_t){ return 1;});
+  printGraph(tsp);
+  graph_t chimera = generate_chimera(16, 16);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(tsp, chimera, "imgs/TSP_7/tsp_7_chimera_2000x", 16, 16);
+  EmbeddingSuite suite{tsp, chimera, visualizer.get()};
+  auto embedding = suite.find_embedding();
+  EmbeddingAnalyzer analyzer{embedding};
+  std::cout << analyzer.getNbOverlaps() << " nodes overlap and "
+            << analyzer.getNbUsedNodes()
+            << " nodes were needed." << std::endl;
 }

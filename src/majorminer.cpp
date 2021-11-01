@@ -268,8 +268,8 @@ void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbC
   nodeset_t connected{};
   auto adjRange = m_source.equal_range(victimNode);
   for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
-  { if (!m_nodesRemaining.contains(adj->second))
-  { connected.insert(adj->second); std::cout << "Connected " << adj->second << std::endl;} }
+  { if (!m_nodesRemaining.contains(adj->second)) connected.insert(adj->second); }
+
   for (auto mapIt = mapped.first; mapIt != mapped.second; ++mapIt)
   {
     auto innerIt = mapIt;

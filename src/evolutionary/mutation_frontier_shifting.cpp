@@ -68,7 +68,6 @@ double MuationFrontierShifting::calculateImprovement(fuint32_t candidateNode)
 void MuationFrontierShifting::execute()
 {
   auto& data = m_suite.m_frontierData;
-  if (m_valid) std::cout << "Mutation FrontierShifting: " << m_conqueror << " victim " << m_victim << " Contested: " << m_bestContested << std::endl;
   if (!m_valid || isCrucial(m_bestContested)) return;
   if (data.isNowACutVertex(m_bestContested) || calculateImprovement(m_bestContested) >= 0) return;
 

@@ -27,7 +27,7 @@ TEST(QuboProblem, Simple_TSP_10)
   containsEdges(graph, {{0, 7}, {1, 8}, {0, 1}, {0, 2}});
 }
 
-TEST(QuboProblem, Matrix_EQ)
+TEST(QuboProblem, DISABLED_Matrix_EQ)
 {
   for (fuint32_t i = 8; i <= 20; ++i)
   {
@@ -35,7 +35,7 @@ TEST(QuboProblem, Matrix_EQ)
   }
 }
 
-TEST(QuboProblem, Matrix_LEQ)
+TEST(QuboProblem, DISABLED_Matrix_LEQ)
 {
   for (fuint32_t i = 8; i <= 20; ++i)
   {
@@ -43,7 +43,7 @@ TEST(QuboProblem, Matrix_LEQ)
   }
 }
 
-TEST(QuboProblem, Matrix_GEQ)
+TEST(QuboProblem, DISABLED_Matrix_GEQ)
 {
   for (fuint32_t i = 8; i <= 20; ++i)
   {

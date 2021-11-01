@@ -26,6 +26,7 @@ const static std::string colors[] = {
   "Green","Darkkhaki","Wheat","Slateblue","Saddlebrown","Sandybrown","Fuchsia","Purple","Olive","Orchid",
   "Sandybrown","Fuchsia","Purple","Olive","Orchid"
 };
+const static fuint32_t nbColors = sizeof(colors)/sizeof(colors[0]);
 
 #define Y_OFFSET 100
 
@@ -64,7 +65,7 @@ void EmbeddingVisualizer::finishDrawing()
 
 const std::string& EmbeddingVisualizer::getColor(fuint32_t node)
 {
-  return colors[node % (sizeof(colors))];
+  return colors[node % nbColors];
 }
 
 
