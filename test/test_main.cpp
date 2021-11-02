@@ -8,6 +8,25 @@
 
 using namespace majorminer;
 
+namespace
+{
+  coordinate_map_t getPetersenCoordinates()
+  {
+    coordinate_map_t coords{
+      std::make_pair(0, Coordinate_t( 7.0, 0.0 )),
+      std::make_pair(1, Coordinate_t( 13.657, 4.837 )),
+      std::make_pair(2, Coordinate_t( 11.114, 12.663 )),
+      std::make_pair(3, Coordinate_t( 2.8859999999999992, 12.663 )),
+      std::make_pair(4, Coordinate_t( 0.34299999999999997, 4.837 )),
+      std::make_pair(5, Coordinate_t( 7.0, 3.0 )),
+      std::make_pair(6, Coordinate_t( 10.804, 5.763999999999999 )),
+      std::make_pair(7, Coordinate_t( 9.350999999999999, 10.236 )),
+      std::make_pair(8, Coordinate_t( 4.648999999999999, 10.236 )),
+      std::make_pair(9, Coordinate_t( 3.1959999999999997, 5.763999999999999 ))
+    };
+    return coords;
+  }
+}
 
 TEST(EmbeddingTest, Basic_Cycle_4)
 {
@@ -91,4 +110,19 @@ TEST(EmbeddingTest, DISABLED_TSP_7)
   std::cout << analyzer.getNbOverlaps() << " nodes overlap and "
             << analyzer.getNbUsedNodes()
             << " nodes were needed." << std::endl;
+}
+
+TEST(EmbeddingTest, K33_On_Petersen_Kuratowski)
+{
+  graph_t petersen = majorminer::generate_petersen();
+  graph_t k33{};
+  addEdges(k33, {
+    {0,3}, {0,4}, {0,5},
+    {1,3}, {1,4}, {1,5},
+    {2,3}, {2,4}, {2,5}
+  });
+  auto coords = getPetersenCoordinates();
+  auto visualizer = std::make_unique<GenericVisualizer>(k33, petersen, "imgs/PetersenNotPlanar/petersen_kuratowski", coords, 14, 14);
+  EmbeddingSuite suite{k33, petersen, visualizer.get()};
+  auto embedding = suite.find_embedding();
 }

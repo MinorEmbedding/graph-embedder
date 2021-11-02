@@ -311,3 +311,27 @@ double KingsVisualizer::getHeight() const
 {
   return ((1 + m_nbRows * 2) * getNodeSize());
 }
+
+
+fuint32_t GenericVisualizer::insertEdge(Vector<Coordinate_t>& /* coords */, const edge_t& /* edge */)
+{
+  return 0;
+}
+
+Coordinate_t GenericVisualizer::insertNode(fuint32_t v) const
+{
+  auto findIt = m_coordinates.find(v);
+  if (findIt == m_coordinates.end()) throw std::runtime_error("Node not contained in coordinate map!");
+
+  return Coordinate_t{ (1 + findIt->second.first) * getNodeSize(), (1 + findIt->second.second) * getNodeSize() };
+}
+
+double GenericVisualizer::getWidth() const
+{
+  return ((2 + m_width) * getNodeSize());
+}
+
+double GenericVisualizer::getHeight() const
+{
+  return ((2 + m_height) * getNodeSize());
+}

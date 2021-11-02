@@ -109,6 +109,30 @@ namespace majorminer
       fuint32_t m_nbRows;
       fuint32_t m_nbCols;
   };
+
+  typedef UnorderedMap<fuint32_t, Coordinate_t> coordinate_map_t;
+  class GenericVisualizer : public EmbeddingVisualizer
+  {
+    public:
+      GenericVisualizer(const graph_t& source, const graph_t& target,
+        std::string filename, const coordinate_map_t& coordinates,
+        double width, double height)
+        : EmbeddingVisualizer(source, target, std::move(filename)),
+          m_coordinates(coordinates), m_width(width), m_height(height) {}
+
+      ~GenericVisualizer(){}
+
+    protected:
+      fuint32_t insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge) override;
+      Coordinate_t insertNode(fuint32_t v) const override;
+      double getWidth() const override;
+      double getHeight() const override;
+
+    private:
+      const coordinate_map_t& m_coordinates;
+      double m_width;
+      double m_height;
+  };
 }
 
 
