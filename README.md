@@ -12,9 +12,10 @@ In order to build, you must then run the following commands
 bash prepare.sh
 mkdir build
 cd build/
-cmake ..
+cmake .. -DMAJORMINER_BUILD_TESTS=[ON|OFF] # depending on whether you want to run tests
 make
 ```
+
 
 
 
