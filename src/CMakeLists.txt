@@ -1,9 +1,8 @@
 
+add_subdirectory(common)
+add_subdirectory(evolutionary)
+add_subdirectory(initial)
+
 target_sources(majorminer PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/graph_gen.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/embedding_validator.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/embedding_visualizer.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/network_simplex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/majorminer.cpp
 )

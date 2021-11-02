@@ -18,14 +18,18 @@ jobs:
       uses: actions/checkout@v2
       with:
         submodules: recursive
-
-    - name: Build project
+    - name: Get Ninja
+      run: |
+        sudo apt install ninja-build
+    - name: Get Lemon
       run: |
         bash prepare.sh
+    - name: Build project
+      run: |
         mkdir build
         cd build
-        cmake ..
-        make
+        cmake .. -GNinja
+        ninja
     - name: Run GoogleTest
       run: ./build/majorminer_test
 
