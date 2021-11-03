@@ -1,6 +1,12 @@
 # Own stuff
 build/
 Makefile
+.vscode/
+external/lemon/
+external/lemon.tar.gz
+
+# Python
+__pycache__
 
 # Prerequisites
 *.d
