@@ -37,11 +37,14 @@ void EmbeddingVisualizer::setupDrawing(const embedding_mapping_t& embedding)
   m_embedding = &embedding;
   m_svg << m_prepared;
 
-  double fontSize = getWidth() / 30;
+  double fontSize = std::min(getWidth() / 30, 40.0);
+  double y = 50 + fontSize / 2.0;
 
   std::stringstream titleText {};
   titleText << "Iteration " << (m_iteration + 1) << ": ";
-  m_svg << "<text x=\"" << getRadius() << "\" y=\"50\" font-size=\"" << fontSize << "\">" << titleText.str();
+  m_svg << "<text x=\"" << getRadius() << "\" y=\"" << y
+        << "\" font-size=\"" << fontSize
+        << "\">" << titleText.str();
 }
 
 void EmbeddingVisualizer::draw(const embedding_mapping_t& embedding, const char* title)

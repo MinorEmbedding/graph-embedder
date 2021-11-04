@@ -3,7 +3,8 @@
 using namespace majorminer;
 
 EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer)
-  : m_sourceGraph(&source), m_targetGraph(&target), m_visualizer(visualizer) {
+  : m_sourceGraph(&source), m_targetGraph(&target), m_visualizer(visualizer),
+    m_embeddingManager(*this), m_mutationManager(*this) {
   convertToAdjacencyList(m_source, source);
   convertToAdjacencyList(m_target, target);
   for (const auto& arc : target)
@@ -90,32 +91,6 @@ void EmbeddingSuite::embeddNodeNetworkSimplex(fuint32_t node)
   m_nsWrapper->embeddNode(node);
 }
 
-
-void EmbeddingSuite::mapNode(fuint32_t node, fuint32_t targetNode)
-{
-  DEBUG(std::cout << node << " -> " << targetNode << std::endl;)
-  m_nodesOccupied.insert(targetNode);
-  m_mapping.insert(std::make_pair(node, targetNode));
-  m_reverseMapping.insert(std::make_pair(targetNode, node));
-  m_targetNodesRemaining.unsafe_extract(targetNode);
-  updateNeededNeighbors(node);
-}
-
-void EmbeddingSuite::mapNode(fuint32_t node, const nodeset_t& targetNodes)
-{
-  DEBUG(OUT_S << node << " -> {";)
-  for(auto targetNode : targetNodes)
-  {
-    DEBUG(OUT_S << " " << targetNode;)
-    m_nodesOccupied.insert(targetNode);
-    m_mapping.insert(std::make_pair(node, targetNode));
-    m_reverseMapping.insert(std::make_pair(targetNode, node));
-    m_targetNodesRemaining.unsafe_extract(targetNode);
-  }
-  updateNeededNeighbors(node);
-  DEBUG(OUT_S << " }" << std::endl;)
-}
-
 void EmbeddingSuite::updateNeededNeighbors(fuint32_t node)
 {
   auto range = m_source.equal_range(node);
@@ -178,7 +153,8 @@ void EmbeddingSuite::embeddSimpleNode(fuint32_t node)
     }
   }
   // map "node" to "bestNodeFound"
-  mapNode(node, bestNodeFound);
+  m_embeddingManager.mapNode(node, bestNodeFound);
+  updateNeededNeighbors(node);
 }
 
 void EmbeddingSuite::embeddTrivialNode(fuint32_t node)
@@ -187,7 +163,8 @@ void EmbeddingSuite::embeddTrivialNode(fuint32_t node)
   {
     auto targetNode = *m_targetNodesRemaining.begin();
     m_targetNodesRemaining.unsafe_erase(m_targetNodesRemaining.begin());
-    mapNode(node, targetNode);
+    m_embeddingManager.mapNode(node, targetNode);
+    updateNeededNeighbors(node);
     updateConnections(node);
   }
   else
@@ -305,6 +282,9 @@ void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbC
 
 void EmbeddingSuite::tryMutations()
 {
+
+  m_mutationManager.mutate();
+  /*
   auto& queue = m_taskQueue;
   if (m_frontierData.m_victimSubgraph.size() > 0)
   {
@@ -332,4 +312,5 @@ void EmbeddingSuite::tryMutations()
     task->execute();
   }
   m_frontierData.clear();
+  */
 }

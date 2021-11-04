@@ -17,6 +17,8 @@ namespace majorminer
       MutationExtend(EmbeddingSuite* suite, fuint32_t sourceNode);
       ~MutationExtend(){}
       void execute() override;
+      bool isValid() override;
+      bool prepare() override;
 
     private:
       double checkCandidate(fuint32_t extendNode, fuint32_t sourceNode, int delta);

@@ -12,7 +12,7 @@ Testing a bunch of graph minor embedding heuristics and related techniques to im
 
 <details>
   <summary>C++</summary>
-  
+
 # Build C++ library
 Note that in order to build, you have to clone the submodules as well. That is,
 if you have already cloned this repository, you should run ```git submodule update --init --recursive``` and find the submodules in ```external/```.
@@ -38,6 +38,6 @@ make
 
 <details>
 <summary>Python</summary>
-  
+
 All Python-related code and documentation can be found [in the Python folder](python/).
 </details>

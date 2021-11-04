@@ -64,6 +64,9 @@ namespace majorminer
   using Queue = tbb::concurrent_queue<T>;
 
   template<typename T>
+  using BoundedQueue = tbb::concurrent_bounded_queue<T>;
+
+  template<typename T>
   using Stack = std::stack<T, std::vector<T>>;
 
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;

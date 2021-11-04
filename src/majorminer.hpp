@@ -4,6 +4,7 @@
 #include<tbb/tbb.h>
 
 #include "config.hpp"
+#include "embedding_manager.hpp"
 #include "common/graph_gen.hpp"
 #include "common/utils.hpp"
 #include "common/embedding_validator.hpp"
@@ -15,6 +16,7 @@
 #include "evolutionary/mutation_extend.hpp"
 #include "evolutionary/frontier_shifting_data.hpp"
 #include "evolutionary/mutation_frontier_shifting.hpp"
+#include "evolutionary/muation_manager.hpp"
 
 namespace majorminer
 {
@@ -22,13 +24,17 @@ namespace majorminer
   class GenericMutation;
   class MutationExtend;
   class MuationFrontierShifting;
+  class EmbeddingManager;
+  class MutationManager;
   struct FrontierShiftingData;
 
   class EmbeddingSuite
   {
-    friend NetworkSimplexWrapper;
-    friend MutationExtend;
-    friend MuationFrontierShifting;
+      friend NetworkSimplexWrapper;
+      friend MutationExtend;
+      friend MuationFrontierShifting;
+      friend EmbeddingManager;
+      friend MutationManager;
     public:
       EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer = nullptr);
 
@@ -40,8 +46,6 @@ namespace majorminer
       void embeddNode(fuint32_t node);
       void embeddNodeNetworkSimplex(fuint32_t node);
 
-      void mapNode(fuint32_t node, fuint32_t targetNode);
-      void mapNode(fuint32_t node, const nodeset_t& targetNodes);
       void updateConnections(fuint32_t node);
 
       void prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo);
@@ -63,6 +67,9 @@ namespace majorminer
       const graph_t* m_targetGraph;
       adjacency_list_t m_source;
       adjacency_list_t m_target;
+
+      EmbeddingManager m_embeddingManager;
+      MutationManager m_mutationManager;
 
       embedding_mapping_t m_mapping;
       embedding_mapping_t m_reverseMapping;
