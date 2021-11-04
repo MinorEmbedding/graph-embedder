@@ -21,7 +21,8 @@ namespace majorminer
       bool prepare() override;
 
     private:
-      double checkCandidate(fuint32_t extendNode, fuint32_t sourceNode, int delta);
+      double checkImprovement(fuint32_t extendNode, fuint32_t sourceNode, int delta, bool useManager = false);
+      void updateFreeNeighbors();
 
     private:
       EmbeddingSuite& m_suite;
@@ -29,7 +30,7 @@ namespace majorminer
       fuint32_t m_sourceVertex;
       fuint32_t m_targetVertex;
       fuint32_t m_extendedTarget;
-      bool m_valid = false;
+      bool m_improving = false;
   };
 
 

@@ -14,6 +14,7 @@ namespace majorminer
     DEL_MAPPING,
     INS_MAPPING,
     FREE_NEIGHBORS,
+    OCCUPY_NODE,
     COMMIT
   };
 
@@ -22,6 +23,8 @@ namespace majorminer
     EmbeddingChange()
       : m_type(ChangeType::COMMIT), m_a((fuint32_t)-1),
         m_b((fuint32_t)-1){}
+    EmbeddingChange(ChangeType t, fuint32_t a)
+      : m_type(t), m_a(a), m_b((fuint32_t)-1) {}
     EmbeddingChange(ChangeType t, fuint32_t a, fuint32_t b)
       : m_type(t), m_a(a), m_b(b) {}
 
@@ -54,9 +57,11 @@ namespace majorminer
       void setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors);
       void deleteMappingPair(fuint32_t source, fuint32_t target);
       void insertMappingPair(fuint32_t source, fuint32_t target);
+      void occupyNode(fuint32_t target);
       void synchronize();
       void commit();
       fuint32_t getTimestamp() { return m_time++; }
+      int numberFreeNeighborsNeeded(fuint32_t sourceNode);
       const NodeAffected& getHistory(fuint32_t node) { return m_changeHistory[node]; }
 
 

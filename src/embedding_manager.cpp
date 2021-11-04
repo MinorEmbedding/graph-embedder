@@ -55,6 +55,19 @@ void EmbeddingManager::insertMappingPair(fuint32_t source, fuint32_t target)
   m_reverseMapping.insert(std::make_pair(target, source));
 }
 
+void EmbeddingManager::occupyNode(fuint32_t target)
+{
+  m_changesToPropagate.push(EmbeddingChange{ChangeType::OCCUPY_NODE, target});
+  m_nodesOccupied.insert(target);
+  m_targetNodesRemaining.unsafe_erase(target);
+}
+
+int EmbeddingManager::numberFreeNeighborsNeeded(fuint32_t sourceNode)
+{
+  return 2 * m_suite.m_sourceNeededNeighbors[sourceNode].load()
+    - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
+}
+
 void EmbeddingManager::commit()
 {
   m_changesToPropagate.push(EmbeddingChange{});

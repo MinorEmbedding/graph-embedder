@@ -188,6 +188,7 @@ bool EmbeddingSuite::connectsNodes() const
 
 void EmbeddingSuite::identifyAffected(fuint32_t node)
 {
+  /*
   m_sourceNodesAffected.clear();
 
   // "node" (from source graph) is now mapped to at least one
@@ -225,6 +226,7 @@ void EmbeddingSuite::identifyAffected(fuint32_t node)
       }
   });
   m_sourceFreeNeighbors[node] = freeAdjNodes.size();
+  */
 }
 
 int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
@@ -236,6 +238,7 @@ int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
 
 void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo)
 {
+  /*
   m_frontierData.clear();
 
   auto mapped = m_mapping.equal_range(victimNode);
@@ -278,6 +281,7 @@ void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbC
   m_frontierData.setNbNodes(nbMapped);
   m_frontierData.setVictimSource(victimNode);
   m_frontierData.findCutVertices();
+  */
 }
 
 void EmbeddingSuite::tryMutations()

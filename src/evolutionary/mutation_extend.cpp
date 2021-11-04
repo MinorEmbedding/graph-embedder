@@ -6,20 +6,28 @@ using namespace majorminer;
 MutationExtend::MutationExtend(EmbeddingSuite* suite, fuint32_t sourceNode)
   : m_suite(*suite), m_sourceVertex(sourceNode) { }
 
-double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode, int delta)
+double MutationExtend::checkImprovement(fuint32_t extendNode, fuint32_t sourceNode, int delta, bool useManager)
 {
   m_degraded.clear();
   double improvement = 0;
+  auto& targetNodesRemaining = m_suite.m_targetNodesRemaining;
+  auto& revMapping = m_suite.m_reverseMapping;
+  if (useManager)
+  {
+    auto& manager = m_suite.m_embeddingManager;
+    targetNodesRemaining = manager.getTargetNodesRemaining();
+    revMapping = manager.getReverseMapping();
+  }
 
   auto adjRange = m_suite.m_target.equal_range(extendNode);
   int nbFree = 0;
   for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
   {
-    if (m_suite.m_targetNodesRemaining.contains(adj->second)) nbFree++;
+    if (targetNodesRemaining.contains(adj->second)) nbFree++;
     else
     { // already mapped to
       // go over each that was mapped to this node and add to degraded
-      auto revIt = m_suite.m_reverseMapping.equal_range(adj->second);
+      auto revIt = revMapping.equal_range(adj->second);
       for (auto rev = revIt.first; rev != revIt.second; ++rev)
       {
         m_degraded.insert(rev->second);
@@ -34,7 +42,9 @@ double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode
     if (deg == extendNode) continue;
     else
     {
-      int needed = m_suite.numberFreeNeighborsNeeded(deg);
+      int needed = (useManager ?
+                m_suite.m_embeddingManager.numberFreeNeighborsNeeded(deg)
+                : m_suite.numberFreeNeighborsNeeded(deg));
       if (needed > -1) improvement++;
     }
   }
@@ -44,43 +54,48 @@ double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode
 // use embedding manager only
 void MutationExtend::execute()
 {
-  if(!m_improving || !m_suite.m_targetNodesRemaining.contains(m_extendedTarget)) return;
-  int delta = m_suite.numberFreeNeighborsNeeded(m_sourceVertex);
+  auto& manager = m_suite.m_embeddingManager;
+  if(!m_improving || !manager.getTargetNodesRemaining().contains(m_extendedTarget)) return;
+  int delta = manager.numberFreeNeighborsNeeded(m_sourceVertex);
   if (delta <= 0) return;
-  double improvement = checkCandidate(m_extendedTarget, m_sourceVertex, delta);
+  double improvement = checkImprovement(m_extendedTarget, m_sourceVertex, delta, true);
   if (improvement < 0)
   { // adopt mutation
-    m_suite.m_targetNodesRemaining.unsafe_erase(m_extendedTarget);
-    m_suite.m_nodesOccupied.insert(m_extendedTarget);
-    m_suite.m_mapping.insert(std::make_pair(m_sourceVertex, m_extendedTarget));
-    m_suite.m_reverseMapping.insert(std::make_pair(m_extendedTarget, m_sourceVertex));
+    manager.occupyNode(m_extendedTarget);
+    manager.insertMappingPair(m_sourceVertex, m_extendedTarget);
 
-    for (auto deg : m_degraded)
-    {
-      if (deg != m_sourceVertex) m_suite.m_sourceFreeNeighbors[deg]--;
-    }
-    m_degraded.clear();
-    auto embRange = m_suite.m_mapping.equal_range(m_sourceVertex);
-    for (auto embIt = embRange.first; embIt != embRange.second; ++embIt)
-    {
-      auto adjRange = m_suite.m_target.equal_range(embIt->second);
-      for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
-      {
-        if (m_suite.m_targetNodesRemaining.contains(adjIt->second))
-        { m_degraded.insert(adjIt->second); }
-      }
-    }
-    m_suite.m_sourceFreeNeighbors[m_sourceVertex] = m_degraded.size();
-
+    updateFreeNeighbors();
+    manager.commit();
     if (m_suite.m_visualizer != nullptr)
     {
       std::stringstream ss;
       ss << "ExtendMutation applied " << m_sourceVertex
          << " -> { ..., " << m_extendedTarget << " }; improvement: "
          << improvement << std::endl;
-      m_suite.m_visualizer->draw(m_suite.m_mapping, ss.str().c_str());
+      m_suite.m_visualizer->draw(manager.getMapping(), ss.str().c_str());
     }
   }
+}
+
+void MutationExtend::updateFreeNeighbors()
+{
+  auto& manager = m_suite.m_embeddingManager;
+  for (auto deg : m_degraded)
+  {
+    if (deg != m_sourceVertex) manager.setFreeNeighbors(deg, m_suite.m_sourceFreeNeighbors[deg] - 1);
+  }
+  m_degraded.clear();
+  auto embRange = m_suite.m_mapping.equal_range(m_sourceVertex);
+  for (auto embIt = embRange.first; embIt != embRange.second; ++embIt)
+  {
+    auto adjRange = m_suite.m_target.equal_range(embIt->second);
+    for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
+    {
+      if (m_suite.m_targetNodesRemaining.contains(adjIt->second))
+      { m_degraded.insert(adjIt->second); }
+    }
+  }
+  manager.setFreeNeighbors(m_sourceVertex, m_degraded.size());
 }
 
 bool MutationExtend::prepare()
@@ -103,7 +118,7 @@ bool MutationExtend::prepare()
     {
       if (m_suite.m_targetNodesRemaining.contains(adj->second))
       { // legitimate candidate
-        auto improvement = checkCandidate(adj->second, m_sourceVertex, delta);
+        auto improvement = checkImprovement(adj->second, m_sourceVertex, delta);
         if (improvement < bestVal)
         {
           bestVal = improvement;
