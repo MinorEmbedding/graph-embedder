@@ -2,7 +2,6 @@
 #define __MAJORMINER_EMBEDDING_MANAGER_HPP
 
 #include "majorminer_types.hpp"
-#include "majorminer.hpp"
 #include "common/utils.hpp"
 
 namespace majorminer
@@ -69,11 +68,14 @@ namespace majorminer
       const embedding_mapping_t& getReverseMapping() const { return m_reverseMapping; }
       const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
       const nodeset_t& getTargetNodesRemaining() const { return m_targetNodesRemaining; }
-      const UnorderedMap<fuint32_t, std::atomic<int>> getFreeNeighborMap() const { return m_sourceFreeNeighbors; }
+      const UnorderedMap<fuint32_t, std::atomic<int>>& getFreeNeighborMap() const { return m_sourceFreeNeighbors; }
+
+      fuint32_t getLastNode() const { return m_lastNode; }
 
     private:
       void mapNode(fuint32_t source, fuint32_t target);
       void mapNode(fuint32_t source, const nodeset_t& targets);
+      void clear();
 
     private:
       EmbeddingSuite& m_suite;
@@ -88,6 +90,8 @@ namespace majorminer
       UnorderedMap<fuint32_t, NodeAffected> m_changeHistory;
 
       std::atomic<fuint32_t> m_time;
+
+      fuint32_t m_lastNode = (fuint32_t)-1;
   };
 
 

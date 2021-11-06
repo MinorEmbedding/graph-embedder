@@ -1,4 +1,6 @@
-#include "mutation_extend.hpp"
+#include "evolutionary/mutation_extend.hpp"
+#include "majorminer.hpp"
+
 
 using namespace majorminer;
 
@@ -102,7 +104,7 @@ bool MutationExtend::prepare()
 {
   // check whether node needs more
   int delta = std::max(m_suite.numberFreeNeighborsNeeded(m_sourceVertex), 0);
-  if (delta == 0) return;
+  if (delta == 0) return false;
 
   // find adjacent target node with highest number
   auto mapRange = m_suite.m_mapping.equal_range(m_sourceVertex);

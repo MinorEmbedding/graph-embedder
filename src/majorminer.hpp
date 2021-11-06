@@ -61,6 +61,7 @@ namespace majorminer
       int numberFreeNeighborsNeeded(fuint32_t sourceNode);
       double checkExtendCandidate(fuint32_t extendNode, fuint32_t sourceNode, int delta);
       void tryMutations();
+      void mapNode(fuint32_t source, const nodeset_t& targets);
 
     private:
       const graph_t* m_sourceGraph;

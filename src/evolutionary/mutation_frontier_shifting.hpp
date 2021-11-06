@@ -3,11 +3,12 @@
 
 #include "evolutionary/generic_mutation.hpp"
 #include "majorminer_types.hpp"
-#include "majorminer.hpp"
 
 
 namespace majorminer
 {
+  class EmbeddingSuite;
+
   class MuationFrontierShifting : public GenericMutation
   {
     public:

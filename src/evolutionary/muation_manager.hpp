@@ -4,7 +4,6 @@
 #include <thread>
 
 #include "majorminer_types.hpp"
-#include "majorminer.hpp"
 
 #include "evolutionary/mutation_extend.hpp"
 #include "evolutionary/mutation_frontier_shifting.hpp"
@@ -28,6 +27,7 @@ namespace majorminer
     private:
       void prepare();
       void incorporate();
+      void prepareAffectedExtendCandidates(fuint32_t node);
 
     private:
       EmbeddingSuite& m_suite;

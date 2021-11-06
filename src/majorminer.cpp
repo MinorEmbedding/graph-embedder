@@ -173,6 +173,11 @@ void EmbeddingSuite::embeddTrivialNode(fuint32_t node)
   }
 }
 
+void EmbeddingSuite::mapNode(fuint32_t source, const nodeset_t& targets)
+{
+  m_embeddingManager.mapNode(source, targets);
+}
+
 bool EmbeddingSuite::isValid() const
 {
   EmbeddingValidator validator{m_mapping, *m_sourceGraph, m_target};
@@ -286,7 +291,7 @@ void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbC
 
 void EmbeddingSuite::tryMutations()
 {
-
+  m_embeddingManager.clear();
   m_mutationManager.mutate();
   /*
   auto& queue = m_taskQueue;

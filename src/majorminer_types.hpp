@@ -13,6 +13,7 @@
 
 #include <cinttypes>
 #include <atomic>
+#include <memory>
 
 #include "config.hpp"
 

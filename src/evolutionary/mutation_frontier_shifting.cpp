@@ -1,5 +1,6 @@
 
 #include "evolutionary/mutation_frontier_shifting.hpp"
+#include "majorminer.hpp"
 
 using namespace majorminer;
 

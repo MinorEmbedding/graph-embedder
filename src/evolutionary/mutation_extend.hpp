@@ -2,8 +2,6 @@
 #define __MAJORMINER_EXTEND_MUTATION_HPP_
 
 #include "majorminer_types.hpp"
-#include "majorminer.hpp"
-
 #include "evolutionary/generic_mutation.hpp"
 
 

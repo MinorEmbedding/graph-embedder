@@ -1,4 +1,6 @@
 #include "embedding_manager.hpp"
+#include "majorminer.hpp"
+
 
 using namespace majorminer;
 
@@ -10,6 +12,7 @@ using namespace majorminer;
 void EmbeddingManager::mapNode(fuint32_t node, fuint32_t targetNode)
 {
   if (!m_changesToPropagate.empty()) synchronize();
+  m_lastNode = node;
   DEBUG(std::cout << node << " -> " << targetNode << std::endl;)
   ADJUST(m_nodesOccupied.insert(targetNode));
   ADJUST(m_mapping.insert(std::make_pair(node, targetNode)));
@@ -20,6 +23,7 @@ void EmbeddingManager::mapNode(fuint32_t node, fuint32_t targetNode)
 void EmbeddingManager::mapNode(fuint32_t node, const nodeset_t& targetNodes)
 {
   if (!m_changesToPropagate.empty()) synchronize();
+  m_lastNode = node;
   DEBUG(OUT_S << node << " -> {";)
   for(auto targetNode : targetNodes)
   {
@@ -75,5 +79,57 @@ void EmbeddingManager::commit()
 
 void EmbeddingManager::synchronize()
 {
+  EmbeddingChange change{};
+  while(!m_changesToPropagate.empty() && m_nbCommitsRemaining > 0)
+  {
+    bool success = m_changesToPropagate.try_pop(change);
+    if (!success) continue;
+    switch(change.m_type)
+    {
+      case ChangeType::DEL_MAPPING:
+      {
+        eraseSinglePair(m_suite.m_mapping, change.m_a, change.m_b);
+        eraseSinglePair(m_suite.m_reverseMapping, change.m_b, change.m_a);
+        m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
+        break;
+      }
+      case ChangeType::INS_MAPPING:
+      {
+        m_suite.m_mapping.insert(std::make_pair(change.m_a, change.m_b));
+        m_suite.m_reverseMapping.insert(std::make_pair(change.m_b, change.m_a));
+        m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
+        break;
+      }
+      case ChangeType::FREE_NEIGHBORS:
+      {
+        m_suite.m_sourceFreeNeighbors[change.m_a] = change.m_b;
+        m_changeHistory[change.m_a].m_timestampEdgeChanged = m_time.load();
+        break;
+      }
+      case ChangeType::OCCUPY_NODE:
+      {
+        m_suite.m_targetNodesRemaining.unsafe_erase(change.m_a);
+        m_suite.m_nodesOccupied.unsafe_erase(change.m_a);
+        m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
+        break;
+      }
+      case ChangeType::COMMIT:
+      {
+        m_nbCommitsRemaining--;
+        break;
+      }
+    }
+  }
+}
 
+void EmbeddingManager::clear()
+{
+  for (auto& entry : m_changeHistory)
+  {
+    entry.second.clear();
+  }
+  m_time = 0;
+  m_changesToPropagate.clear();
+  m_nbCommitsRemaining = 0;
+  m_lastNode = (fuint32_t)-1;
 }
