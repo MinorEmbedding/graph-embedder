@@ -2,7 +2,7 @@
 Testing a bunch of graph minor embedding heuristics and related techniques to improve the embedding of QUBOs.
 
 
-| :warning:    | This is a research repo, so APIs and algorithms might change frequently as were are trying out different ideas. Moreover, this means that the code is not production-ready. |
+| :warning:    | This is a research repo, so APIs and algorithms might change frequently as we are trying out different ideas. Moreover, this means that the code is not production-ready. |
 |---------------|:------------------------|
 
 | :point_up:    | We currently do not implement the same approaches in C++ and Python, but try out different ideas in different programming languages. Make sure to check out both the C++ and Python implementation. |
