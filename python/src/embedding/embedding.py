@@ -1,10 +1,9 @@
 import itertools
 from copy import deepcopy
-from typing import List
 
 from src.embedding.graph_mapping import GraphMapping
-from src.graphs.chimera_graph import ChimeraGraphLayout, GraphEmbedding
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.chimera_graph import ChimeraGraphLayout, GraphEmbedding
+from src.graph.undirected_graph import UndirectedGraphAdjList
 
 
 ########################### Embedding blueprint ################################
@@ -19,13 +18,13 @@ class Embedding():
 
         self.mapping = GraphMapping()
 
-    def get_embedded_nodes(self) -> List:
+    def get_embedded_nodes(self) -> list:
         return self.G_embedding.get_embedded_nodes()
 
     def get_reachable_neighbors(self, from_node):
         return self.G_layout.get_neighbor_nodes(from_node)
 
-    def get_free_neighbors(self, from_node) -> List:
+    def get_free_neighbors(self, from_node) -> list:
         neighbors = self.G_layout.get_neighbor_nodes(from_node)
         neighbors_used = self.G_embedding.get_embedded_nodes()
         neighbors_free = [neighbor for neighbor in neighbors
@@ -34,7 +33,7 @@ class Embedding():
             raise NoFreeNeighborNodes(from_node)
         return neighbors_free
 
-    def get_connected_neighbors(self, from_node) -> List:
+    def get_connected_neighbors(self, from_node) -> list:
         return self.G_embedding.get_neighbor_nodes(from_node)
 
     def embed_edge(self, node_from, node_to) -> None:
@@ -113,8 +112,8 @@ class Embedding():
         self.G_embedding.embed_edge(extend_G, frm, chain=chain)
 
     def is_valid_embedding(self) -> bool:
-        for frm in self.H._get_nodes():
-            expected_tos = self.H._get_neighbor_nodes(frm)
+        for frm in self.H.get_nodes():
+            expected_tos = self.H.get_neighbor_nodes(frm)
             actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
             if actual_tos != expected_tos:
                 return False
@@ -153,8 +152,8 @@ class Embedding():
         """
         missing_edges_added = 0
 
-        for frm in self.H._get_nodes():
-            expected_tos = self.H._get_neighbor_nodes(frm)
+        for frm in self.H.get_nodes():
+            expected_tos = self.H.get_neighbor_nodes(frm)
             actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
             # actual_tos = [self.G_embedding_view.get_neighbor_nodes(frm)
             #               for frm in self.mapping.get_node_G(node_H=frm)]

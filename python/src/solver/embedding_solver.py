@@ -1,7 +1,7 @@
 import random
 
 from src.embedding.embedding import Embedding
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.util.stack import Stack
 from src.util.util import get_first_from_set
 
@@ -50,7 +50,7 @@ class EmbeddingSolver():
         while queue:
             # Dequeue node & get neighbors
             h = queue.pop(0)
-            neighbors_h = self.H._get_neighbor_nodes(h)
+            neighbors_h = self.H.get_neighbor_nodes(h)
             # Filter out already visited nodes in H
             neighbors_h = [h for h in neighbors_h
                            if not visited[h]]
@@ -131,7 +131,7 @@ class EmbeddingSolver():
                 from_h, from_g, to_h, to_g)
 
         # DFS recursion
-        neighbors_h = self.H._get_neighbor_nodes(to_h)
+        neighbors_h = self.H.get_neighbor_nodes(to_h)
         for neighbor_h in neighbors_h:
             if not visited[neighbor_h]:
                 self.dfs(neighbor_h, visited, recursion_stack)

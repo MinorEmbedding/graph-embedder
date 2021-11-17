@@ -1,9 +1,18 @@
 from src.drawing.draw import Draw
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.solver.embedding_solver import EmbeddingSolver
 
 
 def init_H():
+    # House graph
+    # H = UndirectedGraphAdjList(5)
+    # H._set_edge(0, 1)
+    # H._set_edge(0, 4)
+    # H._set_edge(1, 2)
+    # H._set_edge(1, 3)
+    # H._set_edge(2, 3)
+    # H._set_edge(3, 4)
+
     # I letter graph
     # H = UndirectedGraphAdjList(6)
     # H._set_edge(0, 3)
@@ -14,12 +23,12 @@ def init_H():
 
     # K4 graph
     H = UndirectedGraphAdjList(4)
-    H._set_edge(0, 1)
-    H._set_edge(0, 2)
-    H._set_edge(0, 3)
-    H._set_edge(1, 2)
-    H._set_edge(1, 3)
-    H._set_edge(2, 3)
+    H.set_edge(0, 1)
+    H.set_edge(0, 2)
+    H.set_edge(0, 3)
+    H.set_edge(1, 2)
+    H.set_edge(1, 3)
+    H.set_edge(2, 3)
 
     # Pyramid graph
     # H = UndirectedGraphAdjList(5)
@@ -31,7 +40,7 @@ def init_H():
     # H._set_edge(2, 3)
     # H._set_edge(3, 4)
 
-    # Tree graph
+    # Tree-like graph
     # H = UndirectedGraphAdjList(6)
     # H._set_edge(0, 1)
     # H._set_edge(0, 2)
@@ -62,7 +71,7 @@ def main():
     # --- Setup
     d = Draw()
     H = init_H()
-    d.draw_chimera_graph(1, 1, 4)  # one unit cell of Chimera graph
+    # d.draw_chimera_graph(1, 1, 4)  # one unit cell of Chimera graph
 
     # --- Start solving
     while True:
@@ -74,6 +83,8 @@ def main():
             print('🎉 Directly found embedding after initialization')
             output_embedding(*solver.get_embedding(), d)
             return
+        # after_init_embedding = solver.get_embedding()
+        # output_embedding(*after_init_embedding, d)
 
         # --- Mutation
         playground = solver.mutate()
@@ -89,7 +100,7 @@ def main():
 def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
     print()
     print('--- Output ---')
-
+    d.draw_chimera_graph(1, 1, 4)
     print('*** Final mapping ***')
     print(mapping_G_to_H)
     print('*** Final embedding ***')
