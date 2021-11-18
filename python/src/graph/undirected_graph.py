@@ -1,7 +1,6 @@
 from collections import KeysView
 
 
-
 class UndirectedGraphAdjList:
     """
     Undirected Graph using an adjacency list.
@@ -48,7 +47,7 @@ class UndirectedGraphAdjList:
         """Sets an edge between nodes ``frm`` and ``to`` and assigns
         the given ``cost``.
 
-        Note:
+        Warning:
             This may override an existing edge with new costs.
 
         Args:
@@ -219,7 +218,7 @@ class AdjListEntryWithCosts():
     def set_edge_to(self, to: int, cost: int) -> None:
         """Sets an undirected edge with cost to a node.
 
-        Note:
+        Warning:
             This may override an existing edge with new costs.
 
         Args:

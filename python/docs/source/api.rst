@@ -3,16 +3,24 @@
 API Reference
 =============
 
-.. autosummary::
-    :nosignatures:
 
-    src.graph.undirected_graph.UndirectedGraphAdjList
-    src.graph.undirected_graph.AdjListEntryWithCosts
+Graph Module
+------------
 
-
-Graph
------
 .. automodule:: src.graph.undirected_graph
    :members:
    :undoc-members:
    :show-inheritance:
+
+.. automodule:: src.graph.chimera_graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+
+More Modules
+------------
+
+.. note::
+
+   To come soon...
