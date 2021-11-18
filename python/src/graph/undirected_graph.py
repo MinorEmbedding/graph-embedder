@@ -29,7 +29,7 @@ class UndirectedGraphAdjList:
         """Returns all edges of this Graph.
 
         Returns:
-            list: A List of entries (frm, to, cost) \
+            list[tuple[int, int, int]]: A List of entries (frm, to, cost) \
             describing all edges of this Graph with their respective costs.
         """
         edges = set()
@@ -42,6 +42,24 @@ class UndirectedGraphAdjList:
                 else:
                     edges.add((to, frm, cost))
         return list(edges)
+
+    def exists_edge(self, frm: int, to: int) -> bool:
+        """Checks if an edge between two nodes exists.
+
+        Args:
+            frm (int): One node of the edge.
+            to (int): The other node of the edge.
+
+        Returns:
+            bool: True if the edge exists.
+
+        Raises:
+            GraphNodeIndexError: If the given node ``frm`` or ``to`` \
+            does not exist in the Graph.
+        """
+        self._validate_index(frm)
+        self._validate_index(to)
+        return to in self.get_neighbor_nodes(frm)
 
     def set_edge(self, frm: int, to: int, cost=0) -> None:
         """Sets an edge between nodes ``frm`` and ``to`` and assigns
@@ -107,13 +125,13 @@ class UndirectedGraphAdjList:
 
     ################################# Nodes ####################################
 
-    def get_nodes(self) -> KeysView[int]:
+    def get_nodes(self) -> list[int]:
         """Returns all nodes of this Graph.
 
         Returns:
-            KeysView[int]: All nodes of this Graph.
+            list[int]: All nodes of this Graph.
         """
-        return self._adj_list.keys()
+        return list(self._adj_list.keys())  # or rather stick with KeyView?
 
     def add_node(self) -> int:
         """Adds a new node to this Graph.

@@ -12,6 +12,11 @@ Graph Module
    :undoc-members:
    :show-inheritance:
 
+.. automodule:: src.graph.embedding_graph
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
 .. automodule:: src.graph.chimera_graph
    :members:
    :undoc-members:
