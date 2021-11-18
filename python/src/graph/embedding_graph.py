@@ -60,7 +60,9 @@ class EmbeddingGraph(UndirectedGraphAdjList):
         Returns:
             list[int]: The embedded nodes.
         """
-        return super().get_nodes()
+        nodes = super().get_nodes()
+        nodes = [node for node in nodes if self.get_neighbor_nodes(node)]
+        return nodes
 
     ############################### Chains #####################################
 
@@ -79,7 +81,8 @@ class EmbeddingGraph(UndirectedGraphAdjList):
         return self._chain_last
 
     def get_nodes_in_same_chains(self, node: int) -> list[int]:
-        """Returns the nodes that are in one of the chains a given node is in.
+        """Returns the nodes that are in one of the chains the given node \
+            is contained in.
 
         Warning:
             A node might be contained in multiple chains temporarily. Therefore,
@@ -93,7 +96,8 @@ class EmbeddingGraph(UndirectedGraphAdjList):
             node (int): The node from which to take the chain to compare against.
 
         Returns:
-            list[int]: All nodes that are in one of the chains `node` is in.
+            list[int]: All nodes that are in one of the chains `node` \
+                is contained in.
         """
         chains = self.get_node_chains(node)
 
@@ -128,11 +132,8 @@ class EmbeddingGraph(UndirectedGraphAdjList):
 
         Returns:
             list[int]: All nodes that are contained in `chain`. (These nodes \
-                might be contained in other chains at the same time.)
+                might be contained in other chains at the same time.) \
         """
-        if chain == 0:
-            return []
-
         nodes = super().get_nodes()
         nodes = [node for node in nodes if chain in self.get_node_chains(node)]
         return nodes

@@ -2,19 +2,17 @@ import itertools
 from copy import deepcopy
 
 from src.embedding.graph_mapping import GraphMapping
-from src.graph.chimera_graph import ChimeraGraphLayout, GraphEmbedding
+from src.graph.chimera_graph import ChimeraGraphLayout
+from src.graph.embedding_graph import EmbeddingGraph
 from src.graph.undirected_graph import UndirectedGraphAdjList
 
 
-########################### Embedding blueprint ################################
 class Embedding():
     def __init__(self, H: UndirectedGraphAdjList):
-
-        # TODO: explain difference (!) - crucial for understanding
         self.H = H
         self.G_layout = ChimeraGraphLayout()
-        self.G_embedding = GraphEmbedding(8)
-        self.G_embedding_view = GraphEmbedding(H.nodes_count)
+        self.G_embedding = EmbeddingGraph(8)
+        self.G_embedding_view = EmbeddingGraph(H.nodes_count)
 
         self.mapping = GraphMapping()
 
@@ -72,14 +70,14 @@ class Embedding():
         # --- Adjust embedding
         # Delete all edges from node_to and add respective edges from node_to_new
         to_node_connected_neighbors = self.get_connected_neighbors(to_node)
-        self.G_embedding.delete_all_edges_from_node(to_node)
+        self.G_embedding.remove_all_edges_from_node(to_node)
         for prev_connected_neighbor in to_node_connected_neighbors:
             # Avoid edge from node to itself
             if prev_connected_neighbor in [from_node, to_node_new]:
                 continue
 
             # to_node_new might be a chain itself
-            nodes_in_chain = self.G_embedding.get_nodes_in_same_chain(
+            nodes_in_chain = self.G_embedding.get_nodes_in_same_chains(
                 to_node_new)
             embedded = False
             for node_in_chain in nodes_in_chain:
