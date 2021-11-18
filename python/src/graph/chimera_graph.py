@@ -57,7 +57,7 @@ class GraphEmbedding(UndirectedGraphAdjList):
         return self._get_chain_nodes(chain)
 
     def _get_node_chain(self, node):
-        edges = super().get_reachable_nodes_with_costs(node)
+        edges = super().get_neighbor_nodes_with_costs(node)
         if not edges:
             return 0
         else:
@@ -89,7 +89,7 @@ class GraphEmbedding(UndirectedGraphAdjList):
         nodes = super().get_nodes()
         # Filter for nodes that have an edge
         nodes = [
-            node for node in nodes if self._adj_list[node].get_reachable_with_costs()]
+            node for node in nodes if self._adj_list[node].get_neighbors_with_costs()]
         return nodes
 
     def get_free_nodes(self):
