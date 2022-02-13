@@ -23,7 +23,6 @@ namespace majorminer
       const graph_t& m_source;
       const adjacency_list_t& m_target;
   };
-
 }
 
 

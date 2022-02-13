@@ -13,3 +13,10 @@ void majorminer::convertToAdjacencyList(adjacency_list_t& adj, const graph_t& gr
   });
 }
 
+void majorminer::printAdjacencyList(const adjacency_list_t& adj)
+{
+  for (const auto& edge : adj)
+  {
+    std::cout << "(" << edge.first << ", " << edge.second << ")" << std::endl;
+  }
+}

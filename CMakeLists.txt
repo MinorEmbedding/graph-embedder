@@ -2,15 +2,17 @@ cmake_minimum_required(VERSION 3.7)
 
 project(majorminer)
 
-
+option(MAJORMINER_BUILD_TESTS "Build majorminer test executable" ON)
 enable_language(C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Debug)
-set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/)
+set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/ src/)
+set(MM_LINK_LIBS TBB::tbb lemon)
 
-# do not build tests in oneTBB
+# neither build tests nor tbbmalloc in oneTBB
 set(TBB_TEST CACHE BOOL OFF)
+set(TBBMALLOC_BUILD CACHE BOOL OFF)
 
 # build NetworkSimplex, gtest and oneTBB
 add_subdirectory(external)
@@ -18,7 +20,7 @@ add_subdirectory(external)
 
 
 if ( CMAKE_COMPILER_IS_GNUCC )
-    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+    set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} -Wall -Wextra -fdiagnostics-color=always")
 endif()
 if ( MSVC )
     set(CMAKE_CXX_FLAGS  "${CMAKE_CXX_FLAGS} /W4")
@@ -27,14 +29,14 @@ endif()
 add_library(majorminer)
 
 
-target_include_directories(majorminer PUBLIC ${MM_INCLUDE_LIBS})
+target_include_directories(majorminer PRIVATE ${MM_INCLUDE_LIBS})
 
 add_subdirectory(src)
+target_link_libraries(majorminer ${MM_LINK_LIBS})
 
-
-add_executable(majorminer_test)
-add_subdirectory(test)
-
-target_include_directories(majorminer_test PUBLIC src ${MM_INCLUDE_LIBS})
-
-target_link_libraries(majorminer_test majorminer gtest_main TBB::tbb lemon)
+if ( ${MAJORMINER_BUILD_TESTS} )
+    add_executable(majorminer_test)
+    add_subdirectory(test)
+    target_include_directories(majorminer_test PRIVATE src ${MM_INCLUDE_LIBS})
+    target_link_libraries(majorminer_test majorminer gtest_main)
+endif()

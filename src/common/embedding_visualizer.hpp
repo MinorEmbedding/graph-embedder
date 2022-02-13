@@ -5,6 +5,7 @@
 
 #include <sstream>
 #include <fstream>
+#include <filesystem>
 
 namespace majorminer
 {
@@ -15,10 +16,8 @@ namespace majorminer
   {
     public:
       EmbeddingVisualizer(const graph_t& source, const graph_t& target, std::string filename)
-       : m_source(source), m_target(target), m_filename(filename) { }
+       : m_source(source), m_target(target), m_filename(filename), m_iteration(0) { }
       virtual ~EmbeddingVisualizer() {}
-
-      void draw(const embedding_mapping_t& embedding);
 
     protected:
       virtual fuint32_t insertEdge(Vector<Coordinate_t>& coords, const edge_t& edge) = 0;
@@ -33,12 +32,25 @@ namespace majorminer
     private:
       void initialize();
       void writeToFile();
+      void setupDrawing(const embedding_mapping_t& embedding);
+      void finishDrawing();
       void drawNode(fuint32_t node, double radius, const Coordinate_t& coordinate, const std::string& color, fuint32_t n = 0);
       void drawEdge(const edge_t& edge, const std::string& color, double stroke = 1);
       void drawChains();
       void drawInterChainConnections();
       void drawNodes();
       const std::string& getColor(fuint32_t node);
+
+    public:
+      void draw(const embedding_mapping_t& embedding, const char* title = nullptr);
+
+      template<typename Functor>
+      void draw(const embedding_mapping_t& embedding, Functor textGen)
+      {
+        setupDrawing(embedding);
+        textGen(m_svg);
+        finishDrawing();
+      }
 
     private:
       bool m_initialized = false;
@@ -48,7 +60,7 @@ namespace majorminer
       std::string m_filename;
       fuint32_t m_iteration;
       std::stringstream m_svg;
-      std::stringstream m_colorFactory;
+      std::string m_prepared;
 
       UnorderedMap<edge_t, fuint32_pair_t, PairHashFunc<fuint32_t>> m_edgePtrs;
       Vector<Coordinate_t> m_edgeSamples;
