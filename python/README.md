@@ -1,5 +1,8 @@
 # Python evolutionary embedding
 
+| :warning:    | This Readme is currently outdated. You can find the [documentation here](https://majorminer.readthedocs.io/)|
+|---------------|:------------------------|
+
 ## Usage
 Execute (from within the python folder):
 

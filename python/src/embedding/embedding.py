@@ -1,31 +1,47 @@
 import itertools
 from copy import deepcopy
-from typing import List
 
 from src.embedding.graph_mapping import GraphMapping
-from src.graphs.chimera_graph import ChimeraGraphLayout, GraphEmbedding
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.chimera_graph import ChimeraGraphLayout
+from src.graph.embedding_graph import EmbeddingGraph
+from src.graph.undirected_graph import UndirectedGraphAdjList
 
 
-########################### Embedding blueprint ################################
 class Embedding():
     def __init__(self, H: UndirectedGraphAdjList):
+        """Initializes an Embedding.
 
-        # TODO: explain difference (!) - crucial for understanding
+        Args:
+            H (UndirectedGraphAdjList): The minor Graph to embed.
+        """
+        # --- Minor H
         self.H = H
+
+        # --- Layout Graph
+        # Graph where H should be embedded to
         self.G_layout = ChimeraGraphLayout()
-        self.G_embedding = GraphEmbedding(8)
-        self.G_embedding_view = GraphEmbedding(H.nodes_count)
+
+        # --- Embedding Graph
+        # Full graph
+        # 8 nodes in one Chimera unit cell
+        self.G_embedding = EmbeddingGraph(8)
+        # View graph
+        self.G_embedding_view = EmbeddingGraph(H.nodes_count)
 
         self.mapping = GraphMapping()
 
-    def get_embedded_nodes(self) -> List:
+    def get_embedded_nodes(self) -> list[int]:
+        """Returns all embedded nodes.
+
+        Returns:
+            list[int]: The embedded nodes.
+        """
         return self.G_embedding.get_embedded_nodes()
 
     def get_reachable_neighbors(self, from_node):
         return self.G_layout.get_neighbor_nodes(from_node)
 
-    def get_free_neighbors(self, from_node) -> List:
+    def get_free_neighbors(self, from_node) -> list:
         neighbors = self.G_layout.get_neighbor_nodes(from_node)
         neighbors_used = self.G_embedding.get_embedded_nodes()
         neighbors_free = [neighbor for neighbor in neighbors
@@ -34,7 +50,7 @@ class Embedding():
             raise NoFreeNeighborNodes(from_node)
         return neighbors_free
 
-    def get_connected_neighbors(self, from_node) -> List:
+    def get_connected_neighbors(self, from_node) -> list:
         return self.G_embedding.get_neighbor_nodes(from_node)
 
     def embed_edge(self, node_from, node_to) -> None:
@@ -43,8 +59,17 @@ class Embedding():
         node_to_H = self.mapping.add_mapping_new_node_H(node_to)
         self.G_embedding_view.embed_edge(node_from_H, node_to_H)
 
+    def embed_edge_with_mapping(self, from_H, from_G, to_H, to_G) -> None:
+        self.G_embedding.embed_edge(from_G, to_G)
+        self.mapping.set_mapping(from_H, from_G)
+        self.mapping.set_mapping(to_H, to_G)
+        self.G_embedding_view.embed_edge(from_H, to_H)
+
     def remove_edge_inconsistently(self, from_node, to_node):
         self.G_embedding.remove_edge(from_node, to_node)
+
+    def exists_edge(self, frm, to):
+        return self.G_layout.exists_edge(frm, to)
 
     def add_chain_to_used_nodes(self, from_node, to_node, to_node_new=None):
         """
@@ -64,14 +89,14 @@ class Embedding():
         # --- Adjust embedding
         # Delete all edges from node_to and add respective edges from node_to_new
         to_node_connected_neighbors = self.get_connected_neighbors(to_node)
-        self.G_embedding.delete_all_edges_from_node(to_node)
+        self.G_embedding.remove_all_edges_from_node(to_node)
         for prev_connected_neighbor in to_node_connected_neighbors:
             # Avoid edge from node to itself
             if prev_connected_neighbor in [from_node, to_node_new]:
                 continue
 
             # to_node_new might be a chain itself
-            nodes_in_chain = self.G_embedding.get_nodes_in_same_chain(
+            nodes_in_chain = self.G_embedding.get_nodes_in_same_chains(
                 to_node_new)
             embedded = False
             for node_in_chain in nodes_in_chain:
@@ -104,8 +129,8 @@ class Embedding():
         self.G_embedding.embed_edge(extend_G, frm, chain=chain)
 
     def is_valid_embedding(self) -> bool:
-        for frm in self.H._get_nodes():
-            expected_tos = self.H._get_neighbor_nodes(frm)
+        for frm in self.H.get_nodes():
+            expected_tos = self.H.get_neighbor_nodes(frm)
             actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
             if actual_tos != expected_tos:
                 return False
@@ -114,14 +139,25 @@ class Embedding():
     def get_playground(self):
         return deepcopy(self)
 
-    def get_embedding(self):
-        return self.G_embedding.get_embedding()
+    def get_embedding(self, G_to_H_mapping=True):
+        nodes, edges = self.G_embedding.get_embedding()
+        if G_to_H_mapping:
+            mapping = self.get_mapping_G_to_H()
+        else:
+            mapping = self.get_mapping_H_to_G()
+        return nodes, edges, mapping
 
     def get_mapping_H_to_G(self):
         return self.mapping.get_mapping_H_to_G()
 
     def get_mapping_G_to_H(self):
         return self.mapping.get_mapping_G_to_H()
+
+    def get_mapping_H_to_G_node(self, node_H) -> set:
+        try:
+            return self.mapping.get_mapping_H_to_G()[node_H]
+        except KeyError:
+            return set()
 
     def try_to_add_missing_edges(self) -> int:
         """
@@ -133,8 +169,8 @@ class Embedding():
         """
         missing_edges_added = 0
 
-        for frm in self.H._get_nodes():
-            expected_tos = self.H._get_neighbor_nodes(frm)
+        for frm in self.H.get_nodes():
+            expected_tos = self.H.get_neighbor_nodes(frm)
             actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
             # actual_tos = [self.G_embedding_view.get_neighbor_nodes(frm)
             #               for frm in self.mapping.get_node_G(node_H=frm)]

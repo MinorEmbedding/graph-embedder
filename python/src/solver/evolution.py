@@ -1,17 +1,67 @@
 from src.drawing.draw import Draw
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.solver.embedding_solver import EmbeddingSolver
 
 
 def init_H():
+    # House graph
+    # H = UndirectedGraphAdjList(5)
+    # H._set_edge(0, 1)
+    # H._set_edge(0, 4)
+    # H._set_edge(1, 2)
+    # H._set_edge(1, 3)
+    # H._set_edge(2, 3)
+    # H._set_edge(3, 4)
+
+    # I letter graph
+    # H = UndirectedGraphAdjList(6)
+    # H._set_edge(0, 3)
+    # H._set_edge(3, 2)
+    # H._set_edge(3, 5)
+    # H._set_edge(1, 2)
+    # H._set_edge(2, 4)
+
     # K4 graph
     H = UndirectedGraphAdjList(4)
-    H._set_edge(0, 1)
-    H._set_edge(0, 2)
-    H._set_edge(0, 3)
-    H._set_edge(1, 2)
-    H._set_edge(1, 3)
-    H._set_edge(2, 3)
+    H.set_edge(0, 1)
+    H.set_edge(0, 2)
+    H.set_edge(0, 3)
+    H.set_edge(1, 2)
+    H.set_edge(1, 3)
+    H.set_edge(2, 3)
+
+    # Pyramid graph
+    # H = UndirectedGraphAdjList(5)
+    # H._set_edge(0, 1)
+    # H._set_edge(0, 2)
+    # H._set_edge(0, 3)
+    # H._set_edge(0, 4)
+    # H._set_edge(1, 2)
+    # H._set_edge(2, 3)
+    # H._set_edge(3, 4)
+
+    # Tree-like graph
+    # H = UndirectedGraphAdjList(6)
+    # H._set_edge(0, 1)
+    # H._set_edge(0, 2)
+    # H._set_edge(0, 3)
+    # H._set_edge(1, 4)
+    # H._set_edge(1, 5)
+    # H._set_edge(2, 5)  # comment this line out to get a tree
+
+    # K5 graph (for later use with multiple chimera cells)
+    # H = UndirectedGraphAdjList(5)
+    # H._set_edge(0, 1)
+    # H._set_edge(0, 2)
+    # H._set_edge(0, 3)
+    # H._set_edge(0, 4)
+    # H._set_edge(1, 2)
+    # H._set_edge(1, 3)
+    # H._set_edge(1, 4)
+    # H._set_edge(2, 3)
+    # H._set_edge(2, 4)
+    # H._set_edge(3, 4)
+
     return H
 
 
@@ -21,36 +71,43 @@ def main():
     # --- Setup
     d = Draw()
     H = init_H()
-    d.draw_chimera_graph(1, 1, 4)  # one unit cell of Chimera graph
+    # d.draw_chimera_graph(1, 1, 4)  # one unit cell of Chimera graph
 
     # --- Start solving
-    solver = EmbeddingSolver(H)
-    solver.init_basic_path()
-    found_embedding = solver.found_embedding()
-    if found_embedding:
-        print('✨🎉 Found embedding')
-        return
+    while True:
+        solver = EmbeddingSolver(H)
+        solver.init_dfs()
 
-    # --- Mutation
-    playground = solver.mutate()
-    if not playground:
-        print('Not a viable mutation')
-        return
+        found_embedding = solver.found_embedding()
+        if found_embedding:
+            print('🎉 Directly found embedding after initialization')
+            output_embedding(*solver.get_embedding(), d)
+            return
+        # after_init_embedding = solver.get_embedding()
+        # output_embedding(*after_init_embedding, d)
 
-    # --- Output
+        # --- Mutation
+        playground = solver.mutate()
+        if not playground:
+            print('Not a viable mutation')
+            return
+
+        if playground.is_valid_embedding():
+            output_embedding(*playground.get_embedding(), d)
+            return
+
+
+def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
     print()
     print('--- Output ---')
-    nodes, edges = playground.get_embedding()
-    mapping = playground.get_mapping_H_to_G()
-
+    d.draw_chimera_graph(1, 1, 4)
     print('*** Final mapping ***')
-    print(mapping)
+    print(mapping_G_to_H)
     print('*** Final embedding ***')
     print(nodes)
     print(edges)
-    print(f'Is correct: {playground.is_valid_embedding()}')
+    print(mapping_G_to_H)
 
-    mapping_G_to_H = playground.get_mapping_G_to_H()
     d.draw_embedding(nodes, edges, mapping_G_to_H)
 
 

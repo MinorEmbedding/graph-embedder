@@ -1,5 +1,9 @@
 # majorminer
+[![Documentation Status](https://readthedocs.org/projects/majorminer/badge/?version=latest)](https://majorminer.readthedocs.io/en/latest/?badge=latest)
+
+
 Testing a bunch of graph minor embedding heuristics and related techniques to improve the embedding of QUBOs.
+
 
 
 | :warning:    | This is a research repo, so APIs and algorithms might change frequently as we are trying out different ideas. Moreover, this means that the code is not production-ready. |
@@ -12,7 +16,7 @@ Testing a bunch of graph minor embedding heuristics and related techniques to im
 
 <details>
   <summary>C++</summary>
-  
+
 # Build C++ library
 Note that in order to build, you have to clone the submodules as well. That is,
 if you have already cloned this repository, you should run ```git submodule update --init --recursive``` and find the submodules in ```external/```.
@@ -38,6 +42,6 @@ make
 
 <details>
 <summary>Python</summary>
-  
+
 All Python-related code and documentation can be found [in the Python folder](python/).
 </details>

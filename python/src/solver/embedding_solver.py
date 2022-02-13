@@ -1,7 +1,9 @@
 import random
 
 from src.embedding.embedding import Embedding
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.undirected_graph import UndirectedGraphAdjList
+from src.util.stack import Stack
+from src.util.util import get_first_from_set
 
 
 class EmbeddingSolver():
@@ -33,8 +35,111 @@ class EmbeddingSolver():
 
         self.embedding.try_to_add_missing_edges()
 
+    def init_bfs(self):
+        """Traverses through H and inits graph H usugin breadth first search on H."""
+        # Mark all vertices as not visited
+        visited = [False] * self.H.nodes_count
+
+        queue = []
+
+        # Mark source node as visited
+        h = 0  # start with node 0 in graph H
+        queue.append(h)
+        visited[h] = True
+
+        while queue:
+            # Dequeue node & get neighbors
+            h = queue.pop(0)
+            neighbors_h = self.H.get_neighbor_nodes(h)
+            # Filter out already visited nodes in H
+            neighbors_h = [h for h in neighbors_h
+                           if not visited[h]]
+
+            # Embed edges to all neighbors
+            if h == 0:
+                g = 0  # start with node 0 for embedding in graph G
+            else:
+                gs = self.embedding.get_mapping_H_to_G_node(h)
+                g = get_first_from_set(gs)
+
+            free_neighbors_g = self.embedding.get_free_neighbors(g)
+            if len(free_neighbors_g) < len(neighbors_h):
+                raise RuntimeError(
+                    'Not enough free neighbors to embed node of H in G (breadth first search)')
+
+            for neighbor_h in neighbors_h:
+                neighbor_h_on_g = self.embedding.get_mapping_H_to_G_node(
+                    neighbor_h)
+                # Neighbor already embedded embedded?
+                if neighbor_h_on_g:
+                    # Try to add edge
+                    if self.embedding.exists_edge(g, neighbor_h_on_g):
+                        self.embedding.embed_edge_with_mapping(
+                            h, g, neighbor_h, neighbor_h_on_g)
+                    else:
+                        # do nothing (this edge is added later using chains)
+                        pass
+                else:
+                    # Choose random free neighbor
+                    to_g = random.choice(free_neighbors_g)
+                    free_neighbors_g.remove(to_g)
+
+                    # Embed
+                    self.embedding.embed_edge_with_mapping(
+                        h, g, neighbor_h, to_g)
+                    print(f'Embedded edge: {g}---{to_g}')
+
+                # Prepare queue to continue with adjacent nodes
+                queue.append(neighbor_h)
+                visited[h] = True
+
+        self.embedding.try_to_add_missing_edges()
+
+    def init_dfs(self):
+        """Inits G using depth first search."""
+        visited = [False] * self.H.nodes_count
+        recursion_stack = Stack()
+        self.dfs(0, visited, recursion_stack)  # start with node 0
+        self.embedding.try_to_add_missing_edges()
+
+    def dfs(self, to_h, visited, recursion_stack: Stack):
+        """Depth first search recurion"""
+        # Update status (visited array & recursion stack)
+        from_h = recursion_stack.peek()  # peek first
+        recursion_stack.push(to_h)  # then push
+        visited[to_h] = True
+
+        if from_h != None:  # from_h is None at the initial call of dfs()
+            # Get from_g
+            if from_h == 0:
+                from_g = 0
+            else:
+                from_g = self.embedding.get_mapping_H_to_G_node(from_h)
+                from_g = get_first_from_set(from_g)  # no chains yet
+
+            # Get to_g
+            # to_gs = self.embedding.get_mapping_H_to_G_node(to_h)
+            # to_g = get_first_from_set(to_gs)  # no chains yet
+            # if not to_g:  # this is often the case
+            #     free_neighbors_g = self.embedding.get_free_neighbors(from_g)
+            #     to_g = random.choice(free_neighbors_g)
+            free_neighbors_g = self.embedding.get_free_neighbors(from_g)
+            to_g = random.choice(free_neighbors_g)
+
+            # Embed
+            self.embedding.embed_edge_with_mapping(
+                from_h, from_g, to_h, to_g)
+
+        # DFS recursion
+        neighbors_h = self.H.get_neighbor_nodes(to_h)
+        for neighbor_h in neighbors_h:
+            if not visited[neighbor_h]:
+                self.dfs(neighbor_h, visited, recursion_stack)
+
+        recursion_stack.pop()
+
     def get_embedding(self):
-        return self.embedding.get_embedding()
+        return self.embedding.get_embedding(G_to_H_mapping=True)
 
     def _add_random_chain(self):
         # --- Randomly collapse two nodes to one
@@ -66,8 +171,11 @@ class EmbeddingSolver():
             if all(can_reach):
                 # Try out on playground
                 playground = self.embedding.get_playground()
-                playground.add_chain_to_used_nodes(
-                    from_node, to_node, to_node_new)
+                try:
+                    playground.add_chain_to_used_nodes(
+                        from_node, to_node, to_node_new)
+                except:
+                    continue
                 playground.try_to_add_missing_edges()
                 return playground
 
@@ -94,8 +202,11 @@ class EmbeddingSolver():
 
             # edge to_node---to_node_new
             # will be removed when adding this chain:
-            playground.add_chain_to_used_nodes(
-                from_node, to_node, to_node_new)
+            try:
+                playground.add_chain_to_used_nodes(
+                    from_node, to_node, to_node_new)
+            except:
+                return None
 
             print(
                 f'to_node_new to chain partner: {to_node_new}---{to_node_new_chain_partner}')
