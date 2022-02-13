@@ -9,14 +9,33 @@ from src.graph.undirected_graph import UndirectedGraphAdjList
 
 class Embedding():
     def __init__(self, H: UndirectedGraphAdjList):
+        """Initializes an Embedding.
+
+        Args:
+            H (UndirectedGraphAdjList): The minor Graph to embed.
+        """
+        # --- Minor H
         self.H = H
+
+        # --- Layout Graph
+        # Graph where H should be embedded to
         self.G_layout = ChimeraGraphLayout()
+
+        # --- Embedding Graph
+        # Full graph
+        # 8 nodes in one Chimera unit cell
         self.G_embedding = EmbeddingGraph(8)
+        # View graph
         self.G_embedding_view = EmbeddingGraph(H.nodes_count)
 
         self.mapping = GraphMapping()
 
-    def get_embedded_nodes(self) -> list:
+    def get_embedded_nodes(self) -> list[int]:
+        """Returns all embedded nodes.
+
+        Returns:
+            list[int]: The embedded nodes.
+        """
         return self.G_embedding.get_embedded_nodes()
 
     def get_reachable_neighbors(self, from_node):
