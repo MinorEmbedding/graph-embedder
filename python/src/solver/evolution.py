@@ -1,68 +1,7 @@
 from src.drawing.draw import Draw
+from src.graph.test_graph import TestGraph
 from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.solver.embedding_solver import EmbeddingSolver
-
-
-def init_H():
-    # House graph
-    # H = UndirectedGraphAdjList(5)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 4)
-    # H._set_edge(1, 2)
-    # H._set_edge(1, 3)
-    # H._set_edge(2, 3)
-    # H._set_edge(3, 4)
-
-    # I letter graph
-    # H = UndirectedGraphAdjList(6)
-    # H._set_edge(0, 3)
-    # H._set_edge(3, 2)
-    # H._set_edge(3, 5)
-    # H._set_edge(1, 2)
-    # H._set_edge(2, 4)
-
-    # K4 graph
-    H = UndirectedGraphAdjList(4)
-    H.set_edge(0, 1)
-    H.set_edge(0, 2)
-    H.set_edge(0, 3)
-    H.set_edge(1, 2)
-    H.set_edge(1, 3)
-    H.set_edge(2, 3)
-
-    # Pyramid graph
-    # H = UndirectedGraphAdjList(5)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 2)
-    # H._set_edge(0, 3)
-    # H._set_edge(0, 4)
-    # H._set_edge(1, 2)
-    # H._set_edge(2, 3)
-    # H._set_edge(3, 4)
-
-    # Tree-like graph
-    # H = UndirectedGraphAdjList(6)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 2)
-    # H._set_edge(0, 3)
-    # H._set_edge(1, 4)
-    # H._set_edge(1, 5)
-    # H._set_edge(2, 5)  # comment this line out to get a tree
-
-    # K5 graph (for later use with multiple chimera cells)
-    # H = UndirectedGraphAdjList(5)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 2)
-    # H._set_edge(0, 3)
-    # H._set_edge(0, 4)
-    # H._set_edge(1, 2)
-    # H._set_edge(1, 3)
-    # H._set_edge(1, 4)
-    # H._set_edge(2, 3)
-    # H._set_edge(2, 4)
-    # H._set_edge(3, 4)
-
-    return H
 
 
 def main():
@@ -70,8 +9,7 @@ def main():
 
     # --- Setup
     d = Draw()
-    H = init_H()
-    # d.draw_chimera_graph(1, 1, 4)  # one unit cell of Chimera graph
+    H = TestGraph.k4()
 
     # --- Start solving
     while True:
@@ -87,9 +25,18 @@ def main():
         # output_embedding(*after_init_embedding, d)
 
         # --- Mutation
-        playground = solver.mutate()
+        failed_mutation_count = 0
+        playground = None
+        while failed_mutation_count < 10:
+            playground = solver.mutate()
+            if playground:
+                break
+            else:
+                print('Not a viable mutation... Trying again')
+                failed_mutation_count += 1
+
         if not playground:
-            print('Not a viable mutation')
+            print('Could not achieve a viable mutation, even after 10 trials')
             return
 
         if playground.is_valid_embedding():
@@ -100,9 +47,7 @@ def main():
 def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
     print()
     print('--- Output ---')
-    d.draw_chimera_graph(1, 1, 4)
-    print('*** Final mapping ***')
-    print(mapping_G_to_H)
+    d.draw_chimera_graph(3, 3, 4)
     print('*** Final embedding ***')
     print(nodes)
     print(edges)

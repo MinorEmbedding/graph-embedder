@@ -12,19 +12,18 @@ class Embedding():
         """Initializes an Embedding.
 
         Args:
-            H (UndirectedGraphAdjList): The minor Graph to embed.
+            H (UndirectedGraphAdjList): The minor Graph to embed
         """
         # --- Minor H
         self.H = H
 
         # --- Layout Graph
-        # Graph where H should be embedded to
-        self.G_layout = ChimeraGraphLayout()
+        # Graph to embed H onto
+        self.G_layout = ChimeraGraphLayout(3, 3, 4)
 
         # --- Embedding Graph
         # Full graph
-        # 8 nodes in one Chimera unit cell
-        self.G_embedding = EmbeddingGraph(8)
+        self.G_embedding = EmbeddingGraph(self.G_layout.get_size())
         # View graph
         self.G_embedding_view = EmbeddingGraph(H.nodes_count)
 

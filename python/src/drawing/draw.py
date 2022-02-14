@@ -6,25 +6,25 @@ import networkx as nx
 class Draw():
 
     def __init__(self):
-        self.pos = {
-            0: (0., -0.5),
-            1: (0.25, -0.5),
-            2: (0.75, -0.5),
-            3: (1, -0.5),
-            4: (0.5, 0.),
-            5: (0.5, -0.25),
-            6: (0.5, -0.75),
-            7: (0.5, -1.)
-        }
+        # self.pos = {
+        #     0: (0., -0.5),
+        #     1: (0.25, -0.5),
+        #     2: (0.75, -0.5),
+        #     3: (1, -0.5),
+        #     4: (0.5, 0.),
+        #     5: (0.5, -0.25),
+        #     6: (0.5, -0.75),
+        #     7: (0.5, -1.)
+        # }
         self.chain_colors = ['#55C1D9', '#F29E38',
                              '#F23827', '#D748F5', '#39DBC8']
 
     def draw_chimera_graph(self, m, n, t):
         """Draws a Chimera graph."""
         G = dnx.chimera_graph(m, n, t)
-        pos_chimera = dnx.chimera_layout(G)
+        self.pos_chimera = dnx.chimera_layout(G)
         nx.draw_networkx(G,
-                         pos=pos_chimera,
+                         pos=self.pos_chimera,
                          width=2,
                          with_labels=False,
                          node_color='#858585',
@@ -58,7 +58,7 @@ class Draw():
             chain_color = self.chain_colors[chain % len(self.chain_colors)]
             nx.draw_networkx(graph,
                              labels=labels,
-                             pos=self.pos,
+                             pos=self.pos_chimera,
                              width=3,
                              style='solid',
                              node_color='#363636',
