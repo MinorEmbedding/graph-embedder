@@ -1,3 +1,4 @@
+import networkx as nx
 from src.graph.undirected_graph import UndirectedGraphAdjList
 
 
@@ -25,30 +26,11 @@ class TestGraph():
         return H
 
     @staticmethod
-    def k4() -> UndirectedGraphAdjList:
-        H = UndirectedGraphAdjList(4)
-        H.set_edge(0, 1)
-        H.set_edge(0, 2)
-        H.set_edge(0, 3)
-        H.set_edge(1, 2)
-        H.set_edge(1, 3)
-        H.set_edge(2, 3)
-        return H
-
-    @staticmethod
-    def k5() -> UndirectedGraphAdjList:
-        # can only be embedded using multiple chimera cells
-        H = UndirectedGraphAdjList(5)
-        H.set_edge(0, 1)
-        H.set_edge(0, 2)
-        H.set_edge(0, 3)
-        H.set_edge(0, 4)
-        H.set_edge(1, 2)
-        H.set_edge(1, 3)
-        H.set_edge(1, 4)
-        H.set_edge(2, 3)
-        H.set_edge(2, 4)
-        H.set_edge(3, 4)
+    def k(n: int) -> UndirectedGraphAdjList:
+        G = nx.complete_graph(n)
+        H = UndirectedGraphAdjList(n)
+        for e in G.edges:
+            H.set_edge(e[0], e[1])
         return H
 
     @staticmethod
