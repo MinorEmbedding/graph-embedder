@@ -141,6 +141,9 @@ class EmbeddingSolver():
     def get_embedding(self):
         return self.embedding.get_embedding(G_to_H_mapping=True)
 
+    def commit(self, playground: Embedding):
+        self.embedding = playground
+
     def _add_random_chain(self):
         # --- Randomly collapse two nodes to one
         nodes_embedded = self.embedding.get_embedded_nodes()
@@ -203,6 +206,8 @@ class EmbeddingSolver():
             # edge to_node---to_node_new
             # will be removed when adding this chain:
             try:
+                print(
+                    f'Trying to add chain to used nodes: {from_node}, {to_node}, {to_node_new}')
                 playground.add_chain_to_used_nodes(
                     from_node, to_node, to_node_new)
             except:

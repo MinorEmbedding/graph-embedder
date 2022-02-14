@@ -71,6 +71,10 @@ class Draw():
         self._draw(nodes, edges, mapping_G_to_H)
         plt.show()
 
+    def save_and_clear(self, path):
+        plt.savefig(path)  # Save
+        plt.clf()  # Clear
+
     ############################ Big Plot ######################################
 
     def init_big_plot(self, row_count):

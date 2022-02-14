@@ -1,54 +1,98 @@
+import os
+import shutil
+
 from src.drawing.draw import Draw
 from src.graph.test_graph import TestGraph
-from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.solver.embedding_solver import EmbeddingSolver
 
+################################# Params #######################################
 
-def main():
+solver_iterations = 10
+mutation_trials = 100
+
+
+############################### Evolution ######################################
+
+def main_loop():
+    while True:
+        try:
+            res = main()
+            if res:
+                break
+        except:
+            pass
+
+
+def main() -> bool:
     print('--- Main ---')
+
+    # --- Clear
+    # Clear out directory
+    # try:
+    #     shutil.rmtree('./out/')
+    # except FileNotFoundError:
+    #     pass
+    # os.mkdir('./out/')
 
     # --- Setup
     d = Draw()
-    H = TestGraph.k4()
+    H = TestGraph.k(6)
 
-    # --- Start solving
-    while True:
-        solver = EmbeddingSolver(H)
-        solver.init_dfs()
+    solver = EmbeddingSolver(H)
+    solver.init_dfs()
 
-        found_embedding = solver.found_embedding()
-        if found_embedding:
-            print('🎉 Directly found embedding after initialization')
-            output_embedding(*solver.get_embedding(), d)
-            return
-        # after_init_embedding = solver.get_embedding()
-        # output_embedding(*after_init_embedding, d)
+    if solver.found_embedding():
+        print('🎉 Directly found embedding after initialization')
+        output_embedding(*solver.get_embedding(), d)
+        return False
+
+    # --- Start solver
+    i = 0
+    while i < solver_iterations:
+        print()
+        print(f'🔄 New solver iteration: {i}')
+        print()
+
+        # output_embedding(*solver.get_embedding(), d)
+        # save_embedding(*solver.get_embedding(), d, i)
 
         # --- Mutation
-        failed_mutation_count = 0
+        mutation_count = 0
         playground = None
-        while failed_mutation_count < 10:
+
+        while mutation_count < mutation_trials:
             playground = solver.mutate()
             if playground:
                 break
             else:
-                print('Not a viable mutation... Trying again')
-                failed_mutation_count += 1
+                mutation_count += 1
 
         if not playground:
-            print('Could not achieve a viable mutation, even after 10 trials')
-            return
+            print(
+                f'❌ Could not achieve a viable mutation, even after {mutation_trials} trials')
+            print(f'In Mutation: {i}')
+            return False
 
         if playground.is_valid_embedding():
+            print('🎉🎉🎉🎉🎉🎉 Found embedding')
             output_embedding(*playground.get_embedding(), d)
-            return
+            return True
+        else:
+            print('✅ Mutation succeeded, but is not yet a valid embedding')
+            solver.commit(playground)
 
+        i += 1
+
+    return False
+
+
+################################ Output ########################################
 
 def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
     print()
     print('--- Output ---')
     d.draw_chimera_graph(3, 3, 4)
-    print('*** Final embedding ***')
+    print('*** Embedding ***')
     print(nodes)
     print(edges)
     print(mapping_G_to_H)
@@ -56,5 +100,13 @@ def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
     d.draw_embedding(nodes, edges, mapping_G_to_H)
 
 
+def save_embedding(nodes, edges, mapping_G_to_H, d: Draw, i: int):
+    d.draw_chimera_graph(3, 3, 4)
+    d._draw(nodes, edges, mapping_G_to_H)
+    d.save_and_clear(f'./out/{i}.svg')
+
+
+################################ Main ##########################################
+
 if __name__ == "__main__":
-    main()
+    main_loop()
