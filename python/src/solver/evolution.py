@@ -46,9 +46,10 @@ def main() -> bool:
 
     solver = EmbeddingSolver(H)
     solver.init_dfs()
+    save_embedding(*solver.get_embedding(), d, -1)
 
     if solver.found_embedding():
-        print('🎉 Directly found embedding after initialization')
+        logger.info('🎉 Directly found embedding after initialization')
         output_embedding(*solver.get_embedding(), d)
         return False
 
@@ -85,6 +86,7 @@ def main() -> bool:
             logger.info(
                 '✅ Mutation succeeded, but is not yet a valid embedding')
             solver.commit(playground)
+            save_embedding(*solver.get_embedding(), d, i)
 
         i += 1
 
@@ -94,8 +96,6 @@ def main() -> bool:
 ################################ Output ########################################
 
 def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
-    print()
-    print('--- Output ---')
     d.draw_chimera_graph(3, 3, 4)
     logger.info('*** Embedding ***')
     logger.info(nodes)
