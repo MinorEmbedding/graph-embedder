@@ -107,7 +107,7 @@ class EmbeddingGraph(UndirectedGraphAdjList):
 
         return nodes
 
-    def get_node_chains(self, node: int) -> list[int]:
+    def get_node_chains(self, node: int) -> set[int]:
         """Returns all chains in which the current node is contained.
 
         A node might be contained in multiple chains. This would be an incorrect
@@ -118,11 +118,11 @@ class EmbeddingGraph(UndirectedGraphAdjList):
             node (int): The node for which the chains are to be determined.
 
         Returns:
-            list[int]: All chains in which `node` is contained.
+            set[int]: All chains in which `node` is contained.
         """
         edges = super().get_neighbor_nodes_with_costs(node)
         chains = [edge[1] for edge in edges]
-        return chains
+        return set(chains)
 
     def get_chain_nodes(self, chain: int) -> list[int]:
         """Returns all nodes that are contained in a given chain.
