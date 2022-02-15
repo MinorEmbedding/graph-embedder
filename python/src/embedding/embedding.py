@@ -1,10 +1,13 @@
 import itertools
+import logging
 from copy import deepcopy
 
 from src.embedding.graph_mapping import GraphMapping
 from src.graph.chimera_graph import ChimeraGraphLayout
 from src.graph.embedding_graph import EmbeddingGraph
 from src.graph.undirected_graph import UndirectedGraphAdjList
+
+logger = logging.getLogger('evolution')
 
 
 class Embedding():
@@ -177,7 +180,7 @@ class Embedding():
 
             for to in expected_tos:
                 if to not in actual_tos:
-                    # print(f'missing edge from H: {frm}-{to}')
+                    # logger.info(f'missing edge from H: {frm}-{to}')
                     # Can we add this edge with the current embedding?
                     possible_edges = list(itertools.product(
                         self.mapping.get_node_G(node_H=frm), self.mapping.get_node_G(node_H=to)))
@@ -186,7 +189,8 @@ class Embedding():
                     for possible_edge in possible_edges:
                         if self.G_layout.exists_edge(possible_edge[0], possible_edge[1]):
                             self.embed_edge(possible_edge[0], possible_edge[1])
-                            print(f'added missing edge from H: {frm}-{to}')
+                            logger.info(
+                                f'added missing edge from H: {frm}-{to}')
                             missing_edges_added += 1
                             break  # successfully added missing edge
 

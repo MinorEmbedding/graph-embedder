@@ -1,9 +1,12 @@
+import logging
 import random
 
 from src.embedding.embedding import Embedding
 from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.util.stack import Stack
 from src.util.util import get_first_from_set
+
+logger = logging.getLogger('evolution')
 
 
 class EmbeddingSolver():
@@ -87,7 +90,7 @@ class EmbeddingSolver():
                     # Embed
                     self.embedding.embed_edge_with_mapping(
                         h, g, neighbor_h, to_g)
-                    print(f'Embedded edge: {g}---{to_g}')
+                    logger.info(f'Embedded edge: {g}---{to_g}')
 
                 # Prepare queue to continue with adjacent nodes
                 queue.append(neighbor_h)
@@ -151,7 +154,7 @@ class EmbeddingSolver():
         from_node = random.choice(nodes_embedded)
         node_tos = self.embedding.get_connected_neighbors(from_node)
         to_node = random.choice(node_tos)
-        print(f'Trying to chain nodes {from_node} and {to_node}')
+        logger.info(f'Trying to chain nodes {from_node} and {to_node}')
 
         # --- Adjust so that new chain is viable
         # find new place for previous node_to in the graph
@@ -164,7 +167,7 @@ class EmbeddingSolver():
 
         # --- 1) Try out all possible positions for node_to_new
         for to_node_new in to_node_free_neighbors:
-            print(f'node_to_new: {to_node_new}')
+            logger.info(f'node_to_new: {to_node_new}')
 
             # from node_to_new: can we reach all nodes previously connected to node_to?
             node_to_new_reachable_neighbors = self.embedding.get_reachable_neighbors(
@@ -206,14 +209,14 @@ class EmbeddingSolver():
             # edge to_node---to_node_new
             # will be removed when adding this chain:
             try:
-                print(
+                logger.info(
                     f'Trying to add chain to used nodes: {from_node}, {to_node}, {to_node_new}')
                 playground.add_chain_to_used_nodes(
                     from_node, to_node, to_node_new)
             except:
                 return None
 
-            print(
+            logger.info(
                 f'to_node_new to chain partner: {to_node_new}---{to_node_new_chain_partner}')
             playground.try_to_add_missing_edges()
             return playground
@@ -225,7 +228,7 @@ class EmbeddingSolver():
         """
         Mutates the embedding. Supports adding random chains rights now.
         """
-        print('--- MUTATION')
+        logger.info('--- MUTATION')
         # --- Delete & Insert edge
         # Delete an edge between two random nodes that were already embedded.
         # Insert a new edge between two other random nodes that were already embedded.

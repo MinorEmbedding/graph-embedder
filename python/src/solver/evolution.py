@@ -1,9 +1,15 @@
+import logging
 import os
 import shutil
 
 from src.drawing.draw import Draw
 from src.graph.test_graph import TestGraph
 from src.solver.embedding_solver import EmbeddingSolver
+from src.util.logging import init_logger
+
+init_logger()
+logger = logging.getLogger('evolution')
+
 
 ################################# Params #######################################
 
@@ -24,7 +30,7 @@ def main_loop():
 
 
 def main() -> bool:
-    print('--- Main ---')
+    # logger.info('--- Main ---')
 
     # --- Clear
     # Clear out directory
@@ -49,9 +55,8 @@ def main() -> bool:
     # --- Start solver
     i = 0
     while i < solver_iterations:
-        print()
-        print(f'🔄 New solver iteration: {i}')
-        print()
+        logger.info('')
+        logger.info(f'🔄 New solver iteration: {i}')
 
         # output_embedding(*solver.get_embedding(), d)
         # save_embedding(*solver.get_embedding(), d, i)
@@ -68,17 +73,17 @@ def main() -> bool:
                 mutation_count += 1
 
         if not playground:
-            print(
-                f'❌ Could not achieve a viable mutation, even after {mutation_trials} trials')
-            print(f'In Mutation: {i}')
+            logger.info(
+                f'❌ Not a viable mutation even after {mutation_trials} trials (in solver iteration: {i}')
             return False
 
         if playground.is_valid_embedding():
-            print('🎉🎉🎉🎉🎉🎉 Found embedding')
+            logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
             output_embedding(*playground.get_embedding(), d)
             return True
         else:
-            print('✅ Mutation succeeded, but is not yet a valid embedding')
+            logger.info(
+                '✅ Mutation succeeded, but is not yet a valid embedding')
             solver.commit(playground)
 
         i += 1
@@ -92,10 +97,10 @@ def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
     print()
     print('--- Output ---')
     d.draw_chimera_graph(3, 3, 4)
-    print('*** Embedding ***')
-    print(nodes)
-    print(edges)
-    print(mapping_G_to_H)
+    logger.info('*** Embedding ***')
+    logger.info(nodes)
+    logger.info(edges)
+    logger.info(mapping_G_to_H)
 
     d.draw_embedding(nodes, edges, mapping_G_to_H)
 
