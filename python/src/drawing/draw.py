@@ -17,16 +17,19 @@ class Draw():
         #     7: (0.5, -1.)
         # }
         self.chain_colors = ['#55C1D9', '#F29E38',
-                             '#F23827', '#D748F5', '#39DBC8']
+                             '#F23827', '#D748F5', '#39DBC8', '#F5428A',
+                             '#3CDE73', '#11F0EB', '#E9B952', '#7D2EFF',
+                             '#DBDE5D', '#3A2CE0', '#DE6E31', '#E0165C']
 
     def draw_chimera_graph(self, m, n, t):
         """Draws a Chimera graph."""
         G = dnx.chimera_graph(m, n, t)
         self.pos_chimera = dnx.chimera_layout(G)
+
         nx.draw_networkx(G,
                          pos=self.pos_chimera,
                          width=2,
-                         with_labels=False,
+                         with_labels=True,
                          node_color='#858585',
                          edge_color='#BABABA')
         # dnx.draw_chimera(G,
@@ -72,8 +75,12 @@ class Draw():
         plt.show()
 
     def save_and_clear(self, path):
-        plt.savefig(path)  # Save
-        plt.clf()  # Clear
+        # plt.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0)
+        px = 1/plt.rcParams['figure.dpi']  # pixel in inches
+        fig = plt.gcf()
+        fig.set_size_inches(1000*px, 1000*px)
+        fig.savefig(path, bbox_inches='tight')
+        plt.clf()
 
     ############################ Big Plot ######################################
 
