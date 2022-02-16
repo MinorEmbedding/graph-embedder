@@ -149,8 +149,11 @@ class EmbeddingSolver():
 
     def _add_random_chain(self):
         # --- Randomly collapse two nodes to one
-        nodes_embedded = self.embedding.get_embedded_nodes()
-        # TODO: make sure we don't use nodes that are already in a chain
+        nodes_embedded = self.embedding.get_embedded_nodes_not_in_chain()
+        if not nodes_embedded:
+            logger.info('🔴 No nodes to embed (all nodes are in a chain)')
+            return None
+
         from_node = random.choice(nodes_embedded)
         node_tos = self.embedding.get_connected_neighbors(from_node)
         to_node = random.choice(node_tos)
