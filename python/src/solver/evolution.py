@@ -1,115 +1,138 @@
-from src.drawing.draw import Draw
-from src.graph.undirected_graph import UndirectedGraphAdjList
+import logging
+import os
+import shutil
+
+from src.drawing.draw import DrawEmbedding
+from src.graph.test_graph import TestGraph
 from src.solver.embedding_solver import EmbeddingSolver
+from src.util.logging import init_logger
+
+init_logger()
+logger = logging.getLogger('evolution')
 
 
-def init_H():
-    # House graph
-    # H = UndirectedGraphAdjList(5)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 4)
-    # H._set_edge(1, 2)
-    # H._set_edge(1, 3)
-    # H._set_edge(2, 3)
-    # H._set_edge(3, 4)
+################################# Params #######################################
 
-    # I letter graph
-    # H = UndirectedGraphAdjList(6)
-    # H._set_edge(0, 3)
-    # H._set_edge(3, 2)
-    # H._set_edge(3, 5)
-    # H._set_edge(1, 2)
-    # H._set_edge(2, 4)
-
-    # K4 graph
-    H = UndirectedGraphAdjList(4)
-    H.set_edge(0, 1)
-    H.set_edge(0, 2)
-    H.set_edge(0, 3)
-    H.set_edge(1, 2)
-    H.set_edge(1, 3)
-    H.set_edge(2, 3)
-
-    # Pyramid graph
-    # H = UndirectedGraphAdjList(5)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 2)
-    # H._set_edge(0, 3)
-    # H._set_edge(0, 4)
-    # H._set_edge(1, 2)
-    # H._set_edge(2, 3)
-    # H._set_edge(3, 4)
-
-    # Tree-like graph
-    # H = UndirectedGraphAdjList(6)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 2)
-    # H._set_edge(0, 3)
-    # H._set_edge(1, 4)
-    # H._set_edge(1, 5)
-    # H._set_edge(2, 5)  # comment this line out to get a tree
-
-    # K5 graph (for later use with multiple chimera cells)
-    # H = UndirectedGraphAdjList(5)
-    # H._set_edge(0, 1)
-    # H._set_edge(0, 2)
-    # H._set_edge(0, 3)
-    # H._set_edge(0, 4)
-    # H._set_edge(1, 2)
-    # H._set_edge(1, 3)
-    # H._set_edge(1, 4)
-    # H._set_edge(2, 3)
-    # H._set_edge(2, 4)
-    # H._set_edge(3, 4)
-
-    return H
+solver_iterations = 15
+mutation_trials = 10
+max_total = 1
 
 
-def main():
-    print('--- Main ---')
+############################### Evolution ######################################
+
+def main_loop():
+    i = 0
+    while i < max_total:
+        logger.info('')
+        logger.info('#############')
+        logger.info('🎈 NEW MAIN 🎈')
+        logger.info('#############')
+        logger.info('')
+        logger.info(f'Calling main: {i}')
+
+        res = main()
+        if res:
+            break
+        i += 1
+
+
+def main() -> bool:
+    # logger.info('--- Main ---')
+
+    # --- Clear
+    # Clear out directory
+    try:
+        shutil.rmtree('./out/')
+    except FileNotFoundError:
+        pass
+    os.mkdir('./out/')
 
     # --- Setup
-    d = Draw()
-    H = init_H()
-    # d.draw_chimera_graph(1, 1, 4)  # one unit cell of Chimera graph
+    d = DrawEmbedding()
+    H = TestGraph.k(6)
 
-    # --- Start solving
-    while True:
-        solver = EmbeddingSolver(H)
-        solver.init_dfs()
+    solver = EmbeddingSolver(H)
+    solver.init_dfs()
+    save_embedding(*solver.get_embedding(), d, -1,
+                   title=f'Initial embedding')
 
-        found_embedding = solver.found_embedding()
-        if found_embedding:
-            print('🎉 Directly found embedding after initialization')
-            output_embedding(*solver.get_embedding(), d)
-            return
-        # after_init_embedding = solver.get_embedding()
-        # output_embedding(*after_init_embedding, d)
+    if solver.found_embedding():
+        logger.info('🎉 Directly found embedding after initialization')
+        output_embedding(*solver.get_embedding(), d)
+        return False
+
+    # --- Start solver
+    i = 0
+    while i < solver_iterations:
+        logger.info('')
+        logger.info(f'🔄 New solver iteration: {i}')
+
+        # output_embedding(*solver.get_embedding(), d)
+        # save_embedding(*solver.get_embedding(), d, i)
 
         # --- Mutation
-        playground = solver.mutate()
+        mutation_count = 0
+        playground = None
+
+        while mutation_count < mutation_trials:
+            playground = solver.mutate()
+            if playground:
+                break
+            else:
+                mutation_count += 1
+
         if not playground:
-            print('Not a viable mutation')
-            return
+            logger.info(
+                f'❌ Not a viable mutation even after {mutation_trials} trials (in solver iteration: {i}')
+            save_final(d)
+            return False
+
+        solver.commit(playground)
+        # save_embedding(*solver.get_embedding(), d, i,
+        #                title=f'{i}: Mutation')
+
+        # Local maximum
+        solver.local_maximum()
+        save_embedding(*solver.get_embedding(), d, i,
+                       title=f'{i}: Local maximum')
 
         if playground.is_valid_embedding():
-            output_embedding(*playground.get_embedding(), d)
-            return
+            logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
+            save_final(d)
+            return True
+        else:
+            logger.info(
+                '✅ Mutation succeeded, but is not yet a valid embedding')
+
+        i += 1
+
+    save_final(d)
+    return False
 
 
-def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
-    print()
-    print('--- Output ---')
-    d.draw_chimera_graph(1, 1, 4)
-    print('*** Final mapping ***')
-    print(mapping_G_to_H)
-    print('*** Final embedding ***')
-    print(nodes)
-    print(edges)
-    print(mapping_G_to_H)
+################################ Output ########################################
+
+def output_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding):
+    logger.info('*** Embedding ***')
+    logger.info(nodes)
+    logger.info(edges)
+    logger.info(mapping_G_to_H)
 
     d.draw_embedding(nodes, edges, mapping_G_to_H)
+    d.show_embedding()
+
+
+def save_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding, i: int, title=''):
+    d.draw_whole_embedding_step(nodes, edges, mapping_G_to_H, title=title)
+    # d.draw_embedding(nodes, edges, mapping_G_to_H)
+    # d.save_and_clear(f'./out/{i}.svg')
+
+
+def save_final(d: DrawEmbedding) -> None:
+    d.save_and_clear(f'./out/steps.svg')
+
+################################ Main ##########################################
 
 
 if __name__ == "__main__":
-    main()
+    main_loop()

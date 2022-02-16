@@ -1,9 +1,12 @@
+import logging
 import random
 
-from src.embedding.embedding import Embedding
+from src.embedding.embedding import Embedding, NoFreeNeighborNodes
 from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.util.stack import Stack
 from src.util.util import get_first_from_set
+
+logger = logging.getLogger('evolution')
 
 
 class EmbeddingSolver():
@@ -14,6 +17,7 @@ class EmbeddingSolver():
             raise NameError('The minor to embed must have at least two nodes')
 
         self.embedding = Embedding(H)
+        self.non_viable_mutations = []
 
     def init_basic_path(self) -> None:
         """Inits the graph as path graph starting from vertex 0 in the Chimera graph.
@@ -32,8 +36,6 @@ class EmbeddingSolver():
             self.embedding.embed_edge(node_from, node_to)
 
             node_from = node_to
-
-        self.embedding.try_to_add_missing_edges()
 
     def init_bfs(self):
         """Traverses through H and inits graph H usugin breadth first search on H."""
@@ -87,20 +89,17 @@ class EmbeddingSolver():
                     # Embed
                     self.embedding.embed_edge_with_mapping(
                         h, g, neighbor_h, to_g)
-                    print(f'Embedded edge: {g}---{to_g}')
+                    logger.info(f'Embedded edge: {g}---{to_g}')
 
                 # Prepare queue to continue with adjacent nodes
                 queue.append(neighbor_h)
                 visited[h] = True
-
-        self.embedding.try_to_add_missing_edges()
 
     def init_dfs(self):
         """Inits G using depth first search."""
         visited = [False] * self.H.nodes_count
         recursion_stack = Stack()
         self.dfs(0, visited, recursion_stack)  # start with node 0
-        self.embedding.try_to_add_missing_edges()
 
     def dfs(self, to_h, visited, recursion_stack: Stack):
         """Depth first search recurion"""
@@ -141,42 +140,55 @@ class EmbeddingSolver():
     def get_embedding(self):
         return self.embedding.get_embedding(G_to_H_mapping=True)
 
+    def commit(self, playground: Embedding):
+        self.embedding = playground
+        self.reset()
+
+    def reset(self):
+        self.non_viable_mutations = []
+
     def _add_random_chain(self):
         # --- Randomly collapse two nodes to one
-        nodes_embedded = self.embedding.get_embedded_nodes()
-        # TODO: make sure we don't use nodes that are already in a chain
+        nodes_embedded = self.embedding.get_embedded_nodes_not_in_chain()
+        if not nodes_embedded:
+            logger.info('🔴 No nodes to embed (all nodes are in a chain)')
+            return None
+
         from_node = random.choice(nodes_embedded)
         node_tos = self.embedding.get_connected_neighbors(from_node)
         to_node = random.choice(node_tos)
-        print(f'Trying to chain nodes {from_node} and {to_node}')
+        logger.info(f'Trying to chain nodes {from_node} and {to_node}')
+
+        # Avoid unnecessary calculations
+        if (from_node, to_node) in self.non_viable_mutations:
+            return None
 
         # --- Adjust so that new chain is viable
         # find new place for previous node_to in the graph
         # so that the layout permits the following edges
         # node_to   --- node_to'
         # node_to'  --- all_nodes reachable from node_to
-        to_node_free_neighbors = self.embedding.get_free_neighbors(to_node)
+        try:
+            to_node_free_neighbors = self.embedding.get_free_neighbors(to_node)
+        except NoFreeNeighborNodes:
+            return None
         to_node_connected_neighbors = self.embedding.get_connected_neighbors(
             to_node)
 
         # --- 1) Try out all possible positions for node_to_new
         for to_node_new in to_node_free_neighbors:
-            print(f'node_to_new: {to_node_new}')
+            logger.info(f'node_to_new: {to_node_new}')
 
             # from node_to_new: can we reach all nodes previously connected to node_to?
             node_to_new_reachable_neighbors = self.embedding.get_reachable_neighbors(
                 to_node_new)
             can_reach = [neighbor in node_to_new_reachable_neighbors
                          for neighbor in to_node_connected_neighbors if neighbor != from_node]
-            if all(can_reach):
+            if all(can_reach):  # is also true for []
                 # Try out on playground
                 playground = self.embedding.get_playground()
-                try:
-                    playground.add_chain_to_used_nodes(
-                        from_node, to_node, to_node_new)
-                except:
-                    continue
-                playground.try_to_add_missing_edges()
+                playground.add_chain_to_used_nodes(
+                    from_node, to_node, to_node_new)
                 return playground
 
         # --- 2) If step 1) did not work, try to construct another new chain (-> two chains in total)
@@ -184,6 +196,8 @@ class EmbeddingSolver():
         to_node_new_free_neighbors = self.embedding.get_free_neighbors(
             to_node_new)
         to_node_new_chain_partner = to_node_new_free_neighbors[0]
+        logger.info(
+            f'Trying to construct another chain: {to_node_new}, {to_node_new_chain_partner}')
 
         # from to_node_new AND to_node_new_chain_partner:
         # Can we now reach all nodes previously connected to node_to
@@ -201,26 +215,25 @@ class EmbeddingSolver():
                 to_node_new, to_node_new_chain_partner, extend_G=to_node)
 
             # edge to_node---to_node_new
-            # will be removed when adding this chain:
-            try:
-                playground.add_chain_to_used_nodes(
-                    from_node, to_node, to_node_new)
-            except:
-                return None
+            # will be removed and inserted again when adding this chain:
+            logger.info(
+                f'Trying to add chain to used nodes: {from_node}, {to_node}, {to_node_new}')
+            playground.add_chain_to_used_nodes(
+                from_node, to_node, to_node_new, to_node_new_chain_partner)
 
-            print(
+            logger.info(
                 f'to_node_new to chain partner: {to_node_new}---{to_node_new_chain_partner}')
-            playground.try_to_add_missing_edges()
             return playground
 
         # 3. If all of that fails, mark the mutation as failed
+        self.non_viable_mutations.append((from_node, to_node))
         return None
 
     def mutate(self):
         """
         Mutates the embedding. Supports adding random chains rights now.
         """
-        print('--- MUTATION')
+        logger.info('--- MUTATION')
         # --- Delete & Insert edge
         # Delete an edge between two random nodes that were already embedded.
         # Insert a new edge between two other random nodes that were already embedded.
@@ -234,6 +247,9 @@ class EmbeddingSolver():
         # TODO: with low probability: view reduced graph from completely different view
         # maybe from this perspective, we can leverage some better mutations
         # and reduce the costs faster
+
+    def local_maximum(self):
+        self.embedding.try_to_add_missing_edges()
 
     def found_embedding(self) -> bool:
         return self.embedding.is_valid_embedding()
