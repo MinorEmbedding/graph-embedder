@@ -1,7 +1,7 @@
 import logging
 import random
 
-from src.embedding.embedding import Embedding
+from src.embedding.embedding import Embedding, NoFreeNeighborNodes
 from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.util.stack import Stack
 from src.util.util import get_first_from_set
@@ -164,7 +164,10 @@ class EmbeddingSolver():
         # so that the layout permits the following edges
         # node_to   --- node_to'
         # node_to'  --- all_nodes reachable from node_to
-        to_node_free_neighbors = self.embedding.get_free_neighbors(to_node)
+        try:
+            to_node_free_neighbors = self.embedding.get_free_neighbors(to_node)
+        except NoFreeNeighborNodes:
+            return None
         to_node_connected_neighbors = self.embedding.get_connected_neighbors(
             to_node)
 
@@ -177,14 +180,11 @@ class EmbeddingSolver():
                 to_node_new)
             can_reach = [neighbor in node_to_new_reachable_neighbors
                          for neighbor in to_node_connected_neighbors if neighbor != from_node]
-            if all(can_reach):
+            if all(can_reach):  # is also true for []
                 # Try out on playground
                 playground = self.embedding.get_playground()
-                try:
-                    playground.add_chain_to_used_nodes(
-                        from_node, to_node, to_node_new)
-                except:
-                    continue
+                playground.add_chain_to_used_nodes(
+                    from_node, to_node, to_node_new)
                 playground.try_to_add_missing_edges()
                 return playground
 
@@ -210,14 +210,11 @@ class EmbeddingSolver():
                 to_node_new, to_node_new_chain_partner, extend_G=to_node)
 
             # edge to_node---to_node_new
-            # will be removed when adding this chain:
-            try:
-                logger.info(
-                    f'Trying to add chain to used nodes: {from_node}, {to_node}, {to_node_new}')
-                playground.add_chain_to_used_nodes(
-                    from_node, to_node, to_node_new)
-            except:
-                return None
+            # will be removed and inserted again when adding this chain:
+            logger.info(
+                f'Trying to add chain to used nodes: {from_node}, {to_node}, {to_node_new}')
+            playground.add_chain_to_used_nodes(
+                from_node, to_node, to_node_new, to_node_new_chain_partner)
 
             logger.info(
                 f'to_node_new to chain partner: {to_node_new}---{to_node_new_chain_partner}')
