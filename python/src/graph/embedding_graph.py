@@ -1,4 +1,7 @@
+from typing import Optional
+
 from src.graph.undirected_graph import UndirectedGraphAdjList
+from src.util.util import get_first_from_set
 
 
 class EmbeddingGraph(UndirectedGraphAdjList):
@@ -40,6 +43,8 @@ class EmbeddingGraph(UndirectedGraphAdjList):
             GraphNodeIndexError: If the given node ``frm`` or ``to`` \
             does not exist in the Graph.
         """
+        if not chain:
+            chain = 0
         super().set_edge(frm, to, cost=chain)
 
     def get_embedded_edges(self) -> list[tuple[int, int, int]]:
@@ -107,7 +112,7 @@ class EmbeddingGraph(UndirectedGraphAdjList):
 
         return nodes
 
-    def get_node_chains(self, node: int) -> set[int]:
+    def get_node_chains(self, node: int, include_default_chain=True) -> set[int]:
         """Returns all chains in which the current node is contained.
 
         A node might be contained in multiple chains. This would be an incorrect
@@ -115,14 +120,25 @@ class EmbeddingGraph(UndirectedGraphAdjList):
         temporarily invalid states which may be beneficial for some algorithms.
 
         Args:
-            node (int): The node for which the chains are to be determined.
+            node (int):
+                The node for which the chains are to be determined.
+            include_default_chain (bool):
+                Whether to include the default chain (0) in the results or not.
+                Default to True.
 
         Returns:
             set[int]: All chains in which `node` is contained.
         """
         edges = super().get_neighbor_nodes_with_costs(node)
         chains = [edge[1] for edge in edges]
-        return set(chains)
+        chains = set(chains)
+        if not include_default_chain:
+            chains.discard(0)
+        return chains
+
+    def get_first_node_chain_other_than_default(self, node: int) -> Optional[int]:
+        chains = self.get_node_chains(node, include_default_chain=False)
+        return get_first_from_set(chains)
 
     def get_chain_nodes(self, chain: int) -> list[int]:
         """Returns all nodes that are contained in a given chain.
