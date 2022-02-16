@@ -2,7 +2,7 @@ import logging
 import os
 import shutil
 
-from src.drawing.draw import Draw
+from src.drawing.draw import DrawEmbedding
 from src.graph.test_graph import TestGraph
 from src.solver.embedding_solver import EmbeddingSolver
 from src.util.logging import init_logger
@@ -48,12 +48,13 @@ def main() -> bool:
     os.mkdir('./out/')
 
     # --- Setup
-    d = Draw()
+    d = DrawEmbedding()
     H = TestGraph.k(6)
 
     solver = EmbeddingSolver(H)
     solver.init_dfs()
-    save_embedding(*solver.get_embedding(), d, -1)
+    save_embedding(*solver.get_embedding(), d, -1,
+                   title=f'Initial embedding')
 
     if solver.found_embedding():
         logger.info('🎉 Directly found embedding after initialization')
@@ -83,42 +84,55 @@ def main() -> bool:
         if not playground:
             logger.info(
                 f'❌ Not a viable mutation even after {mutation_trials} trials (in solver iteration: {i}')
+            save_final(d)
             return False
+
+        solver.commit(playground)
+        save_embedding(*solver.get_embedding(), d, i,
+                       title=f'{i}: Mutation')
+
+        # Local maximum
+        solver.local_maximum()
+        save_embedding(*solver.get_embedding(), d, i,
+                       title=f'{i}: Local maximum')
 
         if playground.is_valid_embedding():
             logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
-            output_embedding(*playground.get_embedding(), d)
+            save_final(d)
             return True
         else:
             logger.info(
                 '✅ Mutation succeeded, but is not yet a valid embedding')
-            solver.commit(playground)
-            save_embedding(*solver.get_embedding(), d, i)
 
         i += 1
 
+    save_final(d)
     return False
 
 
 ################################ Output ########################################
 
-def output_embedding(nodes, edges, mapping_G_to_H, d: Draw):
-    d.draw_chimera_graph(3, 3, 4)
+def output_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding):
     logger.info('*** Embedding ***')
     logger.info(nodes)
     logger.info(edges)
     logger.info(mapping_G_to_H)
 
     d.draw_embedding(nodes, edges, mapping_G_to_H)
+    d.show_embedding()
 
 
-def save_embedding(nodes, edges, mapping_G_to_H, d: Draw, i: int):
-    d.draw_chimera_graph(3, 3, 4)
-    d._draw(nodes, edges, mapping_G_to_H)
-    d.save_and_clear(f'./out/{i}.svg')
+def save_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding, i: int, title=''):
+    d.draw_whole_embedding_step(nodes, edges, mapping_G_to_H, title=title)
+    # d.draw_embedding(nodes, edges, mapping_G_to_H)
+    # d.save_and_clear(f'./out/{i}.svg')
 
+
+def save_final(d: DrawEmbedding) -> None:
+    d.save_and_clear(f'./out/steps.svg')
 
 ################################ Main ##########################################
+
 
 if __name__ == "__main__":
     main_loop()

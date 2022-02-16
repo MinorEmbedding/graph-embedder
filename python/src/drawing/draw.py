@@ -1,25 +1,31 @@
 import dwave_networkx as dnx
 import matplotlib.pyplot as plt
 import networkx as nx
+from matplotlib import gridspec
+from matplotlib.axes import Axes
 
 
-class Draw():
+class DrawEmbedding():
 
     def __init__(self):
-        # self.pos = {
-        #     0: (0., -0.5),
-        #     1: (0.25, -0.5),
-        #     2: (0.75, -0.5),
-        #     3: (1, -0.5),
-        #     4: (0.5, 0.),
-        #     5: (0.5, -0.25),
-        #     6: (0.5, -0.75),
-        #     7: (0.5, -1.)
-        # }
+        self.total_steps = 0
+
         self.chain_colors = ['#55C1D9', '#F29E38',
                              '#F23827', '#D748F5', '#39DBC8', '#F5428A',
                              '#3CDE73', '#11F0EB', '#E9B952', '#7D2EFF',
                              '#DBDE5D', '#3A2CE0', '#DE6E31', '#E0165C']
+
+        # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/figure_size_units.html
+        self.px = 1/plt.rcParams['figure.dpi']  # pixel in inches
+        plt.rcParams.update({'axes.titlesize': 24})
+
+        # Init figure
+        self.fig = plt.figure()
+        plt.subplots_adjust(left=0.0, right=1.0,
+                            bottom=0.0, top=1.0,
+                            wspace=0.0, hspace=0.1)
+
+        self.row = 0
 
     def draw_chimera_graph(self, m, n, t):
         """Draws a Chimera graph."""
@@ -32,12 +38,8 @@ class Draw():
                          with_labels=True,
                          node_color='#858585',
                          edge_color='#BABABA')
-        # dnx.draw_chimera(G,
-        #                  width=2,
-        #                  node_color='#858585',
-        #                  edge_color='#BABABA')
 
-    def _draw(self, nodes, edges, mapping_G_to_H):
+    def draw_embedding(self, nodes, edges, mapping_G_to_H):
         """Draws the embedding onto the Chimera graph.
 
         Arguments
@@ -49,58 +51,72 @@ class Draw():
         for node in nodes:
             labels[node] = mapping_G_to_H[node]
 
+        G = nx.Graph()
+        G.add_nodes_from(nodes)
+
+        # Nodes
+        nx.draw_networkx_nodes(G,
+                               pos=self.pos_chimera,
+                               node_color='#00000066',
+                               linewidths='2')
+
+        # Labels
+        nx.draw_networkx_labels(G,
+                                pos=self.pos_chimera,
+                                labels=labels,
+                                font_size=15,
+                                font_color='whitesmoke',
+                                font_family='serif')
+
+        # Edges
         chains = [edge[2] for edge in edges]
         for chain in range(max(chains)+1):
             chain_edges = [(edge[0], edge[1])
                            for edge in edges if edge[2] == chain]
-
-            graph = nx.Graph()
-            graph.add_nodes_from(nodes)
-            graph.add_edges_from(chain_edges)
+            G.add_edges_from(chain_edges)
 
             chain_color = self.chain_colors[chain % len(self.chain_colors)]
-            nx.draw_networkx(graph,
-                             labels=labels,
-                             pos=self.pos_chimera,
-                             width=3,
-                             style='solid',
-                             node_color='#363636',
-                             edge_color=chain_color,
-                             font_color='whitesmoke',
-                             font_size=15,
-                             font_family='serif')
+            nx.draw_networkx_edges(G,
+                                   pos=self.pos_chimera,
+                                   width=3,
+                                   style='solid',
+                                   edge_color=chain_color)
 
-    def draw_embedding(self, nodes, edges, mapping_G_to_H):
-        self._draw(nodes, edges, mapping_G_to_H)
+            G.remove_edges_from(chain_edges)
+
+    def draw_chimera_and_embedding(self, nodes, edges, mapping_G_to_H):
+        self.draw_chimera_graph(3, 3, 4)
+        self.draw_embedding(nodes, edges, mapping_G_to_H)
+
+    def show_embedding(self):
         plt.show()
 
+    ############################ Embedding step ################################
+
+    def draw_whole_embedding_step(self, nodes, edges, mapping_G_to_H, title=''):
+        ax = self.construct_subplot_at_bottom()
+        ax.set_title(title)
+        self.draw_chimera_and_embedding(nodes, edges, mapping_G_to_H)
+        print(f'🔍 Called with title: {title} ---------------------')
+        self.total_steps += 1
+
+    def construct_subplot_at_bottom(self) -> Axes:
+        """Constructs a new subplot at the bottom."""
+        self.row += 1
+        gs = gridspec.GridSpec(self.row, 1)
+
+        # Reposition subplots
+        for i, ax in enumerate(self.fig.axes):
+            # ax.set_position(gs[i, 0].get_position(self.fig))
+            ax.set_subplotspec(gs[i, 0])
+
+        # Add new subplot
+        ax = self.fig.add_subplot(gs[self.row-1])
+        ax.set_position(gs[self.row-1].get_position(self.fig))
+
+        return ax
+
     def save_and_clear(self, path):
-        # plt.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0)
-        px = 1/plt.rcParams['figure.dpi']  # pixel in inches
-        fig = plt.gcf()
-        fig.set_size_inches(1000*px, 1000*px)
-        fig.savefig(path, bbox_inches='tight')
+        self.fig.set_size_inches(1000*self.px, self.total_steps*1000*self.px)
+        self.fig.savefig(path, bbox_inches='tight')
         plt.clf()
-
-    ############################ Big Plot ######################################
-
-    def init_big_plot(self, row_count):
-        self.big_plot_row_count = row_count
-        # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/figure_size_units.html
-        px = 1/plt.rcParams['figure.dpi']  # pixel in inches
-        fig = plt.figure(figsize=(row_count*200*px*3, row_count*200*px*3))
-        plt.axis('off')
-        plt.subplots_adjust(left=0.0, right=1.0, bottom=0.0, top=1.0,
-                            wspace=0.0, hspace=0.0)
-        self.big_plot_index = 1  # to start with (gets incremented later)
-
-    def draw_to_big_plot(self, nodes, edges, mapping_G_to_H):
-        plt.subplot(self.big_plot_row_count,
-                    self.big_plot_row_count, self.big_plot_index)
-        self.draw_chimera_graph(1, 1, 4)
-        self._draw(nodes, edges, mapping_G_to_H)
-        plt.draw()
-        self.big_plot_index += 1
-
-    def save_big_plot(self, filename):
-        plt.savefig(f'./{filename}.svg')
