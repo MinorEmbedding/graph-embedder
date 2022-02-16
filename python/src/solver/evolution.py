@@ -88,8 +88,8 @@ def main() -> bool:
             return False
 
         solver.commit(playground)
-        save_embedding(*solver.get_embedding(), d, i,
-                       title=f'{i}: Mutation')
+        # save_embedding(*solver.get_embedding(), d, i,
+        #                title=f'{i}: Mutation')
 
         # Local maximum
         solver.local_maximum()

@@ -23,9 +23,9 @@ class DrawEmbedding():
         self.fig = plt.figure()
         plt.subplots_adjust(left=0.0, right=1.0,
                             bottom=0.0, top=1.0,
-                            wspace=0.0, hspace=0.1)
+                            wspace=0.1, hspace=0.1)
 
-        self.row = 0
+        self.col = 0
 
     def draw_chimera_graph(self, m, n, t):
         """Draws a Chimera graph."""
@@ -94,29 +94,28 @@ class DrawEmbedding():
     ############################ Embedding step ################################
 
     def draw_whole_embedding_step(self, nodes, edges, mapping_G_to_H, title=''):
-        ax = self.construct_subplot_at_bottom()
+        ax = self.construct_subplot_to_the_right()
         ax.set_title(title)
         self.draw_chimera_and_embedding(nodes, edges, mapping_G_to_H)
-        print(f'🔍 Called with title: {title} ---------------------')
         self.total_steps += 1
 
-    def construct_subplot_at_bottom(self) -> Axes:
-        """Constructs a new subplot at the bottom."""
-        self.row += 1
-        gs = gridspec.GridSpec(self.row, 1)
+    def construct_subplot_to_the_right(self) -> Axes:
+        """Constructs a new subplot to the right."""
+        self.col += 1
+        gs = gridspec.GridSpec(1, self.col)
 
         # Reposition subplots
         for i, ax in enumerate(self.fig.axes):
             # ax.set_position(gs[i, 0].get_position(self.fig))
-            ax.set_subplotspec(gs[i, 0])
+            ax.set_subplotspec(gs[0, i])
 
         # Add new subplot
-        ax = self.fig.add_subplot(gs[self.row-1])
-        ax.set_position(gs[self.row-1].get_position(self.fig))
+        ax = self.fig.add_subplot(gs[0, self.col-1])
+        ax.set_position(gs[0, self.col-1].get_position(self.fig))
 
         return ax
 
     def save_and_clear(self, path):
-        self.fig.set_size_inches(1000*self.px, self.total_steps*1000*self.px)
+        self.fig.set_size_inches(self.total_steps*1000*self.px, 800*self.px)
         self.fig.savefig(path, bbox_inches='tight')
         plt.clf()
