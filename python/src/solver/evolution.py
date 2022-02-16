@@ -13,20 +13,27 @@ logger = logging.getLogger('evolution')
 
 ################################# Params #######################################
 
-solver_iterations = 10
-mutation_trials = 100
+solver_iterations = 15
+mutation_trials = 10
+max_total = 1
 
 
 ############################### Evolution ######################################
 
 def main_loop():
-    while True:
-        try:
-            res = main()
-            if res:
-                break
-        except:
-            pass
+    i = 0
+    while i < max_total:
+        logger.info('')
+        logger.info('#############')
+        logger.info('🎈 NEW MAIN 🎈')
+        logger.info('#############')
+        logger.info('')
+        logger.info(f'Calling main: {i}')
+
+        res = main()
+        if res:
+            break
+        i += 1
 
 
 def main() -> bool:
@@ -34,11 +41,11 @@ def main() -> bool:
 
     # --- Clear
     # Clear out directory
-    # try:
-    #     shutil.rmtree('./out/')
-    # except FileNotFoundError:
-    #     pass
-    # os.mkdir('./out/')
+    try:
+        shutil.rmtree('./out/')
+    except FileNotFoundError:
+        pass
+    os.mkdir('./out/')
 
     # --- Setup
     d = Draw()
