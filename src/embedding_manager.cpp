@@ -38,11 +38,21 @@ void EmbeddingManager::mapNode(fuint32_t node, const nodeset_t& targetNodes)
 }
 #undef ADJUST
 
+EmbeddingManager::EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state)
+  : m_suite(suite), m_state(state),
+    m_nbCommitsRemaining(0), m_time(1)
+{
+  const auto& targetNodes = m_state.getRemainingTargetNodes();
+  m_targetNodesRemaining.insert(targetNodes.begin(), targetNodes.end());
+}
+
 
 void EmbeddingManager::setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors)
 {
+  std::cout << "Start free" << std::endl;
   m_changesToPropagate.push(EmbeddingChange{ChangeType::FREE_NEIGHBORS, node, nbNeighbors});
   m_sourceFreeNeighbors[node] = nbNeighbors;
+  std::cout << "End free" << std::endl;
 }
 
 void EmbeddingManager::deleteMappingPair(fuint32_t source, fuint32_t target)
@@ -75,6 +85,7 @@ int EmbeddingManager::numberFreeNeighborsNeeded(fuint32_t sourceNode)
 void EmbeddingManager::commit()
 {
   m_changesToPropagate.push(EmbeddingChange{});
+  m_nbCommitsRemaining++;
 }
 
 void EmbeddingManager::synchronize()
@@ -83,7 +94,7 @@ void EmbeddingManager::synchronize()
   while(!m_changesToPropagate.empty() && m_nbCommitsRemaining > 0)
   {
     bool success = m_changesToPropagate.try_pop(change);
-    if (!success) continue;
+    if (!success) break;
     switch(change.m_type)
     {
       case ChangeType::DEL_MAPPING:
@@ -131,5 +142,4 @@ void EmbeddingManager::clear()
   m_time = 0;
   m_changesToPropagate.clear();
   m_nbCommitsRemaining = 0;
-  m_lastNode = (fuint32_t)-1;
 }

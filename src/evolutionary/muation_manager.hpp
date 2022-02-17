@@ -2,6 +2,7 @@
 #define __MAJORMINER_MUTATION_MANAGER_HPP_
 
 #include <thread>
+#include <mutex>
 
 #include "majorminer_types.hpp"
 
@@ -33,6 +34,10 @@ namespace majorminer
       EmbeddingSuite& m_suite;
       Queue<MutationPtr> m_prepQueue;
       PriorityQueue<MutationPtr> m_incorporationQueue;
+      std::atomic<bool> m_done;
+      std::atomic<fuint32_t> m_runningPreps;
+      std::atomic<bool> m_wait;
+      std::mutex m_free;
   };
 
 }

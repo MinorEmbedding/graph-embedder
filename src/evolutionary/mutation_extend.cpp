@@ -6,7 +6,8 @@ using namespace majorminer;
 
 
 MutationExtend::MutationExtend(EmbeddingSuite* suite, fuint32_t sourceNode)
-  : m_suite(*suite), m_sourceVertex(sourceNode) { }
+  : m_suite(*suite), m_sourceVertex(sourceNode),
+    m_time(m_suite.m_embeddingManager.getTimestamp()) { }
 
 double MutationExtend::checkImprovement(fuint32_t extendNode, fuint32_t sourceNode, int delta, bool useManager)
 {
@@ -61,13 +62,18 @@ void MutationExtend::execute()
   int delta = manager.numberFreeNeighborsNeeded(m_sourceVertex);
   if (delta <= 0) return;
   double improvement = checkImprovement(m_extendedTarget, m_sourceVertex, delta, true);
+  std::cout << "Val " << improvement << std::endl;
   if (improvement < 0)
   { // adopt mutation
     manager.occupyNode(m_extendedTarget);
+    std::cout << "Occupy" << std::endl;
     manager.insertMappingPair(m_sourceVertex, m_extendedTarget);
 
+    std::cout << "Mapping" << std::endl;
     updateFreeNeighbors();
+    std::cout << "FreeNeighbors" << std::endl;
     manager.commit();
+    std::cout << "Commit " << std::endl;
     if (m_suite.m_visualizer != nullptr)
     {
       std::stringstream ss;
@@ -140,11 +146,15 @@ bool MutationExtend::prepare()
     m_extendedTarget = bestExtend;
     m_improving = true;
   }
+  std::cout << "Extend " << m_improving << std::endl;
+  m_time = m_suite.m_embeddingManager.getTimestamp();
   return m_improving;
 }
 
 bool MutationExtend::isValid()
 {
-  return false;
+  std::cout << "Time" << m_time << std::endl;
+  std::cout <<"History "<< m_suite.m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged <<std::endl;
+  return m_suite.m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged < m_time;
 }
 

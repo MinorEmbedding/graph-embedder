@@ -3,10 +3,12 @@
 
 #include "majorminer_types.hpp"
 #include "common/utils.hpp"
+#include "embedding_state.hpp"
 
 namespace majorminer
 {
   class EmbeddingSuite;
+  class SuperVertexPlacer;
 
   enum ChangeType
   {
@@ -35,12 +37,12 @@ namespace majorminer
   struct NodeAffected
   {
     NodeAffected()
-      : m_timestampNodeChanged(-1),
-        m_timestampEdgeChanged(-1) {}
+      : m_timestampNodeChanged(0),
+        m_timestampEdgeChanged(0) {}
     void clear()
     {
-      m_timestampNodeChanged = -1;
-      m_timestampEdgeChanged = -1;
+      m_timestampNodeChanged = 0;
+      m_timestampEdgeChanged = 0;
     }
 
     fuint32_t m_timestampNodeChanged;
@@ -50,9 +52,9 @@ namespace majorminer
   class EmbeddingManager
   {
       friend EmbeddingSuite;
+      friend SuperVertexPlacer;
     public:
-      EmbeddingManager(EmbeddingSuite& suite)
-        : m_suite(suite), m_nbCommitsRemaining(0), m_time(1) {}
+      EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state);
       void setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors);
       void deleteMappingPair(fuint32_t source, fuint32_t target);
       void insertMappingPair(fuint32_t source, fuint32_t target);
@@ -79,6 +81,7 @@ namespace majorminer
 
     private:
       EmbeddingSuite& m_suite;
+      EmbeddingState& m_state;
       embedding_mapping_t m_mapping;
       embedding_mapping_t m_reverseMapping;
       nodeset_t m_nodesOccupied;

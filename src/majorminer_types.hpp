@@ -78,6 +78,8 @@ namespace majorminer
   typedef adjacency_list_t embedding_mapping_t;
   typedef UnorderedSet<fuint32_t> nodeset_t;
   typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
+
+  class EmbeddingVisualizer;
 }
 
 

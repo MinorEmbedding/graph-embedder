@@ -29,6 +29,7 @@ namespace majorminer
       fuint32_t m_targetVertex;
       fuint32_t m_extendedTarget;
       bool m_improving = false;
+      fuint32_t m_time;
   };
 
 

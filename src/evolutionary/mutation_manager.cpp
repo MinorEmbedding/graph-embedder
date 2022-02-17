@@ -7,21 +7,33 @@ using namespace majorminer;
 void MutationManager::mutate()
 {
   prepare();
+  m_done = false;
+  m_runningPreps = 0;
+  m_wait = false;
 
   // one thread integrating mutations, other threads preparing new mutations
   auto& prepQueue = m_prepQueue;
   auto& incorporationQueue = m_incorporationQueue;
+  const auto& done = m_done;
+  auto& runningPreps = m_runningPreps;
+  const auto& wait = m_wait;
+  auto& free = m_free;
   std::thread prep{ [&](){
     MutationPtr mutation;
-    while(!prepQueue.empty() || !incorporationQueue.empty())
+    while(!done)
     {
+    //std::cout << "mutate " << prepQueue.empty() << ", " << incorporationQueue.empty() << std::endl;
       bool success = prepQueue.try_pop(mutation);
       if (!success) continue;
       bool valid = mutation->prepare();
       if (!valid) continue;
       else
       {
+        free.lock();
+        runningPreps++;
+        free.unlock();
         incorporationQueue.push(std::move(mutation));
+        runningPreps--;
       }
     }
   }};
@@ -68,6 +80,7 @@ void MutationManager::incorporate()
 {
   while(!m_prepQueue.empty() || !m_incorporationQueue.empty())
   {
+    //std::cout << "Incorporate " << m_prepQueue.empty() << ", " << m_incorporationQueue.empty() << std::endl;
     MutationPtr mutation;
     bool success = m_incorporationQueue.try_pop(mutation);
     if (!success) continue;
@@ -79,6 +92,19 @@ void MutationManager::incorporate()
     else
     {
       mutation->execute();
+      std::cout << "Mutation done" << std::endl;
+      m_wait = true;
+    }
+    if (m_wait)
+    {
+      m_free.lock();
+      while(m_runningPreps != 0) continue;
+      std::cout << "Synchronizing" << std::endl;
+      m_suite.m_embeddingManager.synchronize();
+      std::cout << "Synchronization done." << std::endl;
+      m_wait = false;
+      m_free.unlock();
     }
   }
+  m_done = true;
 }

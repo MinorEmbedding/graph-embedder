@@ -13,10 +13,10 @@ set(MM_LINK_LIBS TBB::tbb lemon)
 # neither build tests nor tbbmalloc in oneTBB
 set(TBB_TEST CACHE BOOL OFF)
 set(TBBMALLOC_BUILD CACHE BOOL OFF)
+set(TBB_DISABLE_HWLOC_AUTOMATIC_SEARCH CACHE BOOL OFF)
 
 # build NetworkSimplex, gtest and oneTBB
 add_subdirectory(external)
-
 
 
 if ( CMAKE_COMPILER_IS_GNUCC )
