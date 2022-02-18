@@ -3,7 +3,6 @@
 
 #include "majorminer_types.hpp"
 
-#include "common/utils.hpp"
 #include "common/embedding_state.hpp"
 
 namespace majorminer

@@ -3,30 +3,14 @@
 
 #include "config.hpp"
 #include "embedding_manager.hpp"
-
 #include "common/embedding_state.hpp"
-#include "common/graph_gen.hpp"
-#include "common/utils.hpp"
-#include "common/embedding_validator.hpp"
-#include "common/embedding_visualizer.hpp"
-#include "common/cut_vertex.hpp"
-
 #include "initial/super_vertex_placer.hpp"
-
-#include "evolutionary/mutation_extend.hpp"
-#include "evolutionary/frontier_shifting_data.hpp"
-#include "evolutionary/mutation_frontier_shifting.hpp"
 #include "evolutionary/muation_manager.hpp"
 
 namespace majorminer
 {
   class EmbeddingSuite
   {
-      friend NetworkSimplexWrapper;
-      friend MutationExtend;
-      friend MuationFrontierShifting;
-      friend EmbeddingManager;
-      friend MutationManager;
     public:
       EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer = nullptr);
 
@@ -55,7 +39,7 @@ namespace majorminer
       // TODO: change to priority queue depending on fitness function
       Queue<std::unique_ptr<GenericMutation>> m_taskQueue;
 
-      FrontierShiftingData m_frontierData;
+      // FrontierShiftingData m_frontierData;
 
       EmbeddingVisualizer* m_visualizer;
   };

@@ -1,5 +1,7 @@
 #include "muation_manager.hpp"
-#include "majorminer.hpp"
+
+#include "evolutionary/mutation_extend.hpp"
+#include "evolutionary/mutation_frontier_shifting.hpp"
 
 using namespace majorminer;
 

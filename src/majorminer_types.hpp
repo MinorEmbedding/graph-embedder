@@ -8,6 +8,7 @@
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_priority_queue.h>
 #include <tbb/concurrent_queue.h>
+#include <tbb/parallel_for_each.h>
 #include <stack>
 #include <vector>
 

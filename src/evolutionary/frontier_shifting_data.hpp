@@ -2,9 +2,6 @@
 #define __MAJORMINER_FRONTIER_SHIFTING_DATA_HPP_
 
 #include "majorminer_types.hpp"
-#include "common/cut_vertex.hpp"
-#include "common/utils.hpp"
-
 
 namespace majorminer
 {

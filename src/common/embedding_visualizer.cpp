@@ -1,5 +1,8 @@
 #include "embedding_visualizer.hpp"
 
+#include <fstream>
+#include <filesystem>
+
 using namespace majorminer;
 namespace fs = std::filesystem;
 

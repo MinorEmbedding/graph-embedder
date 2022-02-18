@@ -2,7 +2,6 @@
 #define __MAJORMINER_CUT_VERTEX_HPP_
 
 #include "majorminer_types.hpp"
-#include "common/utils.hpp"
 
 namespace majorminer
 {

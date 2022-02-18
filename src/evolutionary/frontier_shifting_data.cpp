@@ -1,5 +1,8 @@
 #include "frontier_shifting_data.hpp"
 
+#include "common/cut_vertex.hpp"
+#include "common/utils.hpp"
+
 using namespace majorminer;
 
 

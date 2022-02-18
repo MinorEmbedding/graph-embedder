@@ -1,6 +1,8 @@
 
 #include "cut_vertex.hpp"
 
+#include "common/utils.hpp"
+
 using namespace majorminer;
 
 typedef adjacency_list_t::const_iterator adj_list_const_it;

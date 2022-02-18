@@ -1,5 +1,7 @@
 #include "embedding_validator.hpp"
 
+#include "utils.hpp"
+
 using namespace majorminer;
 
 bool EmbeddingValidator::isDisjoint() const

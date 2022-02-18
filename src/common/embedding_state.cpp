@@ -37,7 +37,13 @@ fuint32_t EmbeddingState::getTrivialNode()
 
 void EmbeddingState::mapNode(fuint32_t source, const nodeset_t& targets)
 {
-
+  for (auto targetNode : targets)
+  {
+    m_nodesOccupied.insert(targetNode);
+    m_mapping.insert(std::make_pair(source, targetNode));
+    m_reverseMapping.insert(std::make_pair(targetNode, source));
+    m_targetNodesRemaining.unsafe_extract(targetNode);
+  }
 }
 
 bool EmbeddingState::removeRemainingNode(fuint32_t node)
@@ -93,7 +99,10 @@ int EmbeddingState::getSourceNbFreeNeighbors(fuint32_t sourceNode) const
 }
 
 
-void EmbeddingState::mapNode(fuint32_t node, fuint32_t targetNode)
+void EmbeddingState::mapNode(fuint32_t source, fuint32_t targetNode)
 {
-  
+  m_nodesOccupied.insert(targetNode);
+  m_mapping.insert(std::make_pair(source, targetNode));
+  m_reverseMapping.insert(std::make_pair(targetNode, source));
+  m_targetNodesRemaining.unsafe_extract(targetNode);
 }

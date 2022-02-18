@@ -1,8 +1,6 @@
 #ifndef __MAJORMINER_UTILS_HPP_
 #define __MAJORMINER_UTILS_HPP_
 
-#include <tbb/parallel_for_each.h>
-
 #include "majorminer_types.hpp"
 
 

@@ -2,7 +2,6 @@
 #define __MAJORMINER_EMBEDDING_VALIDATOR_HPP_
 
 #include "majorminer_types.hpp"
-#include "utils.hpp"
 
 namespace majorminer
 {

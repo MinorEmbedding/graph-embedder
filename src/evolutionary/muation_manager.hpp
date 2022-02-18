@@ -6,9 +6,7 @@
 
 #include "majorminer_types.hpp"
 
-#include "evolutionary/mutation_extend.hpp"
-#include "evolutionary/mutation_frontier_shifting.hpp"
-
+#include "evolutionary/generic_mutation.hpp"
 #include "common/embedding_state.hpp"
 #include "embedding_manager.hpp"
 

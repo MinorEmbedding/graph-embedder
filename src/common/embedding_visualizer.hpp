@@ -4,8 +4,6 @@
 #include "majorminer_types.hpp"
 
 #include <sstream>
-#include <fstream>
-#include <filesystem>
 
 namespace majorminer
 {

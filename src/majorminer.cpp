@@ -1,5 +1,15 @@
 #include "majorminer.hpp"
 
+#include "common/graph_gen.hpp"
+#include "common/utils.hpp"
+#include "common/embedding_validator.hpp"
+#include "common/embedding_visualizer.hpp"
+#include "common/cut_vertex.hpp"
+
+#include "evolutionary/mutation_extend.hpp"
+#include "evolutionary/frontier_shifting_data.hpp"
+#include "evolutionary/mutation_frontier_shifting.hpp"
+
 using namespace majorminer;
 
 EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer)
@@ -14,7 +24,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   while(!nodesRemaining.empty())
   {
     m_placer();
-    tryMutations();
+    //tryMutations();
   }
   return m_state.getMapping();
 }

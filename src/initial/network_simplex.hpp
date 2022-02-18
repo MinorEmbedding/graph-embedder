@@ -5,7 +5,6 @@
 #include <lemon/network_simplex.h>
 
 #include "majorminer_types.hpp"
-
 #include "common/embedding_state.hpp"
 
 namespace majorminer

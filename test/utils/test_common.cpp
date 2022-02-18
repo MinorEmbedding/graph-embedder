@@ -1,5 +1,7 @@
 #include "test_common.hpp"
 
+#include <fstream>
+
 using namespace majorminer;
 
 namespace
