@@ -1,15 +1,21 @@
 #include "embedding_validator.hpp"
 
-#include "utils.hpp"
+#include "common/utils.hpp"
+#include "common/embedding_state.hpp"
 
 using namespace majorminer;
 
 bool EmbeddingValidator::isDisjoint() const
 {
   UnorderedSet<fuint32_t> nodesOccupied{};
-  for (const auto& mapped : m_embedding)
+  const auto& embedding = m_state.getMapping();
+  for (const auto& mapped : embedding)
   {
-    if (nodesOccupied.contains(mapped.second)) return false;
+    if (nodesOccupied.contains(mapped.second))
+    {
+      DEBUG(OUT_S << "Not an injective mapping." << std::endl;)
+      return false;
+    }
     nodesOccupied.insert(mapped.second);
   }
   return true;
@@ -18,14 +24,17 @@ bool EmbeddingValidator::isDisjoint() const
 
 bool EmbeddingValidator::nodesConnected() const
 {
+  const auto& embedding = m_state.getMapping();
+  const auto& sourceGraph = *m_state.getSourceGraph();
+  const auto& targetGraph = m_state.getTargetAdjGraph();
   UnorderedMultiMap<fuint32_t, fuint32_t> adjacencies{};
-  for (const auto& e : m_source)
+  for (const auto& e : sourceGraph)
   {
     adjacencies.insert(orderedPair(e));
   }
 
   UnorderedMultiMap<fuint32_t, fuint32_t> reverseMapping{};
-  for (const auto& mapped : m_embedding)
+  for (const auto& mapped : embedding)
   {
     reverseMapping.insert(std::make_pair(mapped.second, mapped.first));
   }
@@ -41,11 +50,11 @@ bool EmbeddingValidator::nodesConnected() const
     {
       adjacentNodes.insert(std::make_pair(it->second, false));
     }
-    auto mappedRange = m_embedding.equal_range(groupIt->first);
+    auto mappedRange = embedding.equal_range(groupIt->first);
 
     // for each node in adjacentNodes search for adjacency to mappedNodes
     tbb::parallel_for_each(mappedRange.first, mappedRange.second,
-      [&adjacentNodes, &reverseMapping, this](fuint32_pair_t targetNodeP) {
+      [&adjacentNodes, &reverseMapping, targetGraph](fuint32_pair_t targetNodeP) {
         auto targetNodeMapped = reverseMapping.equal_range(targetNodeP.second);
         for (auto it = targetNodeMapped.first; it != targetNodeMapped.second; ++it)
         {
@@ -54,7 +63,7 @@ bool EmbeddingValidator::nodesConnected() const
             adjacentNodes[it->second] = true;
           }
         }
-        auto adjacentIt = this->m_target.equal_range(targetNodeP.second);
+        auto adjacentIt = targetGraph.equal_range(targetNodeP.second);
         for (auto it = adjacentIt.first; it != adjacentIt.second; ++it)
         {
           auto revMappedIt = reverseMapping.equal_range(it->second);
@@ -70,11 +79,46 @@ bool EmbeddingValidator::nodesConnected() const
 
     for (const auto& adjNode : adjacentNodes)
     {
-      if (!adjNode.second) return false;
+      if (!adjNode.second)
+      {
+        DEBUG(OUT_S << "Not all edges embedded! Node " << adjNode.first << " is missing at least one edge." << std::endl;)
+        DEBUG(printMissingEdges(adjNode.first));
+        return false;
+      }
     }
     groupIt = adjRange.second;
   }
 
   return true;
 
+}
+
+void EmbeddingValidator::printMissingEdges(fuint32_t node) const
+{
+  nodeset_t missingAdjacent{};
+  const auto& reverseMapping = m_state.getReverseMapping();
+  const auto& sourceGraph = m_state.getSourceAdjGraph();
+  const auto& targetGraph = m_state.getTargetAdjGraph();
+
+  auto adjRange = sourceGraph.equal_range(node);
+  for (auto it = adjRange.first; it != adjRange.second; ++it) missingAdjacent.insert(it->second);
+
+  if (missingAdjacent.empty()) return;
+  auto mappedRange = m_state.getMapping().equal_range(node);
+  for (auto mappedIt = mappedRange.first; mappedIt != mappedRange.second; ++mappedIt)
+  {
+    auto targetAdjRange = targetGraph.equal_range(mappedIt->second);
+    for (auto targetAdj = targetAdjRange.first; targetAdj != targetAdjRange.second; ++targetAdj)
+    {
+      auto revRange = reverseMapping.equal_range(targetAdj->second);
+      for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
+      {
+        missingAdjacent.unsafe_erase(revIt->second);
+      }
+    }
+  }
+
+  OUT_S << "Node " << node << " is missing edges to nodes { ";
+  for (auto missing : missingAdjacent) OUT_S << missing << " ";
+  OUT_S << "}" << std::endl;
 }

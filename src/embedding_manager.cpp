@@ -48,10 +48,8 @@ EmbeddingManager::EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state)
 
 void EmbeddingManager::setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors)
 {
-  std::cout << "Start free" << std::endl;
   m_changesToPropagate.push(EmbeddingChange{ChangeType::FREE_NEIGHBORS, node, nbNeighbors});
   m_sourceFreeNeighbors[node] = nbNeighbors;
-  std::cout << "End free" << std::endl;
 }
 
 void EmbeddingManager::deleteMappingPair(fuint32_t source, fuint32_t target)

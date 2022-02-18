@@ -90,6 +90,7 @@ namespace majorminer
   class MutationExtend;
   class MuationFrontierShifting;
   class MutationManager;
+  class NetworkSimplexWrapper;
 
   struct FrontierShiftingData;
 }

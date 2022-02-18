@@ -1,6 +1,8 @@
 #include "super_vertex_placer.hpp"
 
-#include "common/embedding_visualizer.hpp"
+#include <embedding_manager.hpp>
+#include <common/embedding_state.hpp>
+#include <common/embedding_visualizer.hpp>
 
 using namespace majorminer;
 
@@ -105,7 +107,7 @@ void SuperVertexPlacer::visualize(fuint32_t node, PlacedNodeType type, fuint32_t
 
 void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
 {
-  if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(m_state);
+  if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(m_state, m_embeddingManager);
 
   m_nsWrapper->embeddNode(node);
 }

@@ -64,18 +64,18 @@ void MutationExtend::execute()
   int delta = m_embeddingManager.numberFreeNeighborsNeeded(m_sourceVertex);
   if (delta <= 0) return;
   double improvement = checkImprovement(m_extendedTarget, m_sourceVertex, delta, true);
-  std::cout << "Val " << improvement << std::endl;
+  // std::cout << "Val " << improvement << std::endl;
   if (improvement < 0)
   { // adopt mutation
     m_embeddingManager.occupyNode(m_extendedTarget);
-    std::cout << "Occupy" << std::endl;
+    //std::cout << "Occupy" << std::endl;
     m_embeddingManager.insertMappingPair(m_sourceVertex, m_extendedTarget);
 
-    std::cout << "Mapping" << std::endl;
+    //std::cout << "Mapping" << std::endl;
     updateFreeNeighbors();
-    std::cout << "FreeNeighbors" << std::endl;
+    //std::cout << "FreeNeighbors" << std::endl;
     m_embeddingManager.commit();
-    std::cout << "Commit " << std::endl;
+    //std::cout << "Commit " << std::endl;
     if (m_state.hasVisualizer())
     {
       std::stringstream ss;
@@ -124,7 +124,7 @@ bool MutationExtend::prepare()
   fuint32_t adjTargetNode = -1;
   const auto& targetGraph = m_state.getTargetAdjGraph();
   const auto& targetNodesRemaining = m_state.getRemainingTargetNodes();
-  
+
   for (auto targetNode = mapRange.first; targetNode != mapRange.second; ++targetNode)
   { // check nodes adjacent to targetNode as possible candidates
     auto adjRange = targetGraph.equal_range(targetNode->second);
@@ -152,15 +152,15 @@ bool MutationExtend::prepare()
     m_extendedTarget = bestExtend;
     m_improving = true;
   }
-  std::cout << "Extend " << m_improving << std::endl;
+  // std::cout << "Extend " << m_improving << std::endl;
   m_time = m_embeddingManager.getTimestamp();
   return m_improving;
 }
 
 bool MutationExtend::isValid()
 {
-  std::cout << "Time" << m_time << std::endl;
-  std::cout <<"History "<< m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged <<std::endl;
+  // std::cout << "Time" << m_time << std::endl;
+  // std::cout <<"History "<< m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged <<std::endl;
   return m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged < m_time;
 }
 

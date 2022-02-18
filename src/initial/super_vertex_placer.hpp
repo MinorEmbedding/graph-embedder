@@ -2,12 +2,7 @@
 #define __MAJORMINER_SUPER_VERTEX_PLACER_HPP_
 
 #include <majorminer_types.hpp>
-#include <embedding_manager.hpp>
-
-#include <common/embedding_state.hpp>
-
 #include <initial/network_simplex.hpp>
-
 
 namespace majorminer
 {

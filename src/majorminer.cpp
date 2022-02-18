@@ -24,7 +24,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   while(!nodesRemaining.empty())
   {
     m_placer();
-    //tryMutations();
+    tryMutations();
   }
   return m_state.getMapping();
 }
@@ -32,20 +32,14 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
 
 bool EmbeddingSuite::isValid() const
 {
-  const auto& mapping = m_state.getMapping();
-  const auto& sourceGraph = *m_state.getSourceGraph();
-  const auto& targetGraph = m_state.getTargetAdjGraph();
-  EmbeddingValidator validator{mapping, sourceGraph, targetGraph};
+  EmbeddingValidator validator{m_state};
   return validator.isValid();
 }
 
 
 bool EmbeddingSuite::connectsNodes() const
 {
-  const auto& mapping = m_state.getMapping();
-  const auto& sourceGraph = *m_state.getSourceGraph();
-  const auto& targetGraph = m_state.getTargetAdjGraph();
-  EmbeddingValidator validator{mapping, sourceGraph, targetGraph};
+  EmbeddingValidator validator{m_state};
   return validator.nodesConnected();
 }
 

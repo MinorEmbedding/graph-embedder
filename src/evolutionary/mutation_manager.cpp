@@ -24,7 +24,6 @@ void MutationManager::mutate()
     MutationPtr mutation;
     while(!done)
     {
-    //std::cout << "mutate " << prepQueue.empty() << ", " << incorporationQueue.empty() << std::endl;
       bool success = prepQueue.try_pop(mutation);
       if (!success) continue;
       bool valid = mutation->prepare();
@@ -84,7 +83,6 @@ void MutationManager::incorporate()
 {
   while(!m_prepQueue.empty() || !m_incorporationQueue.empty())
   {
-    //std::cout << "Incorporate " << m_prepQueue.empty() << ", " << m_incorporationQueue.empty() << std::endl;
     MutationPtr mutation;
     bool success = m_incorporationQueue.try_pop(mutation);
     if (!success) continue;
@@ -96,16 +94,13 @@ void MutationManager::incorporate()
     else
     {
       mutation->execute();
-      std::cout << "Mutation done" << std::endl;
       m_wait = true;
     }
     if (m_wait)
     {
       m_free.lock();
       while(m_runningPreps != 0) continue;
-      std::cout << "Synchronizing" << std::endl;
       m_embeddingManager.synchronize();
-      std::cout << "Synchronization done." << std::endl;
       m_wait = false;
       m_free.unlock();
     }

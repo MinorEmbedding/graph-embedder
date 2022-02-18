@@ -5,7 +5,6 @@
 #include <lemon/network_simplex.h>
 
 #include "majorminer_types.hpp"
-#include "common/embedding_state.hpp"
 
 namespace majorminer
 {
@@ -22,8 +21,8 @@ namespace majorminer
     typedef std::pair<LemonArc, LemonArc> LemonArcPair;
 
     public:
-      NetworkSimplexWrapper(EmbeddingState& state)
-        : m_state(state) { }
+      NetworkSimplexWrapper(EmbeddingState& state, EmbeddingManager& embeddingManager)
+        : m_state(state), m_embeddingManager(embeddingManager) { }
 
       void embeddNode(fuint32_t node);
 
@@ -40,6 +39,7 @@ namespace majorminer
     private:
       LemonGraph m_graph;
       EmbeddingState& m_state;
+      EmbeddingManager& m_embeddingManager;
       UnorderedMap<fuint32_t, LemonNode> m_nodeMap;
       UnorderedMap<edge_t, LemonArcPair, PairHashFunc<fuint32_t>> m_edgeMap;
       UnorderedSet<fuint32_t> m_mapped;

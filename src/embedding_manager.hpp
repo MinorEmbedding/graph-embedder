@@ -50,6 +50,7 @@ namespace majorminer
   {
       friend EmbeddingSuite;
       friend SuperVertexPlacer;
+      friend NetworkSimplexWrapper;
     public:
       EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state);
       void setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors);

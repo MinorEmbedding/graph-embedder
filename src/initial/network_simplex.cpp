@@ -1,5 +1,8 @@
 #include "network_simplex.hpp"
 
+#include "common/embedding_state.hpp"
+#include "embedding_manager.hpp"
+
 using namespace majorminer;
 
 #define PREVENT_TAKING 100
@@ -121,7 +124,7 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
     }
     OUT_S << "Number outflows " << nbOutFlows << std::endl;
     if (nbOutFlows < 2 && m_mapped.size() > 1) m_mapped.unsafe_erase(m_sConnected);
-    m_state.mapNode(node, m_mapped);
+    m_embeddingManager.mapNode(node, m_mapped);
   }
   else if(status == NetworkSimplex::INFEASIBLE)
   {
