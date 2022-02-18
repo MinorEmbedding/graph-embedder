@@ -4,11 +4,8 @@
 #include "majorminer_types.hpp"
 #include "evolutionary/generic_mutation.hpp"
 
-
 namespace majorminer
 {
-  class EmbeddingSuite;
-
   class MutationExtend : public GenericMutation
   {
     public:

@@ -5,15 +5,13 @@
 
 #include "evolutionary/generic_mutation.hpp"
 
-#include "common/embedding_state.hpp"
-
 namespace majorminer
 {
-  class MuationFrontierShifting : public GenericMutation
+  class MutationFrontierShifting : public GenericMutation
   {
     public:
-      MuationFrontierShifting(EmbeddingSuite* suite, fuint32_t conquerorSource, fuint32_t victimSource);
-      ~MuationFrontierShifting() {}
+      MutationFrontierShifting(const EmbeddingState& state, fuint32_t conquerorSource, fuint32_t victimSource);
+      ~MutationFrontierShifting() {}
 
       void execute() override;
       fuint32_t getConqueror() const { return m_conqueror; }

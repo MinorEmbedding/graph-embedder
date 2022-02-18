@@ -9,7 +9,6 @@ using namespace majorminer;
 
 NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(fuint32_t node, const adjacency_list_range_iterator_t& adjacentIt) const
 {
-  auto adjacentIt = m_state.getSourceAdjGraph().equal_range(node);
   const auto& mapping = m_state.getMapping();
   capacity_t n = 0;
   for (auto adjacentNode = adjacentIt.first; adjacentNode != adjacentIt.second; ++adjacentNode)
@@ -90,8 +89,10 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
   LemonArcMap<capacity_t> caps(m_graph);
   constructLemonGraph(costs, caps);
 
-  m_s = &m_graph.addNode();
-  m_t = &m_graph.addNode();
+  LemonNode s = m_graph.addNode();
+  LemonNode t = m_graph.addNode();
+  m_s = &s;
+  m_t = &t;
 
   NetworkSimplex ns(m_graph);
   ns.costMap(costs).upperMap(caps).stSupply(*m_s, *m_t, m_numberAdjacentLowered);

@@ -104,7 +104,7 @@ void SuperVertexPlacer::visualize(fuint32_t node, PlacedNodeType type, fuint32_t
 
 void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
 {
-  if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(this);
+  if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(m_state);
 
   m_nsWrapper->embeddNode(node);
 }

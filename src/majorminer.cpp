@@ -3,8 +3,9 @@
 using namespace majorminer;
 
 EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer)
-  : m_state(source, target), m_visualizer(visualizer), m_placer(m_state),
-    m_embeddingManager(*this, m_state), m_mutationManager(*this)
+  : m_state(source, target, visualizer), m_visualizer(visualizer),
+    m_embeddingManager(*this, m_state), m_mutationManager(m_state, m_embeddingManager),
+    m_placer(m_state, m_embeddingManager)
 { }
 
 embedding_mapping_t EmbeddingSuite::find_embedding()

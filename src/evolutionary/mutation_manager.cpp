@@ -47,7 +47,7 @@ void MutationManager::prepare()
   m_incorporationQueue.clear();
 
   // insert potential mutations
-  auto lastNode = m_suite.m_embeddingManager.getLastNode();
+  auto lastNode = m_embeddingManager.getLastNode();
   if (lastNode != (fuint32_t)-1)
   {
     prepareAffectedExtendCandidates(lastNode);
@@ -57,13 +57,15 @@ void MutationManager::prepare()
 void MutationManager::prepareAffectedExtendCandidates(fuint32_t node)
 {
   nodeset_t extendAffected{};
-  auto mapped = m_suite.m_mapping.equal_range(node);
+  auto mapped = m_state.getMapping().equal_range(node);
+  const auto& reverseMapping = m_state.getReverseMapping();
+  const auto& targetGraph = m_state.getTargetAdjGraph();
   for (auto mapIt = mapped.first; mapIt != mapped.second; ++mapIt)
   {
-    auto adjacentRange = m_suite.m_target.equal_range(mapIt->second);
+    auto adjacentRange = targetGraph.equal_range(mapIt->second);
     for (auto adjIt = adjacentRange.first; adjIt != adjacentRange.second; ++adjIt)
     {
-      auto revMapped = m_suite.m_reverseMapping.equal_range(adjIt->second);
+      auto revMapped = reverseMapping.equal_range(adjIt->second);
       for (auto revIt = revMapped.first; revIt != revMapped.second; ++revIt)
       {
         extendAffected.insert(revIt->second);
@@ -72,7 +74,7 @@ void MutationManager::prepareAffectedExtendCandidates(fuint32_t node)
   }
   for (auto extendCandidate : extendAffected)
   {
-    m_prepQueue.push(std::make_unique<MutationExtend>(&m_suite, extendCandidate));
+    m_prepQueue.push(std::make_unique<MutationExtend>(m_state, m_embeddingManager, extendCandidate));
   }
 }
 
@@ -100,7 +102,7 @@ void MutationManager::incorporate()
       m_free.lock();
       while(m_runningPreps != 0) continue;
       std::cout << "Synchronizing" << std::endl;
-      m_suite.m_embeddingManager.synchronize();
+      m_embeddingManager.synchronize();
       std::cout << "Synchronization done." << std::endl;
       m_wait = false;
       m_free.unlock();

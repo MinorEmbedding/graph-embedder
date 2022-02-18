@@ -81,6 +81,19 @@ void EmbeddingState::updateConnections(fuint32_t node, PrioNodeQueue& nodesToPro
 int EmbeddingState::numberFreeNeighborsNeeded(fuint32_t sourceNode) const
 { // TODO: rework
   // std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and has " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
-  return 2 * m_sourceNeededNeighbors[sourceNode].load()
-    - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
+  auto it = m_sourceNeededNeighbors.find(sourceNode);
+  return 2 * (it == m_sourceNeededNeighbors.end() ? 0 : it->second.load())
+    - std::max(getSourceNbFreeNeighbors(sourceNode), 0);
+}
+
+int EmbeddingState::getSourceNbFreeNeighbors(fuint32_t sourceNode) const
+{
+  auto it = m_sourceFreeNeighbors.find(sourceNode);
+  return it == m_sourceFreeNeighbors.end() ? 0 : it->second.load();
+}
+
+
+void EmbeddingState::mapNode(fuint32_t node, fuint32_t targetNode)
+{
+  
 }

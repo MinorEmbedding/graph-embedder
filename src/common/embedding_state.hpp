@@ -25,7 +25,7 @@ namespace majorminer
 
       fuint32_t getSuperVertexSize(fuint32_t sourceNode) const { return m_mapping.count(sourceNode); }
 
-      int getSourceNbFreeNeighbors(fuint32_t sourceNode) const { return m_sourceFreeNeighbors[sourceNode].load(); }
+      int getSourceNbFreeNeighbors(fuint32_t sourceNode) const;
 
     public: // getter
       const graph_t* getSourceGraph() const { return m_sourceGraph; }

@@ -82,11 +82,12 @@ namespace majorminer
 
   class EmbeddingVisualizer;
   class EmbeddingSuite;
+  class EmbeddingState;
+  class EmbeddingManager;
   class SuperVertexPlacer;
   class GenericMutation;
   class MutationExtend;
   class MuationFrontierShifting;
-  class EmbeddingManager;
   class MutationManager;
 
   struct FrontierShiftingData;

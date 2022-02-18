@@ -1,15 +1,18 @@
-
 #include "evolutionary/mutation_frontier_shifting.hpp"
+
+#include "common/embedding_state.hpp"
+#include "common/embedding_visualizer.hpp"
+#include "embedding_manager.hpp"
+
+#include <sstream>
 
 using namespace majorminer;
 
-
-
-MuationFrontierShifting::MuationFrontierShifting(EmbeddingSuite* suite,
+MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state,
   fuint32_t conquerorSource, fuint32_t victimSource)
-  : m_suite(*suite), m_conqueror(conquerorSource),
+  : m_state(state), m_conqueror(conquerorSource),
     m_victim(victimSource), m_valid(false)
-{
+{/*
   // find a victim node for which conqueror is connected to and
   // all other node is not crucial for victim
   auto& data = m_suite.m_frontierData;
@@ -25,11 +28,11 @@ MuationFrontierShifting::MuationFrontierShifting(EmbeddingSuite* suite,
       m_valid = true;
       m_bestContested = candidateIt->second;
     }
-  }
+  }*/
 }
 
-bool MuationFrontierShifting::isCrucial(fuint32_t candidateNode)
-{
+bool MutationFrontierShifting::isCrucial(fuint32_t candidateNode)
+{/*
   auto& data = m_suite.m_frontierData;
   auto revRange = data.m_reverseConnections.equal_range(candidateNode);
   for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
@@ -47,11 +50,11 @@ bool MuationFrontierShifting::isCrucial(fuint32_t candidateNode)
       }
     }
     if (!replaceable) return true;
-  }
+  }*/
   return false;
 }
 
-double MuationFrontierShifting::calculateImprovement(fuint32_t candidateNode)
+double MutationFrontierShifting::calculateImprovement(fuint32_t candidateNode)
 {
   // Two factors play a role:
   // 1. Change in chain length
@@ -65,9 +68,9 @@ double MuationFrontierShifting::calculateImprovement(fuint32_t candidateNode)
         - pow(victimLength, 2) - pow(conquerorLength, 2);
 }
 
-void MuationFrontierShifting::execute()
+void MutationFrontierShifting::execute()
 {
-  auto& data = m_suite.m_frontierData;
+ /* auto& data = m_suite.m_frontierData;
   if (!m_valid || isCrucial(m_bestContested)) return;
   if (data.isNowACutVertex(m_bestContested) || calculateImprovement(m_bestContested) >= 0) return;
 
@@ -89,4 +92,5 @@ void MuationFrontierShifting::execute()
           << this->getContested();
     });
   }
+  */
 }
