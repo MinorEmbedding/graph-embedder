@@ -59,6 +59,7 @@ bool SuperVertexPlacer::connectedNode()
 
     if (m_state.hasVisualizer()) visualize(node.m_id, SIMPLE);
   }
+  return true;
 }
 
 void SuperVertexPlacer::embeddNode(fuint32_t node)

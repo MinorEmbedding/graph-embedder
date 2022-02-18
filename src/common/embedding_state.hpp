@@ -40,8 +40,8 @@ namespace majorminer
       const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
       const nodeset_t& getRemainingTargetNodes() const { return m_targetNodesRemaining; }
       nodeset_t& getRemainingTargetNodes() { return m_targetNodesRemaining; }
-      const UnorderedMap<fuint32_t, fuint32_t> getRemainingNodes() const { return m_nodesRemaining; }
-      UnorderedMap<fuint32_t, fuint32_t> getRemainingNodes() { return m_nodesRemaining; }
+      const UnorderedMap<fuint32_t, fuint32_t>& getRemainingNodes() const { return m_nodesRemaining; }
+      UnorderedMap<fuint32_t, fuint32_t>& getRemainingNodes() { return m_nodesRemaining; }
 
       EmbeddingVisualizer* getVisualizer() { return m_visualizer; }
       bool hasVisualizer() const { return m_visualizer != nullptr; }

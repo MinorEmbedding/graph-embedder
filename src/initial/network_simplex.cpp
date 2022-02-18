@@ -93,6 +93,7 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
   LemonNode t = m_graph.addNode();
   m_s = &s;
   m_t = &t;
+  constructHelperNodes(costs, caps, adjacentIt);
 
   NetworkSimplex ns(m_graph);
   ns.costMap(costs).upperMap(caps).stSupply(*m_s, *m_t, m_numberAdjacentLowered);
