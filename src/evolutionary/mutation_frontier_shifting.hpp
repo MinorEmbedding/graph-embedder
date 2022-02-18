@@ -1,14 +1,14 @@
 #ifndef __MAJORMINER_MUTATION_FRONTIER_SHIFTING_HPP_
 #define __MAJORMINER_MUTATION_FRONTIER_SHIFTING_HPP_
 
-#include "evolutionary/generic_mutation.hpp"
 #include "majorminer_types.hpp"
 
+#include "evolutionary/generic_mutation.hpp"
+
+#include "common/embedding_state.hpp"
 
 namespace majorminer
 {
-  class EmbeddingSuite;
-
   class MuationFrontierShifting : public GenericMutation
   {
     public:
@@ -25,7 +25,7 @@ namespace majorminer
       double calculateImprovement(fuint32_t candidateNode);
 
     private:
-      EmbeddingSuite& m_suite;
+      const EmbeddingState& m_state;
       fuint32_t m_conqueror;
       fuint32_t m_victim;
       fuint32_t m_bestContested;

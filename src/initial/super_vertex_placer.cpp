@@ -1,5 +1,7 @@
 #include "super_vertex_placer.hpp"
 
+#include "common/embedding_visualizer.hpp"
+
 using namespace majorminer;
 
 SuperVertexPlacer::SuperVertexPlacer(EmbeddingState& state, EmbeddingManager& embeddingManager)

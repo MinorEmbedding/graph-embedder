@@ -1,6 +1,5 @@
 
 #include "evolutionary/mutation_frontier_shifting.hpp"
-#include "majorminer.hpp"
 
 using namespace majorminer;
 
@@ -58,8 +57,8 @@ double MuationFrontierShifting::calculateImprovement(fuint32_t candidateNode)
   // 1. Change in chain length
   // 2. Change in free neighbors
   // TODO: add free neighbor calculation
-  fuint32_t victimLength = m_suite.m_mapping.count(m_victim);
-  fuint32_t conquerorLength = m_suite.m_mapping.count(m_conqueror);
+  fuint32_t victimLength = m_state.getSuperVertexSize(m_victim);
+  fuint32_t conquerorLength = m_state.getSuperVertexSize(m_conqueror);
   if (victimLength == 0) return MAXFLOAT;
 
   return pow(victimLength - 1, 2) + pow(conquerorLength + 1, 2)

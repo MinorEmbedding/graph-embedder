@@ -12,7 +12,7 @@ namespace majorminer
   class MutationExtend : public GenericMutation
   {
     public:
-      MutationExtend(EmbeddingSuite* suite, fuint32_t sourceNode);
+      MutationExtend(const EmbeddingState& state, EmbeddingManager& embeddingManager, fuint32_t sourceNode);
       ~MutationExtend(){}
       void execute() override;
       bool isValid() override;
@@ -23,7 +23,9 @@ namespace majorminer
       void updateFreeNeighbors();
 
     private:
-      EmbeddingSuite& m_suite;
+      const EmbeddingState& m_state;
+      EmbeddingManager& m_embeddingManager;
+
       nodeset_t m_degraded;
       fuint32_t m_sourceVertex;
       fuint32_t m_targetVertex;
