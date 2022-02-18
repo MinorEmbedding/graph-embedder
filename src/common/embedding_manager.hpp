@@ -1,9 +1,7 @@
 #ifndef __MAJORMINER_EMBEDDING_MANAGER_HPP
 #define __MAJORMINER_EMBEDDING_MANAGER_HPP
 
-#include "majorminer_types.hpp"
-
-#include "common/embedding_state.hpp"
+#include <majorminer_types.hpp>
 
 namespace majorminer
 {

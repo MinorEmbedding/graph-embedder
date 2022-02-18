@@ -1,7 +1,10 @@
-#include "muation_manager.hpp"
+#include "evolutionary/mutation_manager.hpp"
 
-#include "evolutionary/mutation_extend.hpp"
-#include "evolutionary/mutation_frontier_shifting.hpp"
+#include <evolutionary/mutation_extend.hpp>
+#include <evolutionary/mutation_frontier_shifting.hpp>
+#include <common/embedding_state.hpp>
+#include <common/embedding_manager.hpp>
+
 
 using namespace majorminer;
 

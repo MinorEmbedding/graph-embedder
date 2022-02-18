@@ -1,6 +1,6 @@
 #include "super_vertex_placer.hpp"
 
-#include <embedding_manager.hpp>
+#include <common/embedding_manager.hpp>
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
 
@@ -20,8 +20,6 @@ void SuperVertexPlacer::operator()()
   {
     trivialNode();
   }
-
-  // tryMutations();
 }
 
 void SuperVertexPlacer::trivialNode()

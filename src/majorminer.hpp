@@ -1,11 +1,10 @@
 #ifndef __MAJORMINER_MAJOR_MINER_HPP_
 #define __MAJORMINER_MAJOR_MINER_HPP_
 
-#include "config.hpp"
-#include "embedding_manager.hpp"
-#include "common/embedding_state.hpp"
-#include "initial/super_vertex_placer.hpp"
-#include "evolutionary/muation_manager.hpp"
+#include <common/embedding_manager.hpp>
+#include <common/embedding_state.hpp>
+#include <initial/super_vertex_placer.hpp>
+#include <evolutionary/mutation_manager.hpp>
 
 namespace majorminer
 {
@@ -22,7 +21,6 @@ namespace majorminer
       void prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo);
 
       void identifyAffected(fuint32_t node);
-
 
       // query the delta between the number of free nodes
       // and the needed amount of by the sourceNode

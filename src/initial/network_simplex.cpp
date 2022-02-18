@@ -1,7 +1,7 @@
 #include "network_simplex.hpp"
 
-#include "common/embedding_state.hpp"
-#include "embedding_manager.hpp"
+#include <common/embedding_state.hpp>
+#include <common/embedding_manager.hpp>
 
 using namespace majorminer;
 

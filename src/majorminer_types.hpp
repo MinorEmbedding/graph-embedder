@@ -15,8 +15,10 @@
 #include <cinttypes>
 #include <atomic>
 #include <memory>
+#include <thread>
+#include <mutex>
 
-#include "config.hpp"
+#include "common/config.hpp"
 
 
 namespace majorminer

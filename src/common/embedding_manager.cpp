@@ -1,6 +1,7 @@
-#include "embedding_manager.hpp"
+#include "common/embedding_manager.hpp"
 
-#include "common/utils.hpp"
+#include <common/utils.hpp>
+#include <common/embedding_state.hpp>
 
 using namespace majorminer;
 

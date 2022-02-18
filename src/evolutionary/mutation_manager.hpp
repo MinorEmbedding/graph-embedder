@@ -1,14 +1,9 @@
 #ifndef __MAJORMINER_MUTATION_MANAGER_HPP_
 #define __MAJORMINER_MUTATION_MANAGER_HPP_
 
-#include <thread>
-#include <mutex>
+#include <majorminer_types.hpp>
 
-#include "majorminer_types.hpp"
-
-#include "evolutionary/generic_mutation.hpp"
-#include "common/embedding_state.hpp"
-#include "embedding_manager.hpp"
+#include <evolutionary/generic_mutation.hpp>
 
 namespace majorminer
 {
