@@ -2,14 +2,12 @@
 #define __MAJORMINER_EMBEDDING_MANAGER_HPP
 
 #include "majorminer_types.hpp"
+
 #include "common/utils.hpp"
-#include "embedding_state.hpp"
+#include "common/embedding_state.hpp"
 
 namespace majorminer
 {
-  class EmbeddingSuite;
-  class SuperVertexPlacer;
-
   enum ChangeType
   {
     DEL_MAPPING,

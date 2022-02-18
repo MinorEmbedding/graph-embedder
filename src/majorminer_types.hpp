@@ -78,8 +78,18 @@ namespace majorminer
   typedef adjacency_list_t embedding_mapping_t;
   typedef UnorderedSet<fuint32_t> nodeset_t;
   typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
+  typedef std::pair<adjacency_list_t::const_iterator, adjacency_list_t::const_iterator> adjacency_list_range_iterator_t;
 
   class EmbeddingVisualizer;
+  class EmbeddingSuite;
+  class SuperVertexPlacer;
+  class GenericMutation;
+  class MutationExtend;
+  class MuationFrontierShifting;
+  class EmbeddingManager;
+  class MutationManager;
+
+  struct FrontierShiftingData;
 }
 
 

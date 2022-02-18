@@ -126,3 +126,4 @@ TEST(EmbeddingTest, K33_On_Petersen_Kuratowski)
   EmbeddingSuite suite{k33, petersen, visualizer.get()};
   auto embedding = suite.find_embedding();
 }
+

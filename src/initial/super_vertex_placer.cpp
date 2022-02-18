@@ -37,7 +37,7 @@ bool SuperVertexPlacer::connectedNode()
   if (!found) return false;
 
   if (!m_state.removeRemainingNode(node.m_id)) return false;
-  
+
 
   if (node.m_nbConnections > 1)
   {
@@ -51,7 +51,7 @@ bool SuperVertexPlacer::connectedNode()
   else
   { // nbConnections = 1
     DEBUG(OUT_S << "Simple adjacent node to embedd: " << node.m_id << std::endl;)
-    
+
     embeddSimpleNode(node.m_id);
     m_state.updateConnections(node.m_id, m_nodesToProcess);
 

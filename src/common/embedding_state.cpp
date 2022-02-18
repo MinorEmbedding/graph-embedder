@@ -77,3 +77,10 @@ void EmbeddingState::updateConnections(fuint32_t node, PrioNodeQueue& nodesToPro
   }
   // identifyAffected(node);
 }
+
+int EmbeddingState::numberFreeNeighborsNeeded(fuint32_t sourceNode)
+{ // TODO: rework
+  // std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and has " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
+  return 2 * m_sourceNeededNeighbors[sourceNode].load()
+    - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
+}

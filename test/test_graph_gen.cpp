@@ -93,3 +93,4 @@ TEST(CycleGraphGen, Cycle_1)
   EXPECT_EQ(graph.size(), 0);
   containsEdges(graph, {});
 }
+

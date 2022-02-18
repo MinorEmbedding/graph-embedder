@@ -6,4 +6,5 @@ target_sources(majorminer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/embedding_validator.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/embedding_visualizer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/embedding_analyzer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/embedding_state.cpp
 )

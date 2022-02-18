@@ -4,20 +4,18 @@
 
 using namespace majorminer;
 
-#define ADJUST(...)         \
-    __VA_ARGS__;            \
-    m_suite.__VA_ARGS__
-
 
 void EmbeddingManager::mapNode(fuint32_t node, fuint32_t targetNode)
 {
   if (!m_changesToPropagate.empty()) synchronize();
   m_lastNode = node;
   DEBUG(std::cout << node << " -> " << targetNode << std::endl;)
-  ADJUST(m_nodesOccupied.insert(targetNode));
-  ADJUST(m_mapping.insert(std::make_pair(node, targetNode)));
-  ADJUST(m_reverseMapping.insert(std::make_pair(targetNode, node)));
-  ADJUST(m_targetNodesRemaining.unsafe_extract(targetNode));
+
+  m_nodesOccupied.insert(targetNode);
+  m_mapping.insert(std::make_pair(node, targetNode));
+  m_reverseMapping.insert(std::make_pair(targetNode, node));
+  m_targetNodesRemaining.unsafe_extract(targetNode);
+  m_state.mapNode(node, targetNode);
 }
 
 void EmbeddingManager::mapNode(fuint32_t node, const nodeset_t& targetNodes)
@@ -28,13 +26,14 @@ void EmbeddingManager::mapNode(fuint32_t node, const nodeset_t& targetNodes)
   for(auto targetNode : targetNodes)
   {
     DEBUG(OUT_S << " " << targetNode;)
-    ADJUST(m_nodesOccupied.insert(targetNode));
-    ADJUST(m_mapping.insert(std::make_pair(node, targetNode)));
-    ADJUST(m_reverseMapping.insert(std::make_pair(targetNode, node)));
-    ADJUST(m_targetNodesRemaining.unsafe_extract(targetNode));
+    m_nodesOccupied.insert(targetNode);
+    m_mapping.insert(std::make_pair(node, targetNode));
+    m_reverseMapping.insert(std::make_pair(targetNode, node));
+    m_targetNodesRemaining.unsafe_extract(targetNode);
 
   }
   DEBUG(OUT_S << " }" << std::endl;)
+  m_state.mapNode(node, targetNodes);
 }
 #undef ADJUST
 
@@ -77,8 +76,8 @@ void EmbeddingManager::occupyNode(fuint32_t target)
 }
 
 int EmbeddingManager::numberFreeNeighborsNeeded(fuint32_t sourceNode)
-{
-  return 2 * m_suite.m_sourceNeededNeighbors[sourceNode].load()
+{ // TODO: rework and correct?!
+  return 2 * m_state.getSourceNeededNeighbors()[sourceNode].load()
     - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
 }
 
@@ -91,6 +90,11 @@ void EmbeddingManager::commit()
 void EmbeddingManager::synchronize()
 {
   EmbeddingChange change{};
+  auto& mapping = m_state.getMapping();
+  auto& revMapping = m_state.getReverseMapping();
+  auto& sourceFreeNeighbors = m_state.getSourceFreeNeighbors();
+  auto& nodesOccupied = m_state.getNodesOccupied();
+  auto& targetNodesRemaining = m_state.getRemainingTargetNodes();
   while(!m_changesToPropagate.empty() && m_nbCommitsRemaining > 0)
   {
     bool success = m_changesToPropagate.try_pop(change);
@@ -99,28 +103,28 @@ void EmbeddingManager::synchronize()
     {
       case ChangeType::DEL_MAPPING:
       {
-        eraseSinglePair(m_suite.m_mapping, change.m_a, change.m_b);
-        eraseSinglePair(m_suite.m_reverseMapping, change.m_b, change.m_a);
+        eraseSinglePair(mapping, change.m_a, change.m_b);
+        eraseSinglePair(revMapping, change.m_b, change.m_a);
         m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
         break;
       }
       case ChangeType::INS_MAPPING:
       {
-        m_suite.m_mapping.insert(std::make_pair(change.m_a, change.m_b));
-        m_suite.m_reverseMapping.insert(std::make_pair(change.m_b, change.m_a));
+        mapping.insert(std::make_pair(change.m_a, change.m_b));
+        revMapping.insert(std::make_pair(change.m_b, change.m_a));
         m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
         break;
       }
       case ChangeType::FREE_NEIGHBORS:
       {
-        m_suite.m_sourceFreeNeighbors[change.m_a] = change.m_b;
+        sourceFreeNeighbors[change.m_a] = change.m_b;
         m_changeHistory[change.m_a].m_timestampEdgeChanged = m_time.load();
         break;
       }
       case ChangeType::OCCUPY_NODE:
       {
-        m_suite.m_targetNodesRemaining.unsafe_erase(change.m_a);
-        m_suite.m_nodesOccupied.unsafe_erase(change.m_a);
+        targetNodesRemaining.unsafe_erase(change.m_a);
+        nodesOccupied.unsafe_erase(change.m_a);
         m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
         break;
       }

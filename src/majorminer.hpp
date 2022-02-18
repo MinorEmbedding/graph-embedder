@@ -3,8 +3,8 @@
 
 #include "config.hpp"
 #include "embedding_manager.hpp"
-#include "embedding_state.hpp"
 
+#include "common/embedding_state.hpp"
 #include "common/graph_gen.hpp"
 #include "common/utils.hpp"
 #include "common/embedding_validator.hpp"
@@ -20,14 +20,6 @@
 
 namespace majorminer
 {
-  class NetworkSimplexWrapper;
-  class GenericMutation;
-  class MutationExtend;
-  class MuationFrontierShifting;
-  class EmbeddingManager;
-  class MutationManager;
-  struct FrontierShiftingData;
-
   class EmbeddingSuite
   {
       friend NetworkSimplexWrapper;
@@ -56,7 +48,7 @@ namespace majorminer
 
     private:
       EmbeddingState m_state;
-      SuperVertexPlacer& m_placer;
+      SuperVertexPlacer m_placer;
       EmbeddingManager m_embeddingManager;
       MutationManager m_mutationManager;
 

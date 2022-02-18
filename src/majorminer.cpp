@@ -13,17 +13,11 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   while(!nodesRemaining.empty())
   {
     m_placer();
+    tryMutations();
   }
   return m_state.getMapping();
 }
 
-
-
-
-void EmbeddingSuite::mapNode(fuint32_t source, const nodeset_t& targets)
-{
-  m_embeddingManager.mapNode(source, targets);
-}
 
 bool EmbeddingSuite::isValid() const
 {
@@ -87,12 +81,7 @@ void EmbeddingSuite::identifyAffected(fuint32_t node)
   */
 }
 
-int EmbeddingSuite::numberFreeNeighborsNeeded(fuint32_t sourceNode)
-{
-  // std::cout << "Source node " << sourceNode << " needs " << m_sourceNeededNeighbors[sourceNode].load() << " neighbors and has " << m_sourceFreeNeighbors[sourceNode].load() << std::endl;
-  return 2 * m_sourceNeededNeighbors[sourceNode].load()
-    - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
-}
+
 
 void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo)
 {

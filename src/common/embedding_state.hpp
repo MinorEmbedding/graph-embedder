@@ -8,9 +8,11 @@ namespace majorminer
 
   class EmbeddingState
   {
+    friend class EmbeddingManager;
     public:
       EmbeddingState(const graph_t& sourceGraph, const graph_t& targetGraph, EmbeddingVisualizer* vis);
 
+      void mapNode(fuint32_t node, fuint32_t targetNode);
       void mapNode(fuint32_t source, const nodeset_t& targets);
       void updateNeededNeighbors(fuint32_t node);
       void updateConnections(fuint32_t node, PrioNodeQueue& nodesToProcess);
@@ -19,6 +21,7 @@ namespace majorminer
 
       bool removeRemainingNode(fuint32_t node);
 
+      bool isNodeOccupied(fuint32_t node) const { return m_nodesOccupied.contains(node); }
 
     public: // getter
       const graph_t* getSourceGraph() const { return m_sourceGraph; }
@@ -29,8 +32,8 @@ namespace majorminer
       embedding_mapping_t& getMapping() { return m_mapping; }
       const embedding_mapping_t& getReverseMapping() const { return m_reverseMapping; }
       embedding_mapping_t& getReverseMapping() { return m_reverseMapping; }
-      const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
       nodeset_t& getNodesOccupied() { return m_nodesOccupied; }
+      const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
       const nodeset_t& getRemainingTargetNodes() const { return m_targetNodesRemaining; }
       nodeset_t& getRemainingTargetNodes() { return m_targetNodesRemaining; }
       const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
@@ -40,8 +43,15 @@ namespace majorminer
       EmbeddingVisualizer* getVisualizer() { return m_visualizer; }
       bool hasVisualizer() const { return m_visualizer != nullptr; }
 
+      UnorderedMap<fuint32_t, std::atomic<int>>& getSourceFreeNeighbors() { return m_sourceFreeNeighbors; }
+      UnorderedMap<fuint32_t, std::atomic<int>>& getSourceNeededNeighbors() { return m_sourceNeededNeighbors; }
+
     private:
       void initialize();
+
+
+    private: // for friend EmbeddingManager
+
 
     private:
       const graph_t* m_sourceGraph;
