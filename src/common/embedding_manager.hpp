@@ -2,6 +2,7 @@
 #define __MAJORMINER_EMBEDDING_MANAGER_HPP
 
 #include <majorminer_types.hpp>
+#include <common/embedding_base.hpp>
 
 namespace majorminer
 {
@@ -44,7 +45,7 @@ namespace majorminer
     fuint32_t m_timestampEdgeChanged;
   };
 
-  class EmbeddingManager
+  class EmbeddingManager : public EmbeddingBase
   {
       friend EmbeddingSuite;
       friend SuperVertexPlacer;
@@ -58,17 +59,23 @@ namespace majorminer
       void synchronize();
       void commit();
       fuint32_t getTimestamp() { return m_time++; }
-      int numberFreeNeighborsNeeded(fuint32_t sourceNode);
+      int numberFreeNeighborsNeeded(fuint32_t sourceNode) const override;
       const NodeAffected& getHistory(fuint32_t node) { return m_changeHistory[node]; }
 
-
-      const embedding_mapping_t& getMapping() const { return m_mapping; }
-      const embedding_mapping_t& getReverseMapping() const { return m_reverseMapping; }
-      const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
-      const nodeset_t& getTargetNodesRemaining() const { return m_targetNodesRemaining; }
       const UnorderedMap<fuint32_t, std::atomic<int>>& getFreeNeighborMap() const { return m_sourceFreeNeighbors; }
 
       fuint32_t getLastNode() const { return m_lastNode; }
+
+    public:
+      const graph_t* getSourceGraph() const override;
+      const graph_t* getTargetGraph() const override;
+      const adjacency_list_t& getSourceAdjGraph() const override;
+      const adjacency_list_t& getTargetAdjGraph() const override;
+      const embedding_mapping_t& getMapping() const override;
+      const embedding_mapping_t& getReverseMapping() const override;
+      const nodeset_t& getNodesOccupied() const override;
+      const nodeset_t& getRemainingTargetNodes() const override;
+
 
     private:
       void mapNode(fuint32_t source, fuint32_t target);

@@ -43,7 +43,7 @@ bool EmbeddingSuite::connectsNodes() const
   return validator.nodesConnected();
 }
 
-void EmbeddingSuite::identifyAffected(fuint32_t node)
+void EmbeddingSuite::identifyAffected(fuint32_t /* node */)
 {
   /*
   m_sourceNodesAffected.clear();
@@ -88,7 +88,7 @@ void EmbeddingSuite::identifyAffected(fuint32_t node)
 
 
 
-void EmbeddingSuite::prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo)
+void EmbeddingSuite::prepareFrontierShifting(fuint32_t /* victimNode */, fuint32_t /* nbConnectedTo */)
 {
   /*
   m_frontierData.clear();

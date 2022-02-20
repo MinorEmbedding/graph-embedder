@@ -31,7 +31,7 @@ MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state,
   }*/
 }
 
-bool MutationFrontierShifting::isCrucial(fuint32_t candidateNode)
+bool MutationFrontierShifting::isCrucial(fuint32_t /* candidateNode */)
 {/*
   auto& data = m_suite.m_frontierData;
   auto revRange = data.m_reverseConnections.equal_range(candidateNode);
@@ -54,7 +54,7 @@ bool MutationFrontierShifting::isCrucial(fuint32_t candidateNode)
   return false;
 }
 
-double MutationFrontierShifting::calculateImprovement(fuint32_t candidateNode)
+double MutationFrontierShifting::calculateImprovement(fuint32_t /* candidateNode */)
 {
   // Two factors play a role:
   // 1. Change in chain length

@@ -127,26 +127,13 @@ void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)
   }
   if (adjacentNode == (fuint32_t)-1) throw std::runtime_error("Could not find the adjacent node.");
 
-  const auto& mapping = m_state.getMapping();
-  const auto& target = m_state.getTargetAdjGraph();
-  const auto& nodesOccupied = m_state.getNodesOccupied();
 
-  auto embeddedPathIt = mapping.equal_range(adjacentNode);
   fuint32_t bestNodeFound = adjacentNode;
+  m_state.iterateSourceMappingAdjacent<true>(adjacentNode, [&bestNodeFound](fuint32_t candidate, fuint32_t){
+    bestNodeFound = candidate;
+    return true;
+  });
 
-  for (auto targetNode = embeddedPathIt.first; targetNode != embeddedPathIt.second && bestNodeFound == adjacentNode; ++targetNode)
-  {
-    // find nodes that are adjacent to targetNode (in the targetGraph)
-    auto targetGraphAdjacentIt = target.equal_range(targetNode->second);
-    for (auto targetAdjacent = targetGraphAdjacentIt.first; targetAdjacent != targetGraphAdjacentIt.second; ++targetAdjacent)
-    {
-      if (!nodesOccupied.contains(targetAdjacent->second))
-      {
-        bestNodeFound = targetAdjacent->second;
-        break;
-      }
-    }
-  }
   // map "node" to "bestNodeFound"
   m_embeddingManager.mapNode(node, bestNodeFound);
   m_state.updateNeededNeighbors(node);

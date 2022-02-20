@@ -33,7 +33,7 @@ namespace majorminer
       void clear();
       const LemonArcPair& getArcPair(fuint32_t n1, fuint32_t n2);
 
-      capacity_t getNumberAdjacentNodes(fuint32_t node, const adjacency_list_range_iterator_t& adjacentIt) const;
+      capacity_t getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const;
       void constructLemonGraph(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps);
       void constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, const adjacency_list_range_iterator_t& adjacentIt);
     private:

@@ -21,7 +21,7 @@ void MutationManager::mutate()
   auto& incorporationQueue = m_incorporationQueue;
   const auto& done = m_done;
   auto& runningPreps = m_runningPreps;
-  const auto& wait = m_wait;
+  // const auto& wait = m_wait;
   auto& free = m_free;
   std::thread prep{ [&](){
     MutationPtr mutation;

@@ -74,10 +74,11 @@ void EmbeddingManager::occupyNode(fuint32_t target)
   m_targetNodesRemaining.unsafe_erase(target);
 }
 
-int EmbeddingManager::numberFreeNeighborsNeeded(fuint32_t sourceNode)
+int EmbeddingManager::numberFreeNeighborsNeeded(fuint32_t sourceNode) const
 { // TODO: rework and correct?!
+  auto it = m_sourceFreeNeighbors.find(sourceNode);
   return 2 * m_state.getSourceNeededNeighbors()[sourceNode].load()
-    - std::max(m_sourceFreeNeighbors[sourceNode].load(), 0);
+    - (it == m_sourceFreeNeighbors.end() ? 0 : std::max(it->second.load(), 0));
 }
 
 void EmbeddingManager::commit()
@@ -146,3 +147,13 @@ void EmbeddingManager::clear()
   m_changesToPropagate.clear();
   m_nbCommitsRemaining = 0;
 }
+
+
+const graph_t* EmbeddingManager::getSourceGraph() const { return m_state.getSourceGraph(); }
+const graph_t* EmbeddingManager::getTargetGraph() const { return m_state.getTargetGraph(); }
+const adjacency_list_t& EmbeddingManager::getSourceAdjGraph() const { return m_state.getSourceAdjGraph(); }
+const adjacency_list_t& EmbeddingManager::getTargetAdjGraph() const { return m_state.getTargetAdjGraph(); }
+const embedding_mapping_t& EmbeddingManager::getMapping() const { return m_mapping; }
+const embedding_mapping_t& EmbeddingManager::getReverseMapping() const { return m_reverseMapping; }
+const nodeset_t& EmbeddingManager::getNodesOccupied() const { return m_nodesOccupied; }
+const nodeset_t& EmbeddingManager::getRemainingTargetNodes() const { return m_targetNodesRemaining; }

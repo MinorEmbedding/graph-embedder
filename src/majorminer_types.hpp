@@ -85,6 +85,7 @@ namespace majorminer
 
   class EmbeddingVisualizer;
   class EmbeddingSuite;
+  class EmbeddingBase;
   class EmbeddingState;
   class EmbeddingManager;
   class SuperVertexPlacer;

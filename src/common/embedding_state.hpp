@@ -1,12 +1,13 @@
 #ifndef __MAJORMINER_EMBEDDING_STATE_HPP_
 #define __MAJORMINER_EMBEDDING_STATE_HPP_
 
-#include "majorminer_types.hpp"
+#include <majorminer_types.hpp>
+#include <common/embedding_base.hpp>
 
 namespace majorminer
 {
 
-  class EmbeddingState
+  class EmbeddingState : public EmbeddingBase
   {
     friend EmbeddingManager;
     public:
@@ -28,17 +29,19 @@ namespace majorminer
       int getSourceNbFreeNeighbors(fuint32_t sourceNode) const;
 
     public: // getter
-      const graph_t* getSourceGraph() const { return m_sourceGraph; }
-      const graph_t* getTargetGraph() const { return m_targetGraph; }
-      const adjacency_list_t& getSourceAdjGraph() const { return m_source; }
-      const adjacency_list_t& getTargetAdjGraph() const { return m_target; }
-      const embedding_mapping_t& getMapping() const { return m_mapping; }
+      const graph_t* getSourceGraph() const override { return m_sourceGraph; }
+      const graph_t* getTargetGraph() const override { return m_targetGraph; }
+      const adjacency_list_t& getSourceAdjGraph() const override { return m_source; }
+      const adjacency_list_t& getTargetAdjGraph() const override { return m_target; }
+      const embedding_mapping_t& getMapping() const override { return m_mapping; }
+      const embedding_mapping_t& getReverseMapping() const override { return m_reverseMapping; }
+      const nodeset_t& getNodesOccupied() const override { return m_nodesOccupied; }
+      const nodeset_t& getRemainingTargetNodes() const override { return m_targetNodesRemaining; }
+
+
       embedding_mapping_t& getMapping() { return m_mapping; }
-      const embedding_mapping_t& getReverseMapping() const { return m_reverseMapping; }
       embedding_mapping_t& getReverseMapping() { return m_reverseMapping; }
       nodeset_t& getNodesOccupied() { return m_nodesOccupied; }
-      const nodeset_t& getNodesOccupied() const { return m_nodesOccupied; }
-      const nodeset_t& getRemainingTargetNodes() const { return m_targetNodesRemaining; }
       nodeset_t& getRemainingTargetNodes() { return m_targetNodesRemaining; }
       const UnorderedMap<fuint32_t, fuint32_t>& getRemainingNodes() const { return m_nodesRemaining; }
       UnorderedMap<fuint32_t, fuint32_t>& getRemainingNodes() { return m_nodesRemaining; }

@@ -30,16 +30,15 @@ namespace majorminer
 
     private:
       EmbeddingState m_state;
-      SuperVertexPlacer m_placer;
+      EmbeddingVisualizer* m_visualizer;
       EmbeddingManager m_embeddingManager;
       MutationManager m_mutationManager;
+      SuperVertexPlacer m_placer;
 
       // TODO: change to priority queue depending on fitness function
       Queue<std::unique_ptr<GenericMutation>> m_taskQueue;
 
       // FrontierShiftingData m_frontierData;
-
-      EmbeddingVisualizer* m_visualizer;
   };
 
 }

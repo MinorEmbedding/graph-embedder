@@ -10,7 +10,7 @@ using namespace majorminer;
 #define FREE 1
 
 
-NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(fuint32_t node, const adjacency_list_range_iterator_t& adjacentIt) const
+NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const
 {
   const auto& mapping = m_state.getMapping();
   capacity_t n = 0;
@@ -83,9 +83,8 @@ void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, Lem
 void NetworkSimplexWrapper::embeddNode(fuint32_t node)
 {
   clear();
-  const auto& mapping = m_state.getMapping();
   auto adjacentIt = m_state.getSourceAdjGraph().equal_range(node);
-  m_numberAdjacentLowered = getNumberAdjacentNodes(node, adjacentIt) - 1;
+  m_numberAdjacentLowered = getNumberAdjacentNodes(adjacentIt) - 1;
   // DEBUG(OUT_S << "Flow of " << lowered << " needed." << std::endl;)
 
   LemonArcMap<cost_t> costs(m_graph);
