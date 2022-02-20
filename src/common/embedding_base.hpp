@@ -59,7 +59,7 @@ namespace majorminer
         auto revRange = getReverseMapping().equal_range(mappedTargetNode);
         for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
         {
-          if (func(revIt->second)) return;
+          func(revIt->second);
         }
       }
 
@@ -69,7 +69,43 @@ namespace majorminer
         auto adjRange = getTargetAdjGraph().equal_range(targetNode);
         for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
         {
+          func(adj->second);
+        }
+      }
+
+      template<typename Functor>
+      void iterateSourceGraphAdjacent(fuint32_t sourceNode, Functor func) const
+      {
+        auto adjRange = getSourceAdjGraph().equal_range(sourceNode);
+        for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
+        {
+          func(adj->second);
+        }
+      }
+
+      template<typename Functor>
+      void iterateSourceGraphAdjacentBreak(fuint32_t sourceNode, Functor func) const
+      {
+        auto adjRange = getSourceAdjGraph().equal_range(sourceNode);
+        for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
+        {
           if (func(adj->second)) return;
+        }
+      }
+
+      template<typename Functor>
+      void iterateTargetAdjacentReverseMapping(fuint32_t target, Functor func) const
+      {
+        const auto& targetGraph = getTargetAdjGraph();
+        const auto& reverse = getReverseMapping();
+        auto adjacentRange = targetGraph.equal_range(target);
+        for (auto adjIt = adjacentRange.first; adjIt != adjacentRange.second; ++adjIt)
+        {
+          auto revMappedRange = reverse.equal_range(adjIt->second);
+          for (auto revIt = revMappedRange.first; revIt != revMappedRange.second; ++revIt)
+          {
+            func(revIt->second);
+          }
         }
       }
   };

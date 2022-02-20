@@ -26,17 +26,10 @@ bool EmbeddingValidator::nodesConnected() const
 {
   const auto& embedding = m_state.getMapping();
   const auto& sourceGraph = *m_state.getSourceGraph();
-  const auto& targetGraph = m_state.getTargetAdjGraph();
   UnorderedMultiMap<fuint32_t, fuint32_t> adjacencies{};
   for (const auto& e : sourceGraph)
   {
     adjacencies.insert(orderedPair(e));
-  }
-
-  UnorderedMultiMap<fuint32_t, fuint32_t> reverseMapping{};
-  for (const auto& mapped : embedding)
-  {
-    reverseMapping.insert(std::make_pair(mapped.second, mapped.first));
   }
 
   UnorderedMap<fuint32_t, std::atomic<bool>> adjacentNodes{};
@@ -54,27 +47,14 @@ bool EmbeddingValidator::nodesConnected() const
 
     // for each node in adjacentNodes search for adjacency to mappedNodes
     tbb::parallel_for_each(mappedRange.first, mappedRange.second,
-      [&adjacentNodes, &reverseMapping, targetGraph](fuint32_pair_t targetNodeP) {
-        auto targetNodeMapped = reverseMapping.equal_range(targetNodeP.second);
-        for (auto it = targetNodeMapped.first; it != targetNodeMapped.second; ++it)
-        {
-          if (adjacentNodes.contains(it->second))
-          {
-            adjacentNodes[it->second] = true;
-          }
-        }
-        auto adjacentIt = targetGraph.equal_range(targetNodeP.second);
-        for (auto it = adjacentIt.first; it != adjacentIt.second; ++it)
-        {
-          auto revMappedIt = reverseMapping.equal_range(it->second);
-          for (auto revIt = revMappedIt.first; revIt != revMappedIt.second; ++revIt)
-          {
-            if (adjacentNodes.contains(revIt->second))
-            {
-              adjacentNodes[revIt->second] = true;
-            }
-          }
-        }
+      [&](fuint32_pair_t targetNodeP) {
+        m_state.iterateReverseMapping(targetNodeP.second, [&](fuint32_t reverse){
+          if (adjacentNodes.contains(reverse)) adjacentNodes[reverse] = true;
+        });
+
+        m_state.iterateTargetAdjacentReverseMapping(targetNodeP.second, [&](fuint32_t revSourceNode){
+          if (adjacentNodes.contains(revSourceNode)) adjacentNodes[revSourceNode] = true;
+        });
     });
 
     for (const auto& adjNode : adjacentNodes)
@@ -96,27 +76,18 @@ bool EmbeddingValidator::nodesConnected() const
 void EmbeddingValidator::printMissingEdges(fuint32_t node) const
 {
   nodeset_t missingAdjacent{};
-  const auto& reverseMapping = m_state.getReverseMapping();
-  const auto& sourceGraph = m_state.getSourceAdjGraph();
-  const auto& targetGraph = m_state.getTargetAdjGraph();
 
-  auto adjRange = sourceGraph.equal_range(node);
-  for (auto it = adjRange.first; it != adjRange.second; ++it) missingAdjacent.insert(it->second);
+  m_state.iterateSourceGraphAdjacent(node, [&missingAdjacent](fuint32_t adjacentSource)
+    { missingAdjacent.insert(adjacentSource); });
 
   if (missingAdjacent.empty()) return;
-  auto mappedRange = m_state.getMapping().equal_range(node);
-  for (auto mappedIt = mappedRange.first; mappedIt != mappedRange.second; ++mappedIt)
-  {
-    auto targetAdjRange = targetGraph.equal_range(mappedIt->second);
-    for (auto targetAdj = targetAdjRange.first; targetAdj != targetAdjRange.second; ++targetAdj)
-    {
-      auto revRange = reverseMapping.equal_range(targetAdj->second);
-      for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
-      {
-        missingAdjacent.unsafe_erase(revIt->second);
-      }
-    }
-  }
+
+  m_state.iterateSourceMappingAdjacent<false>(node, [&](fuint32_t adjacent, fuint32_t){
+    m_state.iterateReverseMapping(adjacent, [&](fuint32_t reverse){
+      missingAdjacent.unsafe_erase(reverse);
+    });
+    return false;
+  });
 
   OUT_S << "Node " << node << " is missing edges to nodes { ";
   for (auto missing : missingAdjacent) OUT_S << missing << " ";

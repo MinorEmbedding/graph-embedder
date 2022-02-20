@@ -106,25 +106,19 @@ void SuperVertexPlacer::visualize(fuint32_t node, PlacedNodeType type, fuint32_t
 void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
 {
   if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(m_state, m_embeddingManager);
-
   m_nsWrapper->embeddNode(node);
 }
 
 void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)
 {
   // find a node that is adjacent to the node "adjacentNode"
-
-  auto adjacentIt = m_state.getSourceAdjGraph().equal_range(node);
-  const auto& nodesRemaining = m_state.getRemainingNodes();
   fuint32_t adjacentNode = -1;
-  for (auto n = adjacentIt.first; n != adjacentIt.second; ++n)
-  {
-    if (!nodesRemaining.contains(n->second))
-    {
-      adjacentNode = n->second;
-      break;
-    }
-  }
+  m_state.iterateSourceGraphAdjacentBreak(node, [&](fuint32_t adjacent){
+    if (m_state.isNodeMapped(adjacent))
+    { adjacentNode = adjacent; return true; }
+    return false;
+  });
+
   if (adjacentNode == (fuint32_t)-1) throw std::runtime_error("Could not find the adjacent node.");
 
 

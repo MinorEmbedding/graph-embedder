@@ -21,6 +21,7 @@ namespace majorminer
       fuint32_t getTrivialNode();
 
       bool removeRemainingNode(fuint32_t node);
+      bool isNodeMapped(fuint32_t sourceNode) const { return !m_nodesRemaining.contains(sourceNode); }
 
       bool isNodeOccupied(fuint32_t node) const { return m_nodesOccupied.contains(node); }
 

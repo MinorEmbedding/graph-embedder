@@ -44,32 +44,27 @@ bool EmbeddingState::removeRemainingNode(fuint32_t node)
 
 void EmbeddingState::updateNeededNeighbors(fuint32_t node)
 {
-  auto range = m_source.equal_range(node);
   fuint32_t nbNodes = 0;
-  for (auto it = range.first; it != range.second; ++it)
-  {
-    if (!m_nodesRemaining.contains(it->second))
+  iterateSourceGraphAdjacent(node, [&, this](fuint32_t adjacentSource){
+    if (isNodeMapped(adjacentSource))
     {
-      nbNodes++;
-      m_sourceNeededNeighbors[it->second]--;
+      nbNodes++; m_sourceNeededNeighbors[adjacentSource]--;
     }
-  }
+  });
   m_sourceNeededNeighbors[node] -= nbNodes;
 }
 
 
 void EmbeddingState::updateConnections(fuint32_t node, PrioNodeQueue& nodesToProcess)
 {
-  auto adjacentRange = m_source.equal_range(node);
-  for (auto adjacentIt = adjacentRange.first; adjacentIt != adjacentRange.second; ++adjacentIt)
-  {
-    auto findIt = m_nodesRemaining.find(adjacentIt->second);
+  iterateSourceGraphAdjacent(node, [&](fuint32_t adjacent){
+    auto findIt = m_nodesRemaining.find(adjacent);
     if (findIt != m_nodesRemaining.end())
     {
       findIt->second += 1; // one of its neighbors is now embedded
       nodesToProcess.push(PrioNode{findIt->first, findIt->second});
     }
-  }
+  });
   // identifyAffected(node);
 }
 

@@ -32,9 +32,8 @@ double MutationExtend::checkImprovement(fuint32_t extendNode, int delta, bool us
       { // already mapped to
         // go over each that was mapped to this node and add to degraded
         m_state.iterateReverseMapping(adjacent, [&](fuint32_t sourceNode)
-          { degraded.insert(sourceNode); return false; });
+          { degraded.insert(sourceNode); });
       }
-      return false;
   });
 
   if (nbFree == 0) return MAXFLOAT;

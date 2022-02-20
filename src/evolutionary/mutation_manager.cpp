@@ -61,21 +61,12 @@ void MutationManager::prepare()
 void MutationManager::prepareAffectedExtendCandidates(fuint32_t node)
 {
   nodeset_t extendAffected{};
-  auto mapped = m_state.getMapping().equal_range(node);
-  const auto& reverseMapping = m_state.getReverseMapping();
-  const auto& targetGraph = m_state.getTargetAdjGraph();
-  for (auto mapIt = mapped.first; mapIt != mapped.second; ++mapIt)
-  {
-    auto adjacentRange = targetGraph.equal_range(mapIt->second);
-    for (auto adjIt = adjacentRange.first; adjIt != adjacentRange.second; ++adjIt)
-    {
-      auto revMapped = reverseMapping.equal_range(adjIt->second);
-      for (auto revIt = revMapped.first; revIt != revMapped.second; ++revIt)
-      {
-        extendAffected.insert(revIt->second);
-      }
-    }
-  }
+  m_state.iterateSourceMappingAdjacent<false>(node, [&](fuint32_t target){
+    m_state.iterateReverseMapping(target, [&](fuint32_t revSourceNode){
+      extendAffected.insert(revSourceNode);
+    });
+  });
+
   for (auto extendCandidate : extendAffected)
   {
     m_prepQueue.push(std::make_unique<MutationExtend>(m_state, m_embeddingManager, extendCandidate));
