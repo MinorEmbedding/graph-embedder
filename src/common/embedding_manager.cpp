@@ -166,7 +166,9 @@ ShiftingCandidates EmbeddingManager::getCandidatesFor(fuint32_t conquerorNode)
 
 ShiftingCandidates EmbeddingManager::setCandidatesFor(fuint32_t conquerorNode, nodeset_t& candidates)
 {
-  ShiftingCandidates element = std::make_pair(candidates.size(), std::make_shared<fuint32_t[]>(candidates.size()));
+  fuint32_t size = candidates.size();
+  ShiftingCandidates element = std::make_pair(size, std::make_shared<fuint32_t[]>(size));
+  m_random.shuffle(element.second.get(), size);
   fuint32_t* writePtr = element.second.get();
   for (auto candidate : candidates) *writePtr++ = candidate;
   m_candidateCache[conquerorNode].value() = element;

@@ -3,12 +3,21 @@
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
 #include <common/embedding_manager.hpp>
+#include <common/csc_problem.hpp>
 
 #include <sstream>
 
 #define MAX_CANDIDATES 20
 
 using namespace majorminer;
+
+namespace
+{
+  bool isCandidateValid(const ShiftingCandidates& candidate)
+  {
+    return candidate.second.get() != nullptr;
+  }
+}
 
 MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state, EmbeddingManager& manager,
   fuint32_t conquerorSource)
@@ -18,7 +27,7 @@ MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state, 
   // find a victim node for which conqueror is connected to and
   // all other node is not crucial for victim
   ShiftingCandidates cands = m_manager.getCandidatesFor(conquerorSource);
-  if (cands.second.get() == nullptr)
+  if (!isCandidateValid(cands))
   {
     nodeset_t candidateSet{};
     m_state.iterateSourceMappingAdjacent<false>(m_conqueror, [&](fuint32_t target, fuint32_t){
@@ -30,20 +39,24 @@ MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state, 
     cands = m_manager.setCandidatesFor(m_conqueror, candidateSet);
   }
 
+  if (!isCandidateValid(cands)) return;
+  fuint32_t* candidates = cands.second.get();
+  auto subgraph = extractSubgraph(m_state, conquerorSource);
 
-  /*auto conquerorRange = data.m_victimConnections.equal_range(conquerorSource);
-
-  for (auto candidateIt = conquerorRange.first; candidateIt != conquerorRange.second; ++candidateIt)
+  for (fuint32_t idx = 0; idx < cands.first; ++idx)
   {
-    if (data.m_cutVertices.contains(candidateIt->second) || isCrucial(candidateIt->second)) continue;
-    double val = calculateImprovement(candidateIt->second);
-    if (val < m_bestImprovement)
+    fuint32_t value = candidates[idx];
+    candidates[idx] = FUINT32_UNDEF;
+
+    if (value == FUINT32_UNDEF) continue;
+    if (!isNodeCrucial(subgraph, m_state, value))
     {
+      double val = calculateImprovement(value);
       m_bestImprovement = val;
       m_valid = true;
-      m_bestContested = candidateIt->second;
+      m_bestContested = value;
     }
-  }*/
+  }
 }
 
 bool MutationFrontierShifting::isCrucial(fuint32_t /* candidateNode */)
@@ -52,7 +65,7 @@ bool MutationFrontierShifting::isCrucial(fuint32_t /* candidateNode */)
   auto revRange = data.m_reverseConnections.equal_range(candidateNode);
   for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
   { // for every node, we have to make sure that the source node has another
-    // connection to the victim chain
+    // connection  to the victim chain
     if (revIt->second == m_conqueror) continue;
     bool replaceable = false;
     auto connectionRange = data.m_victimConnections.equal_range(revIt->second);

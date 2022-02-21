@@ -108,6 +108,26 @@ namespace majorminer
           }
         }
       }
+
+
+      /// For a given source node, iterates over every pair of two target nodes the source node
+      /// is mapped to and invokes the functor func using this pair of target nodes.
+      template<typename Functor>
+      void iterateSourceMappingPair(fuint32_t sourceNode, Functor func) const
+      {
+        const auto& mapping = getMapping();
+        auto mappedRange = mapping.equal_range(sourceNode);
+        for (auto mapped1It = mappedRange.first; mapped1It != mappedRange.second; ++mapped1It)
+        {
+          auto mapped2It = mapped1It;
+          mapped2It++;
+
+          for (; mapped2It != mappedRange.second; ++mapped2It)
+          {
+            func(mapped1It->second, mapped2It->second);
+          }
+        }
+      }
   };
 
 

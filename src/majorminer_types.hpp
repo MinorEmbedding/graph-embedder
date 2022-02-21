@@ -20,6 +20,7 @@
 #include <memory>
 #include <thread>
 #include <mutex>
+#include <random>
 
 
 namespace majorminer
@@ -103,6 +104,8 @@ namespace majorminer
   class NetworkSimplexWrapper;
 
   struct FrontierShiftingData;
+
+  const static fuint32_t FUINT32_UNDEF = (fuint32_t)-1;
 }
 
 

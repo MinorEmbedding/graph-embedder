@@ -27,7 +27,6 @@ void majorminer::identifiyCutVertices(nodeset_t& cut, const adjacency_list_t& su
 {
   if (subgraph.empty()) return;
   Stack<equal_range_t> nodeStack{};
-  Vector<edge_t> edgesDfs{};
 
   UnorderedMap<fuint32_t, VertexData> properties{};
 

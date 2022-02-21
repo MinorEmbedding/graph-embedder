@@ -3,6 +3,7 @@
 
 #include <majorminer_types.hpp>
 #include <common/embedding_base.hpp>
+#include <common/random_gen.hpp>
 
 namespace majorminer
 {
@@ -69,6 +70,8 @@ namespace majorminer
       ShiftingCandidates getCandidatesFor(fuint32_t conquerorNode);
       ShiftingCandidates setCandidatesFor(fuint32_t conquerorNode, nodeset_t& candidates);
 
+      RandomGen& getRandomGen() { return m_random; }
+
     public:
       const graph_t* getSourceGraph() const override;
       const graph_t* getTargetGraph() const override;
@@ -89,6 +92,8 @@ namespace majorminer
       EmbeddingSuite& m_suite;
       EmbeddingState& m_state;
       CandidateCache m_candidateCache;
+      RandomGen m_random;
+
       embedding_mapping_t m_mapping;
       embedding_mapping_t m_reverseMapping;
       nodeset_t m_nodesOccupied;
