@@ -48,82 +48,82 @@ class Embedding():
                 res.append(node)
         return res
 
-    def get_reachable_neighbors(self, from_node):
-        return self.G_layout.get_neighbor_nodes(from_node)
+    def get_reachable_neighbors(self, source):
+        return self.G_layout.get_neighbor_nodes(source)
 
-    def get_free_neighbors(self, from_node) -> list:
-        neighbors = self.G_layout.get_neighbor_nodes(from_node)
+    def get_free_neighbors(self, source) -> list:
+        neighbors = self.G_layout.get_neighbor_nodes(source)
         neighbors_used = self.G_embedding.get_embedded_nodes()
         neighbors_free = [neighbor for neighbor in neighbors
                           if neighbor not in neighbors_used]
         if not neighbors_free:
-            raise NoFreeNeighborNodes(from_node)
+            raise NoFreeNeighborNodes(source)
         return neighbors_free
 
-    def get_connected_neighbors(self, from_node) -> list:
-        return self.G_embedding.get_neighbor_nodes(from_node)
+    def get_embedded_neighbors(self, source) -> list:
+        return self.G_embedding.get_neighbor_nodes(source)
 
-    def embed_edge(self, node_from, node_to) -> None:
-        self.G_embedding.embed_edge(node_from, node_to)
-        node_from_H = self.mapping.add_mapping_new_node_H(node_from)
-        node_to_H = self.mapping.add_mapping_new_node_H(node_to)
+    def embed_edge(self, source, target) -> None:
+        self.G_embedding.embed_edge(source, target)
+        node_from_H = self.mapping.add_mapping_new_node_H(source)
+        node_to_H = self.mapping.add_mapping_new_node_H(target)
         self.G_embedding_view.embed_edge(node_from_H, node_to_H)
 
-    def embed_edge_with_mapping(self, from_H, from_G, to_H, to_G) -> None:
-        self.G_embedding.embed_edge(from_G, to_G)
-        self.mapping.set_mapping(from_H, from_G)
-        self.mapping.set_mapping(to_H, to_G)
-        self.G_embedding_view.embed_edge(from_H, to_H)
+    def embed_edge_with_mapping(self, source_H, source_G, target_H, target_G) -> None:
+        self.G_embedding.embed_edge(source_G, target_G)
+        self.mapping.set_mapping(source_H, source_G)
+        self.mapping.set_mapping(target_H, target_G)
+        self.G_embedding_view.embed_edge(source_H, target_H)
 
-    def remove_edge_inconsistently(self, from_node, to_node):
-        self.G_embedding.remove_edge(from_node, to_node)
+    def remove_edge_inconsistently(self, source, target):
+        self.G_embedding.remove_edge(source, target)
 
-    def exists_edge(self, frm, to):
-        return self.G_layout.exists_edge(frm, to)
+    def exists_edge(self, source, target):
+        return self.G_layout.exists_edge(source, target)
 
-    def add_chain_to_used_nodes(self, from_node, to_node, to_node_new, to_node_new_chain_partner=None):
+    def add_chain_to_used_nodes(self, source, target, shifted_target, shifted_target_partner=None):
         """
         Adds a new chain. Does NOT check if this chain is even possible in the
         graph at the moment. TODO: "insource" the check to this class
         """
         # --- Adjust mapping
-        # mapping for from_node stays the same
-        from_node_H = self.mapping.get_node_H(node_G=from_node)
-        # mapping for to_node is adjusted so that from_node_H maps to from_node AND to_node
-        to_node_H = self.mapping.get_node_H(node_G=to_node)
+        # mapping for source stays the same
+        from_node_H = self.mapping.get_node_H(node_G=source)
+        # mapping for target is adjusted so that from_node_H maps to source AND target
+        to_node_H = self.mapping.get_node_H(node_G=target)
 
-        # TODO: simplify to set_mapping(to_node, from_node_H) # other-way around
-        self.mapping.remove_mapping(to_node_H, to_node)
-        self.mapping.extend_mapping(from_node_H, to_node)
-        self.mapping.extend_mapping(to_node_H, to_node_new)
+        # TODO: simplify to set_mapping(target, from_node_H) # other-way around
+        self.mapping.remove_mapping(to_node_H, target)
+        self.mapping.extend_mapping(from_node_H, target)
+        self.mapping.extend_mapping(to_node_H, shifted_target)
 
         # --- Adjust embedding
-        to_node_connected_neighbors = self.get_connected_neighbors(to_node)
+        to_node_connected_neighbors = self.get_embedded_neighbors(target)
 
-        # Special case: To_Node might have been in chain
+        # Special case: target might have been in chain
         to_node_chain = self.G_embedding.get_first_node_chain_other_than_default(
-            to_node)
+            target)
         to_node_chain_nodes = self.G_embedding.get_chain_nodes(
             to_node_chain) if to_node_chain else []
 
         # Two chains constructed?
-        new_nodes = [to_node_new]
-        if to_node_new_chain_partner:
-            new_nodes.append(to_node_new_chain_partner)
+        new_nodes = [shifted_target]
+        if shifted_target_partner:
+            new_nodes.append(shifted_target_partner)
 
-        # Delete all edges outgoing from node_to
-        self.G_embedding.remove_all_edges_from_node(to_node)
+        # Delete all edges outgoing from target
+        self.G_embedding.remove_all_edges_from_node(target)
 
         for prev_connected_neighbor in to_node_connected_neighbors:
             print('🌹 here for the next prev_connected_neigbhor: ',
                   prev_connected_neighbor)
 
             # Special previous connected neighbors
-            if prev_connected_neighbor in [from_node, to_node_new]:
+            if prev_connected_neighbor in [source, shifted_target]:
                 continue
 
             # Embed all other pre-existing edges
-            # To_Node might have been in a chain with the current neighbor
+            # target might have been in a chain with the current neighbor
             # -> if in super-node
             chain = to_node_chain if prev_connected_neighbor in to_node_chain_nodes else 0
             embedded = False
@@ -177,28 +177,27 @@ class Embedding():
                     'Error adding a chain to used nodes. Should never happen!')
 
         # --- Chain
-        # If from_node has been in a chain before, we extend this chain
-        from_node_chain = self.G_embedding.get_first_node_chain_other_than_default(
-            from_node)
-        if from_node_chain:
-            self.G_embedding.embed_edge(
-                from_node, to_node, chain=from_node_chain)
+        # If source has been in a chain before, we extend this chain
+        source_chain = self.G_embedding.get_first_node_chain_other_than_default(
+            source)
+        if source_chain:
+            self.G_embedding.embed_edge(source, target, chain=source_chain)
         else:
-            self.G_embedding.add_chain(from_node, to_node)
+            self.G_embedding.add_chain(source, target)
 
-        self.G_embedding.embed_edge(to_node, to_node_new)
+        self.G_embedding.embed_edge(target, shifted_target)
         # TODO: adjust embedding for self.G_embedding_view (???)
 
-    def extend_one_node_to_chain(self, frm, to, extend_G):
+    def extend_one_node_to_chain(self, source, target, extend_G):
         """Extends one node to a chain.
 
         Note that an edge from extend_G to frm must be viable. TODO: add a check
         """
         extend_H = self.mapping.get_node_H(node_G=extend_G)
-        self.mapping.extend_mapping(extend_H, frm)
-        self.mapping.extend_mapping(extend_H, to)
+        self.mapping.extend_mapping(extend_H, source)
+        self.mapping.extend_mapping(extend_H, target)
 
-        # The to_node might be a chain, so we need to choose the right chain then
+        # The target might be a chain, so we need to choose the right chain then
         extend_G_node_chain = self.G_embedding.get_first_node_chain_other_than_default(
             extend_G)
         logger.info(f'🎂 Extend_G node chain: {extend_G_node_chain}')
@@ -206,19 +205,20 @@ class Embedding():
             logger.info('👀 (1) Reuse existing chain')
             # TODO: What about a node being included in multiple chains temporarily?
             # Right now, this is never the case, or is it?
-            self.G_embedding.embed_edge(frm, to, chain=extend_G_node_chain)
+            self.G_embedding.embed_edge(
+                source, target, chain=extend_G_node_chain)
         else:
             logger.info('👀 (2) Add chain')
-            self.G_embedding.add_chain(frm, to)
+            self.G_embedding.add_chain(source, target)
         # avoid inconsistent state
         # TODO: right now not really needed as chain gets added later
-        self.G_embedding.embed_edge(extend_G, frm)
+        self.G_embedding.embed_edge(extend_G, source)
 
     def is_valid_embedding(self) -> bool:
         for frm in self.H.get_nodes():
-            expected_tos = self.H.get_neighbor_nodes(frm)
-            actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
-            if actual_tos != expected_tos:
+            expected_targets = self.H.get_neighbor_nodes(frm)
+            actual_targets = self.G_embedding_view.get_neighbor_nodes(frm)
+            if actual_targets != expected_targets:
                 return False
         return True
 
@@ -255,26 +255,26 @@ class Embedding():
         """
         missing_edges_added = 0
 
-        for frm in self.H.get_nodes():
-            expected_tos = self.H.get_neighbor_nodes(frm)
-            actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
-            # actual_tos = [self.G_embedding_view.get_neighbor_nodes(frm)
+        for source in self.H.get_nodes():
+            expected_targets = self.H.get_neighbor_nodes(source)
+            actual_targets = self.G_embedding_view.get_neighbor_nodes(source)
+            # actual_targets = [self.G_embedding_view.get_neighbor_nodes(frm)
             #               for frm in self.mapping.get_node_G(node_H=frm)]
-            # actual_tos = list(itertools.chain(*actual_tos))  # flatten
+            # actual_targets = list(itertools.chain(*actual_targets))  # flatten
 
-            for to in expected_tos:
-                if to not in actual_tos:
-                    # logger.info(f'missing edge from H: {frm}-{to}')
+            for target in expected_targets:
+                if target not in actual_targets:
+                    # logger.info(f'missing edge from H: {source}-{target}')
                     # Can we add this edge with the current embedding?
                     possible_edges = list(itertools.product(
-                        self.mapping.get_node_G(node_H=frm), self.mapping.get_node_G(node_H=to)))
+                        self.mapping.get_node_G(node_H=source), self.mapping.get_node_G(node_H=target)))
                     # product since we are dealing with possible chains
 
                     for possible_edge in possible_edges:
                         if self.G_layout.exists_edge(possible_edge[0], possible_edge[1]):
                             self.embed_edge(possible_edge[0], possible_edge[1])
                             logger.info(
-                                f'added missing edge from H: {frm}-{to}')
+                                f'added missing edge from H: {source}-{target}')
                             missing_edges_added += 1
                             break  # successfully added missing edge
 
@@ -283,8 +283,8 @@ class Embedding():
 
 ############################### Exceptions #####################################
 class NoFreeNeighborNodes(Exception):
-    def __init__(self, from_node):
-        self.from_node = from_node
+    def __init__(self, source):
+        self.source = source
 
     def __str__(self):
-        return f'NoFreeNeighborNodes from node: {self.from_node}'
+        return f'NoFreeNeighborNodes from node: {self.source}'
