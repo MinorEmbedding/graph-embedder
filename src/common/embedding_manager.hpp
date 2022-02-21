@@ -66,6 +66,9 @@ namespace majorminer
 
       fuint32_t getLastNode() const { return m_lastNode; }
 
+      ShiftingCandidates getCandidatesFor(fuint32_t conquerorNode);
+      ShiftingCandidates setCandidatesFor(fuint32_t conquerorNode, nodeset_t& candidates);
+
     public:
       const graph_t* getSourceGraph() const override;
       const graph_t* getTargetGraph() const override;
@@ -85,6 +88,7 @@ namespace majorminer
     private:
       EmbeddingSuite& m_suite;
       EmbeddingState& m_state;
+      CandidateCache m_candidateCache;
       embedding_mapping_t m_mapping;
       embedding_mapping_t m_reverseMapping;
       nodeset_t m_nodesOccupied;

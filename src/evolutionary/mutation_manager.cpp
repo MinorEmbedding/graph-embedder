@@ -61,10 +61,11 @@ void MutationManager::prepare()
 void MutationManager::prepareAffectedExtendCandidates(fuint32_t node)
 {
   nodeset_t extendAffected{};
-  m_state.iterateSourceMappingAdjacent<false>(node, [&](fuint32_t target){
+  m_state.iterateSourceMappingAdjacent<false>(node, [&](fuint32_t target, fuint32_t /* */){
     m_state.iterateReverseMapping(target, [&](fuint32_t revSourceNode){
       extendAffected.insert(revSourceNode);
     });
+    return false;
   });
 
   for (auto extendCandidate : extendAffected)

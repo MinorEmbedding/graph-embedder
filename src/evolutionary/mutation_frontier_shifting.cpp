@@ -6,17 +6,32 @@
 
 #include <sstream>
 
+#define MAX_CANDIDATES 20
+
 using namespace majorminer;
 
-MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state,
-  fuint32_t conquerorSource, fuint32_t victimSource)
-  : m_state(state), m_conqueror(conquerorSource),
-    m_victim(victimSource), m_valid(false)
-{/*
+MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state, EmbeddingManager& manager,
+  fuint32_t conquerorSource)
+  : m_state(state), m_manager(manager), m_conqueror(conquerorSource),
+    m_victim((fuint32_t)-1), m_valid(false)
+{
   // find a victim node for which conqueror is connected to and
   // all other node is not crucial for victim
-  auto& data = m_suite.m_frontierData;
-  auto conquerorRange = data.m_victimConnections.equal_range(conquerorSource);
+  ShiftingCandidates cands = m_manager.getCandidatesFor(conquerorSource);
+  if (cands.second.get() == nullptr)
+  {
+    nodeset_t candidateSet{};
+    m_state.iterateSourceMappingAdjacent<false>(m_conqueror, [&](fuint32_t target, fuint32_t){
+      m_state.iterateReverseMapping(target, [&](fuint32_t cand){
+        if (cand != m_conqueror) candidateSet.insert(cand);
+      });
+      return candidateSet.size() > MAX_CANDIDATES;
+    });
+    cands = m_manager.setCandidatesFor(m_conqueror, candidateSet);
+  }
+
+
+  /*auto conquerorRange = data.m_victimConnections.equal_range(conquerorSource);
 
   for (auto candidateIt = conquerorRange.first; candidateIt != conquerorRange.second; ++candidateIt)
   {

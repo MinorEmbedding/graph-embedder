@@ -2,6 +2,7 @@
 #define __MAJORMINER_CONFIG_HPP_
 
 #define EIGEN_MPL2_ONLY
+#define TBB_PREVIEW_CONCURRENT_LRU_CACHE 1
 #define __DEBUG__ 1
 
 

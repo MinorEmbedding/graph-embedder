@@ -1,12 +1,15 @@
 #ifndef __MAJORMINER_TYPES_HPP_
 #define __MAJORMINER_TYPES_HPP_
 
+#include "common/config.hpp"
+
 #include <tbb/concurrent_vector.h>
 #include <tbb/concurrent_set.h>
 #include <tbb/concurrent_map.h>
 #include <tbb/concurrent_unordered_set.h>
 #include <tbb/concurrent_unordered_map.h>
 #include <tbb/concurrent_priority_queue.h>
+#include <tbb/concurrent_lru_cache.h>
 #include <tbb/concurrent_queue.h>
 #include <tbb/parallel_for_each.h>
 #include <stack>
@@ -17,8 +20,6 @@
 #include <memory>
 #include <thread>
 #include <mutex>
-
-#include "common/config.hpp"
 
 
 namespace majorminer
@@ -73,6 +74,9 @@ namespace majorminer
   template<typename T>
   using Stack = std::stack<T, std::vector<T>>;
 
+  template<typename K, typename V>
+  using Cache = tbb::concurrent_lru_cache<K, V>;
+
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
 
@@ -82,6 +86,9 @@ namespace majorminer
   typedef UnorderedSet<fuint32_t> nodeset_t;
   typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
   typedef std::pair<adjacency_list_t::const_iterator, adjacency_list_t::const_iterator> adjacency_list_range_iterator_t;
+
+  typedef std::pair<fuint32_t, std::shared_ptr<fuint32_t[]>> ShiftingCandidates;
+  typedef Cache<fuint32_t, ShiftingCandidates> CandidateCache;
 
   class EmbeddingVisualizer;
   class EmbeddingSuite;

@@ -2,9 +2,17 @@
 
 #include <common/utils.hpp>
 #include <common/embedding_state.hpp>
+#define CACHE_CAPACITY 128
 
 using namespace majorminer;
 
+namespace
+{
+  ShiftingCandidates getEmptyCandidate()
+  {
+    return ShiftingCandidates{0, std::shared_ptr<fuint32_t[]>() };
+  }
+}
 
 void EmbeddingManager::mapNode(fuint32_t node, fuint32_t targetNode)
 {
@@ -40,6 +48,7 @@ void EmbeddingManager::mapNode(fuint32_t node, const nodeset_t& targetNodes)
 
 EmbeddingManager::EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state)
   : m_suite(suite), m_state(state),
+    m_candidateCache([](fuint32_t) {return getEmptyCandidate(); }, CACHE_CAPACITY),
     m_nbCommitsRemaining(0), m_time(1)
 {
   const auto& targetNodes = m_state.getRemainingTargetNodes();
@@ -146,6 +155,22 @@ void EmbeddingManager::clear()
   m_time = 0;
   m_changesToPropagate.clear();
   m_nbCommitsRemaining = 0;
+}
+
+ShiftingCandidates EmbeddingManager::getCandidatesFor(fuint32_t conquerorNode)
+{
+  auto handle = m_candidateCache[conquerorNode];
+  if (handle) return handle.value();
+  else return getEmptyCandidate();
+}
+
+ShiftingCandidates EmbeddingManager::setCandidatesFor(fuint32_t conquerorNode, nodeset_t& candidates)
+{
+  ShiftingCandidates element = std::make_pair(candidates.size(), std::make_shared<fuint32_t[]>(candidates.size()));
+  fuint32_t* writePtr = element.second.get();
+  for (auto candidate : candidates) *writePtr++ = candidate;
+  m_candidateCache[conquerorNode].value() = element;
+  return element;
 }
 
 

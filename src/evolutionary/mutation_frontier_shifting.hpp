@@ -10,7 +10,7 @@ namespace majorminer
   class MutationFrontierShifting : public GenericMutation
   {
     public:
-      MutationFrontierShifting(const EmbeddingState& state, fuint32_t conquerorSource, fuint32_t victimSource);
+      MutationFrontierShifting(const EmbeddingState& state, EmbeddingManager& manager, fuint32_t conquerorSource);
       ~MutationFrontierShifting() {}
 
       void execute() override;
@@ -24,6 +24,7 @@ namespace majorminer
 
     private:
       const EmbeddingState& m_state;
+      EmbeddingManager& m_manager;
       fuint32_t m_conqueror;
       fuint32_t m_victim;
       fuint32_t m_bestContested;
