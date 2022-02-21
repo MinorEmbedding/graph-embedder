@@ -6,6 +6,7 @@ from src.embedding.graph_mapping import GraphMapping
 from src.graph.chimera_graph import ChimeraGraphLayout
 from src.graph.embedding_graph import EmbeddingGraph
 from src.graph.undirected_graph import UndirectedGraphAdjList
+from src.util.util import get_first_from_set
 
 logger = logging.getLogger('evolution')
 
@@ -114,26 +115,77 @@ class Embedding():
         self.G_embedding.remove_all_edges_from_node(to_node)
 
         for prev_connected_neighbor in to_node_connected_neighbors:
+            print('🌹 here for the next prev_connected_neigbhor: ',
+                  prev_connected_neighbor)
+
             # Special previous connected neighbors
             if prev_connected_neighbor in [from_node, to_node_new]:
                 continue
 
             # Embed all other pre-existing edges
             # To_Node might have been in a chain with the current neighbor
+            # -> if in super-node
             chain = to_node_chain if prev_connected_neighbor in to_node_chain_nodes else 0
             embedded = False
             for node_in_chain in new_nodes:
-                if self.G_layout.exists_edge(prev_connected_neighbor, node_in_chain):
-                    self.G_embedding.embed_edge(
-                        prev_connected_neighbor, node_in_chain, chain=chain)
-                    embedded = True
-                    break
+                # No direct edge to neighbor needed, just to the whole super-node,
+                # thus to any node in the chain # TODO: method to calculate any connection to super-node
+                neighbors = self.get_reachable_neighbors(node_in_chain)
+                neighbors_chain = [self.G_embedding.get_first_node_chain_other_than_default(
+                    node) for node in neighbors]
+                print(f'Node: {node_in_chain} (chain: {chain})')
+                print(f'Reachable neighbors: {neighbors}')
+                print(f'Reachable neighbors chain: {neighbors_chain}')
+
+                if chain != 0:
+                    for i, reachable_neighbor in enumerate(neighbors):
+                        print(
+                            f'Reachable neighbor {reachable_neighbor} is in chain {neighbors_chain[i]}')
+                        # Might be a chain, so give another chance
+                        if chain == neighbors_chain[i]:
+                            print(
+                                f'Check exists edge {reachable_neighbor}, {node_in_chain}')
+                            if self.G_layout.exists_edge(reachable_neighbor, node_in_chain):
+                                self.G_embedding.embed_edge(
+                                    reachable_neighbor, node_in_chain, chain=chain)
+                                embedded = True
+                                break
+                else:
+                    # Directly
+                    if self.G_layout.exists_edge(prev_connected_neighbor, node_in_chain):
+                        # TODO: outsource exists_edge check to embed_edge method
+                        # and do a simple try catch here
+                        self.G_embedding.embed_edge(
+                            prev_connected_neighbor, node_in_chain, chain=chain)
+                        embedded = True
+                        break
+
+                    # or prev connected node itself in a chain
+                    prev_connected_neighbor_chain = self.G_embedding.get_first_node_chain_other_than_default(
+                        prev_connected_neighbor)
+                    for i, reachable_neighbor in enumerate(neighbors):
+                        if prev_connected_neighbor_chain == neighbors_chain[i]:
+                            if self.G_layout.exists_edge(reachable_neighbor, node_in_chain):
+                                self.G_embedding.embed_edge(
+                                    reachable_neighbor, node_in_chain, chain=chain)
+                                embedded = True
+                                break
 
             if not embedded:
-                raise RuntimeError('Error adding a chain to used nodes')
+                print('FATAL ERROR here, but going on')
+                raise RuntimeError(
+                    'Error adding a chain to used nodes. Should never happen!')
 
         # --- Chain
-        self.G_embedding.add_chain(from_node, to_node)
+        # If from_node has been in a chain before, we extend this chain
+        from_node_chain = self.G_embedding.get_first_node_chain_other_than_default(
+            from_node)
+        if from_node_chain:
+            self.G_embedding.embed_edge(
+                from_node, to_node, chain=from_node_chain)
+        else:
+            self.G_embedding.add_chain(from_node, to_node)
+
         self.G_embedding.embed_edge(to_node, to_node_new)
         # TODO: adjust embedding for self.G_embedding_view (???)
 

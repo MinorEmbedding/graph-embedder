@@ -148,44 +148,107 @@ class EmbeddingSolver():
         self.non_viable_mutations = []
 
     def _add_random_chain(self):
-        # --- Randomly collapse two nodes to one
-        nodes_embedded = self.embedding.get_embedded_nodes_not_in_chain()
+        # --- Randomly merge two nodes into one super-node (add a chain between them)
+        nodes_embedded = self.embedding.get_embedded_nodes()
         if not nodes_embedded:
             logger.info('🔴 No nodes to embed (all nodes are in a chain)')
             return None
 
         from_node = random.choice(nodes_embedded)
         node_tos = self.embedding.get_connected_neighbors(from_node)
+
+        # Filter out nodes that are in the same chain since another chain doesn't
+        # make sense in this case
+        from_node_chain = self.embedding.G_embedding.get_first_node_chain_other_than_default(
+            from_node)
+        if from_node_chain:
+            node_tos_filtered = []
+            for to_node in node_tos:
+                to_node_chain = self.embedding.G_embedding.get_first_node_chain_other_than_default(
+                    to_node)
+                if (not to_node_chain) or (to_node_chain and from_node_chain != to_node_chain):
+                    node_tos_filtered.append(to_node)
+            node_tos = node_tos_filtered
+            if not node_tos:
+                logger.info(
+                    f'Could not find a valid chain partner for node {from_node}')
+                return
+
         to_node = random.choice(node_tos)
+
         logger.info(f'Trying to chain nodes {from_node} and {to_node}')
 
         # Avoid unnecessary calculations
         if (from_node, to_node) in self.non_viable_mutations:
+            logger.info(
+                'Already considered this pair for a random chain -> skip')
             return None
 
         # --- Adjust so that new chain is viable
         # find new place for previous node_to in the graph
         # so that the layout permits the following edges
         # node_to   --- node_to'
-        # node_to'  --- all_nodes reachable from node_to
+        # node_to'  --- all nodes reachable from node_to
         try:
             to_node_free_neighbors = self.embedding.get_free_neighbors(to_node)
         except NoFreeNeighborNodes:
             return None
-        to_node_connected_neighbors = self.embedding.get_connected_neighbors(
-            to_node)
 
-        # --- 1) Try out all possible positions for node_to_new
+        to_node_connected_neighbors = set(self.embedding.get_connected_neighbors(
+            to_node))
+        # Ignore from_node as we don't need to reach it from to_node'
+        # since the chain gets expanded to to_node and there will definitely
+        # be an edge to_node --- to_node'
+        to_node_connected_neighbors.discard(from_node)
+        to_node_connected_neighbors_chain = [self.embedding.G_embedding.get_node_chains(
+            node, include_default_chain=False) for node in to_node_connected_neighbors]
+        to_node_connected_neighbors_chain = [get_first_from_set(
+            chain) if chain else None for chain in to_node_connected_neighbors_chain]
+
+        # --- 1) Try out all possible positions for to_node_new
+        # TODO: ❗ Instead of precalculating if insertion would work and then
+        # execute it, combine this and do the actual embedding on the fly
         for to_node_new in to_node_free_neighbors:
             logger.info(f'node_to_new: {to_node_new}')
 
             # from node_to_new: can we reach all nodes previously connected to node_to?
-            node_to_new_reachable_neighbors = self.embedding.get_reachable_neighbors(
-                to_node_new)
-            can_reach = [neighbor in node_to_new_reachable_neighbors
-                         for neighbor in to_node_connected_neighbors if neighbor != from_node]
-            if all(can_reach):  # is also true for []
-                # Try out on playground
+            to_node_new_reachable_neighbors = set(self.embedding.get_reachable_neighbors(
+                to_node_new))
+
+            # Remove to prevent cycles
+            to_node_new_reachable_neighbors.discard(from_node)
+            to_node_new_reachable_neighbors.discard(to_node)
+
+            # Precalculate chains of reachable neighbors
+            reachable_neighbors_chain = [self.embedding.G_embedding.get_first_node_chain_other_than_default(node)
+                                         for node in to_node_new_reachable_neighbors]
+
+            # --- Check if we can reach all previous neighbors
+            can_reach_all = True
+            print(f'🟢 To_node_new: {to_node_new}')
+            for i, neighbor in enumerate(to_node_connected_neighbors):
+                chain = to_node_connected_neighbors_chain[i]
+                print(
+                    f'🟢 To_node_connected_neighbor: {neighbor} - in chain: {chain}')
+                if chain:
+                    # If we deal with a neighbor node that is in a chain, we only need
+                    # to connect node_to' to a node that is in the same chain (but it
+                    # does not have to be a direct neighbor of node_to')
+
+                    # The question is: can we reach a node in that chain?
+                    if chain not in reachable_neighbors_chain:
+                        can_reach_all = False
+                        break  # and go on with next to_node_new
+                else:
+                    # Deal with neighbors that are not in a chain
+                    if neighbor not in to_node_new_reachable_neighbors:
+                        # print(
+                        #     f'{neighbor} not in {node_to_new_reachable_neighbors}')
+                        can_reach_all = False
+                        break  # and go on with next to_node_new
+
+            # Embed on playground
+            if can_reach_all:
                 playground = self.embedding.get_playground()
                 playground.add_chain_to_used_nodes(
                     from_node, to_node, to_node_new)
@@ -193,9 +256,9 @@ class EmbeddingSolver():
 
         # --- 2) If step 1) did not work, try to construct another new chain (-> two chains in total)
         to_node_new = to_node_free_neighbors[0]
-        to_node_new_free_neighbors = self.embedding.get_free_neighbors(
+        to_node_new_reachable_neighbors = self.embedding.get_free_neighbors(
             to_node_new)
-        to_node_new_chain_partner = to_node_new_free_neighbors[0]
+        to_node_new_chain_partner = to_node_new_reachable_neighbors[0]
         logger.info(
             f'Trying to construct another chain: {to_node_new}, {to_node_new_chain_partner}')
 
