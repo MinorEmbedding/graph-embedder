@@ -10,10 +10,13 @@ class DrawEmbedding():
     def __init__(self):
         self.total_steps = 0
 
-        self.chain_colors = ['#55C1D9', '#F29E38',
-                             '#F23827', '#D748F5', '#39DBC8', '#F5428A',
-                             '#3CDE73', '#11F0EB', '#E9B952', '#7D2EFF',
-                             '#DBDE5D', '#3A2CE0', '#DE6E31', '#E0165C']
+        self.supernode_default_color = '#55C1D9'
+        self.supernode_colors = ['#F29E38', '#F23827', '#D748F5', '#39DBC8',
+                                 '#F5428A', '#3CDE73', '#11F0EB', '#E9B952',
+                                 '#7D2EFF', '#DBDE5D', '#3A2CE0', '#DE6E31',
+                                 '#E0165C']
+
+        self.remember_colors = dict()
 
         # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/figure_size_units.html
         self.px = 1/plt.rcParams['figure.dpi']  # pixel in inches
@@ -42,10 +45,9 @@ class DrawEmbedding():
     def draw_embedding(self, nodes, edges, mapping_G_to_H):
         """Draws the embedding onto the Chimera graph.
 
-        Arguments
-        ---------
-        - nodes: nodes list
-        - edges: tuple (from, to, chain)
+        Args:
+            nodes (set[int]): nodes
+            edges (tuple[int, int, int]): tuple (node1, node2, chain)
         """
         labels = {}
         for node in nodes:
@@ -69,20 +71,31 @@ class DrawEmbedding():
                                 font_family='serif')
 
         # Edges
-        chains = [edge[2] for edge in edges]
-        for chain in range(max(chains)+1):
-            chain_edges = [(edge[0], edge[1])
-                           for edge in edges if edge[2] == chain]
-            G.add_edges_from(chain_edges)
+        for i, edge in enumerate(edges):
+            node1 = edge[0]
+            node2 = edge[1]
 
-            chain_color = self.chain_colors[chain % len(self.chain_colors)]
+            # Color edges inside a supernode with the same color
+            # and between supernodes with the first color
+            node1_H = mapping_G_to_H[node1]
+            node2_H = mapping_G_to_H[node2]
+            print(f'💨 Edge {node1}-{node2} (in H: {node1_H}-{node2_H})')
+            if node1_H != node2_H:
+                chain_color = self.supernode_default_color
+            else:
+                try:
+                    chain_color = self.remember_colors[node1_H]
+                except KeyError:
+                    chain_color = self.supernode_colors[i % len(self.supernode_colors)]
+                    self.remember_colors[node1_H] = chain_color
+
+            G.add_edge(node1, node2)
             nx.draw_networkx_edges(G,
                                    pos=self.pos_chimera,
                                    width=3,
                                    style='solid',
                                    edge_color=chain_color)
-
-            G.remove_edges_from(chain_edges)
+            G.remove_edge(node1, node2)
 
     def draw_chimera_and_embedding(self, nodes, edges, mapping_G_to_H):
         self.draw_chimera_graph(3, 3, 4)

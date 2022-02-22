@@ -14,7 +14,7 @@ logger = logging.getLogger('evolution')
 ################################# Params #######################################
 
 solver_iterations = 15
-mutation_trials = 10
+mutation_trials = 30
 max_total = 1
 
 
@@ -49,17 +49,19 @@ def main() -> bool:
 
     # --- Setup
     d = DrawEmbedding()
-    H = TestGraph.k(6)
+    H = TestGraph.k(4)
 
     solver = EmbeddingSolver(H)
     solver.init_dfs()
+    solver.local_maximum()
     save_embedding(*solver.get_embedding(), d, -1,
                    title=f'Initial embedding')
 
     if solver.found_embedding():
         logger.info('🎉 Directly found embedding after initialization')
+        save_final(d)
         output_embedding(*solver.get_embedding(), d)
-        return False
+        return True
 
     # --- Start solver
     i = 0
@@ -83,7 +85,8 @@ def main() -> bool:
 
         if not playground:
             logger.info(
-                f'❌ Not a viable mutation even after {mutation_trials} trials (in solver iteration: {i}')
+                f'🔴 Not a viable mutation after '
+                f'{mutation_trials} trials (in solver iteration: {i})')
             save_final(d)
             return False
 
@@ -101,8 +104,7 @@ def main() -> bool:
             save_final(d)
             return True
         else:
-            logger.info(
-                '✅ Mutation succeeded, but is not yet a valid embedding')
+            logger.info('✅ Mutation succeeded')
 
         i += 1
 

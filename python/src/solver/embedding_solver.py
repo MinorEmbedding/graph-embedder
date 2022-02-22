@@ -1,10 +1,11 @@
 import logging
 import random
+from typing import Optional
 
 from src.embedding.embedding import Embedding, NoFreeNeighborNodes
 from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.util.stack import Stack
-from src.util.util import get_first_from_set
+from src.util.util import any_of_one_in_other, get_first_from
 
 logger = logging.getLogger('evolution')
 
@@ -30,7 +31,7 @@ class EmbeddingSolver():
         for _ in range(self.H.nodes_count-1):
             # Choose random neighbor
             neighbors = self.embedding.get_free_neighbors(source)
-            target = random.choice(neighbors)
+            target = random.choice(list(neighbors))
 
             # Embed
             self.embedding.embed_edge(source, target)
@@ -62,7 +63,7 @@ class EmbeddingSolver():
                 g = 0  # start with node 0 for embedding in graph G
             else:
                 gs = self.embedding.get_mapping_H_to_G_node(h)
-                g = get_first_from_set(gs)
+                g = get_first_from(gs)
 
             free_neighbors_g = self.embedding.get_free_neighbors(g)
             if len(free_neighbors_g) < len(neighbors_h):
@@ -83,13 +84,13 @@ class EmbeddingSolver():
                         pass
                 else:
                     # Choose random free neighbor
-                    to_g = random.choice(free_neighbors_g)
+                    to_g = random.choice(list(free_neighbors_g))
                     free_neighbors_g.remove(to_g)
 
                     # Embed
                     self.embedding.embed_edge_with_mapping(
                         h, g, neighbor_h, to_g)
-                    logger.info(f'Embedded edge: {g}---{to_g}')
+                    logger.info(f'Embedded edge: {g}-{to_g}')
 
                 # Prepare queue to continue with adjacent nodes
                 queue.append(neighbor_h)
@@ -114,7 +115,7 @@ class EmbeddingSolver():
                 from_g = 0
             else:
                 from_g = self.embedding.get_mapping_H_to_G_node(from_h)
-                from_g = get_first_from_set(from_g)  # no chains yet
+                from_g = get_first_from(from_g)  # no chains yet
 
             # Get to_g
             # to_gs = self.embedding.get_mapping_H_to_G_node(to_h)
@@ -123,7 +124,7 @@ class EmbeddingSolver():
             #     free_neighbors_g = self.embedding.get_free_neighbors(from_g)
             #     to_g = random.choice(free_neighbors_g)
             free_neighbors_g = self.embedding.get_free_neighbors(from_g)
-            to_g = random.choice(free_neighbors_g)
+            to_g = random.choice(list(free_neighbors_g))
 
             # Embed
             self.embedding.embed_edge_with_mapping(
@@ -147,150 +148,144 @@ class EmbeddingSolver():
     def reset(self):
         self.non_viable_mutations = []
 
-    def _add_random_chain(self):
-        # --- Randomly merge two nodes into one super-node (add a chain between them)
-        nodes_embedded = self.embedding.get_embedded_nodes()
-        if not nodes_embedded:
-            logger.info('🔴 No nodes to embed (all nodes are in a chain)')
+    def extend_random_supernode(self):
+        """Randomly merges two nodes into one super node or extends existing
+        super nodes by merging another node into it. This process might also
+        create up to two new super nodes."""
+        # Choose source
+        embedded_nodes = self.embedding.get_embedded_nodes()
+        if not embedded_nodes:
+            logger.info('❌ Extend random supernode operation failed: '
+                        'No nodes embedded yet')
             return None
+        source = random.choice(list(embedded_nodes))
 
-        source = random.choice(nodes_embedded)
+        # Choose target
         targets = self.embedding.get_embedded_neighbors(source)
+        target = random.choice(list(targets))
 
-        # Filter out nodes that are in the same chain since another chain doesn't
-        # make sense in this case
-        source_chain = self.embedding.G_embedding.get_first_node_chain_other_than_default(
-            source)
-        if source_chain:
-            targets_filtered = []
-            for target in targets:
-                target_chain = self.embedding.G_embedding.get_first_node_chain_other_than_default(
-                    target)
-                if (not target_chain) or (target_chain and source_chain != target_chain):
-                    targets_filtered.append(target)
-            targets = targets_filtered
-            if not targets:
-                logger.info(
-                    f'Could not find a valid chain partner for node {source}')
-                return
-
-        target = random.choice(targets)
-
-        logger.info(f'Trying to chain nodes {source} and {target}')
+        logger.info(f'🔗 Trying to construct supernode: {source}, {target}')
 
         # Avoid unnecessary calculations
         if (source, target) in self.non_viable_mutations:
-            logger.info(
-                'Already considered this pair for a random chain -> skip')
+            logger.info('Already considered but not viable -> skip')
             return None
 
-        # --- Adjust so that new chain is viable
-        # find new place for previous node_to in the graph
-        # so that the layout permits the following edges
-        # node_to   --- node_to'
-        # node_to'  --- all nodes reachable from node_to
-        try:
-            target_free_neighbors = self.embedding.get_free_neighbors(target)
-        except NoFreeNeighborNodes:
-            return None
+        target_supernode_nodes = self.embedding.get_nodes_in_supernode_of(target)
+        if len(target_supernode_nodes) > 1:
+            res = self._construct_supernode_where_target_in_chain(
+                source, target, target_supernode_nodes)
+            if res:
+                return res
+        else:
+            # Adjust so that new super node placement is viable
+            target_neighbors = self.embedding.get_embedded_neighbors(target)
+            # no need to reach source from shifted_target
+            target_neighbors.discard(source)
+            try:
+                target_free_neighbors = self.embedding.get_free_neighbors(target)
+            except NoFreeNeighborNodes:
+                logging.info(f'Target {target} has no free neighbors')
+                return None
 
-        target_embedded_neighbors = set(self.embedding.get_embedded_neighbors(
-            target))
-        # Ignore source as we don't need to reach it from target'
-        # since the chain gets expanded to target and there will definitely
-        # be an edge target --- target'
-        target_embedded_neighbors.discard(source)
-        target_embedded_neighbors_chain = [self.embedding.G_embedding.get_node_chains(
-            node, include_default_chain=False) for node in target_embedded_neighbors]
-        target_embedded_neighbors_chain = [get_first_from_set(
-            chain) if chain else None for chain in target_embedded_neighbors_chain]
+            # --- Try out possible positions for shifted_target
+            # Always check if we can reach all super nodes previously connected
+            # to target from the shifted_target
+            for shifted_target in target_free_neighbors:
+                logger.info(f'▶ Try out shifted target on node: {shifted_target}')
+                res = self._construct_supernode_with_shifted_target(source, target,
+                                                                    shifted_target, target_neighbors,
+                                                                    target_free_neighbors)
+                if res:
+                    return res
 
-        # --- 1) Try out all possible positions for shifted_target
-        # TODO: ❗ Instead of precalculating if insertion would work and then
-        # execute it, combine this and do the actual embedding on the fly
-        for shifted_target in target_free_neighbors:
-            logger.info(f'shifted_target: {shifted_target}')
-
-            # from shifted_target: can we reach all nodes previously connected to target?
-            shifted_target_reachable_neighbors = set(self.embedding.get_reachable_neighbors(
-                shifted_target))
-
-            # Remove to prevent cycles
-            shifted_target_reachable_neighbors.discard(source)
-            shifted_target_reachable_neighbors.discard(target)
-
-            # Precalculate chains of reachable neighbors
-            reachable_neighbors_chain = [self.embedding.G_embedding.get_first_node_chain_other_than_default(node)
-                                         for node in shifted_target_reachable_neighbors]
-
-            # --- Check if we can reach all previous neighbors
-            can_reach_all = True
-            print(f'🟢 shifted_target: {shifted_target}')
-            for i, neighbor in enumerate(target_embedded_neighbors):
-                chain = target_embedded_neighbors_chain[i]
-                print(
-                    f'🟢 target embedded neighbors: {neighbor} - in chain: {chain}')
-                if chain:
-                    # If we deal with a neighbor node that is in a chain, we only need
-                    # to connect node_to' to a node that is in the same chain (but it
-                    # does not have to be a direct neighbor of node_to')
-
-                    # The question is: can we reach a node in that chain?
-                    if chain not in reachable_neighbors_chain:
-                        can_reach_all = False
-                        break  # and go on with next shifted_target
-                else:
-                    # Deal with neighbors that are not in a chain
-                    if neighbor not in shifted_target_reachable_neighbors:
-                        # print(
-                        #     f'{neighbor} not in {node_to_new_reachable_neighbors}')
-                        can_reach_all = False
-                        break  # and go on with next shifted_target
-
-            # Embed on playground
-            if can_reach_all:
-                playground = self.embedding.get_playground()
-                playground.add_chain_to_used_nodes(
-                    source, target, shifted_target)
-                return playground
-
-        # --- 2) If step 1) did not work, try to construct another new chain (-> two chains in total)
-        shifted_target = target_free_neighbors[0]
-        shifted_target_reachable_neighbors = self.embedding.get_free_neighbors(
-            shifted_target)
-        shifted_target_partner = shifted_target_reachable_neighbors[0]
-        logger.info(
-            f'Trying to construct another chain: {shifted_target}, {shifted_target_partner}')
-
-        # from shifted_target AND shifted_target_partner:
-        # Can we now reach all nodes previously connected to node_to
-        chain_reachable_nodes = self.embedding.get_reachable_neighbors(
-            shifted_target)
-        chain_reachable_nodes.extend(
-            self.embedding.get_reachable_neighbors(shifted_target_partner))
-        can_reach = [neighbor in chain_reachable_nodes
-                     for neighbor in target_embedded_neighbors if neighbor != source]
-        if all(can_reach):
-            # Try out on playground
-            playground = self.embedding.get_playground()
-
-            playground.extend_one_node_to_chain(
-                shifted_target, shifted_target_partner, extend_G=target)
-
-            # edge target---shifted_target
-            # will be removed and inserted again when adding this chain:
-            logger.info(
-                f'Trying to add chain to used nodes: {source}, {target}, {shifted_target}')
-            playground.add_chain_to_used_nodes(
-                source, target, shifted_target, shifted_target_partner)
-
-            logger.info(
-                f'shifted_target to chain partner: {shifted_target}---{shifted_target_partner}')
-            return playground
-
-        # 3. If all of that fails, mark the mutation as failed
+        # If it didn't work, mark the mutation as failed
         self.non_viable_mutations.append((source, target))
+        logger.info('❌ Extend random supernode operation failed: '
+                    'No viable supernode placement')
         return None
+
+    def _construct_supernode_where_target_in_chain(self, source: int, target: int, target_supernode_nodes: set[int]):
+        """Constructs a supernode in the case where the target is in another
+        supernode consisting of more than 1 node, which we call "chain".
+
+        In this case we shrink the chain by removing the target from it.
+        """
+        playground = self.embedding.get_playground()
+
+        target_neighbors = playground.get_embedded_neighbors(target)
+        embedded_edge = False
+        for neighbor in target_neighbors:
+            if target_neighbors in target_supernode_nodes:
+                embedded_edge = True
+                playground.embed_edge(target, neighbor)
+
+        if not embedded_edge:
+            logger.error(f'❌ Fatal error: Could not embed edge from '
+                         f'target {target} to one of its supernode neighbors: '
+                         f'{target_supernode_nodes}')
+            return None
+
+        playground.construct_supernode(source, target)
+        return playground
+
+    def _construct_supernode_with_shifted_target(self, source: int, target: int,
+                                                 shifted_target: int, target_neighbors: set[int],
+                                                 target_free_neighbors: set[int]):
+        """Tries to embed the shifted target, so that the node placement is viable.
+
+        This means that we check if the new place for ``target`` - which is
+        ``shifted_target`` - allows for the following edges:
+            - ``target`` - ``shifted_target``
+            - ``shifted_target`` - ``target_neighbors`` (all embedded ``target`` neighbors)
+        """
+        playground = self.embedding.get_playground()
+
+        # Get reachable neighbors
+        shifted_target_reachable = \
+            playground.get_reachable_neighbors(shifted_target)
+        shifted_target_reachable.discard(source)  # prevent cycles
+        shifted_target_reachable.discard(target)  # prevent cycles
+
+        if not target_neighbors:
+            logger.info(f'No target neighbors to check')
+
+        for neighbor in target_neighbors:
+            supernode = playground.get_supernode(neighbor)
+            supernode_nodes = playground.get_nodes_in_supernode(supernode)
+
+            logger.info(f'Can we reach neighbor {neighbor} '
+                        f'(supernode: {supernode} -> {supernode_nodes})')
+            other = any_of_one_in_other(shifted_target_reachable, supernode_nodes)
+            if other == -1:
+                logger.info(f'Could not reach with any of {shifted_target_reachable}')
+
+                # Try out to construct another chain
+                shifted_target_partner = get_first_from(target_free_neighbors)
+                logger.info(f'🔗 Trying to construct another supernode: '
+                            f'{shifted_target}, {shifted_target_partner}')
+
+                shifted_target_partner_reachable = \
+                    playground.get_reachable_neighbors(shifted_target_partner)
+                shifted_target_partner_reachable.discard(source)  # prevent cycles
+                shifted_target_partner_reachable.discard(target)  # prevent cycles
+
+                other = any_of_one_in_other(
+                    shifted_target_partner_reachable, supernode_nodes)
+                if other == -1:
+                    logger.error(f'Could also not reach with any of '
+                                 f'{shifted_target_partner_reachable}')
+                    return None
+
+                playground.construct_supernode(shifted_target, shifted_target_partner)
+
+            playground.add_to_supernode(supernode, node_in_supernode=other,
+                                        node_to_include=shifted_target)
+
+        playground.embed_edge_with_source_supernode_mapping(target, shifted_target)
+        playground.construct_supernode(source, target)
+
+        return playground
 
     def mutate(self):
         """
@@ -302,7 +297,7 @@ class EmbeddingSolver():
         # Insert a new edge between two other random nodes that were already embedded.
 
         # Add random chain
-        return self._add_random_chain()
+        return self.extend_random_supernode()
 
         # TODO: Remove chain mutation
 
@@ -312,7 +307,7 @@ class EmbeddingSolver():
         # and reduce the costs faster
 
     def local_maximum(self):
-        self.embedding.try_to_add_missing_edges()
+        self.embedding.try_embed_missing_edges()
 
     def found_embedding(self) -> bool:
         return self.embedding.is_valid_embedding()

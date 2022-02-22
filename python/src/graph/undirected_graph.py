@@ -122,13 +122,13 @@ class UndirectedGraphAdjList:
 
     ################################# Nodes ####################################
 
-    def get_nodes(self) -> list[int]:
+    def get_nodes(self) -> set[int]:
         """Returns all nodes of this Graph.
 
         Returns:
-            list[int]: All nodes of this Graph.
+            set[int]: All nodes of this Graph.
         """
-        return list(self._adj_list.keys())  # or rather stick with KeyView?
+        return set(self._adj_list.keys())
 
     def add_node(self) -> int:
         """Adds a new node to this Graph.
@@ -141,23 +141,23 @@ class UndirectedGraphAdjList:
         self._adj_list[self.nodes_count-1] = AdjListEntryWithCosts()
         return self.nodes_count
 
-    def get_neighbor_nodes(self, frm: int) -> list[int]:
+    def get_neighbor_nodes(self, source: int) -> set[int]:
         """Returns all neighboring nodes.
 
         Neighboring nodes are nodes that are connected via an edge to this node.
 
         Args:
-            frm (int): Node from which the neighboring nodes should be retrieved.
+            source (int): Node from which the neighboring nodes should be retrieved.
 
         Return:
-            list[int]: List of integers describing the neighboring nodes.
+            set[int]: Set of integers describing the neighboring nodes.
 
         Raises:
-            GraphNodeIndexError: If the given node ``frm`` \
+            GraphNodeIndexError: If the given node ``source`` \
             does not exist in the Graph.
         """
-        self._validate_index(frm)
-        return self._adj_list[frm].get_neighbors()
+        self._validate_index(source)
+        return self._adj_list[source].get_neighbors()
 
     def get_neighbor_nodes_with_costs(self, frm: int) -> list[tuple[int, int]]:
         """Returns all neighboring nodes with costs.
@@ -254,13 +254,13 @@ class AdjListEntryWithCosts():
 
     ################################# Nodes ####################################
 
-    def get_neighbors(self) -> list[int]:
+    def get_neighbors(self) -> set[int]:
         """Returns all neighboring nodes.
 
         Returns:
-            list[int]: All neighboring nodes (from the current node).
+            set[int]: All neighboring nodes (from the current node).
         """
-        return list(self._to_nodes)
+        return self._to_nodes
 
     def get_neighbors_with_costs(self) -> list[tuple[int, int]]:
         """Returns all neighboring nodes with costs (from the current node).

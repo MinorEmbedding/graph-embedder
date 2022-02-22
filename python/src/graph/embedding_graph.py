@@ -1,7 +1,7 @@
 from typing import Optional
 
 from src.graph.undirected_graph import UndirectedGraphAdjList
-from src.util.util import get_first_from_set
+from src.util.util import get_first_from
 
 
 class EmbeddingGraph(UndirectedGraphAdjList):
@@ -59,14 +59,14 @@ class EmbeddingGraph(UndirectedGraphAdjList):
 
     ################################# Nodes ####################################
 
-    def get_embedded_nodes(self) -> list[int]:
+    def get_embedded_nodes(self) -> set[int]:
         """Returns all embedded nodes.
 
         Returns:
-            list[int]: The embedded nodes.
+            set[int]: The embedded nodes.
         """
         nodes = super().get_nodes()
-        nodes = [node for node in nodes if self.get_neighbor_nodes(node)]
+        nodes = {node for node in nodes if self.get_neighbor_nodes(node)}
         return nodes
 
     ############################### Chains #####################################
@@ -138,7 +138,7 @@ class EmbeddingGraph(UndirectedGraphAdjList):
 
     def get_first_node_chain_other_than_default(self, node: int) -> Optional[int]:
         chains = self.get_node_chains(node, include_default_chain=False)
-        return get_first_from_set(chains)
+        return get_first_from(chains)
 
     def get_chain_nodes(self, chain: int) -> list[int]:
         """Returns all nodes that are contained in a given chain.
