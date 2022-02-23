@@ -40,13 +40,6 @@ class Embedding():
         """
         return self.G_embedding.get_embedded_nodes()
 
-    def get_embedded_nodes_not_in_chain(self) -> list[int]:
-        res = []
-        for node in self.G_embedding.get_embedded_nodes():
-            if self.G_embedding.get_node_chains(node) == {0}:
-                res.append(node)
-        return res
-
     def get_reachable_neighbors(self, source):
         return self.G_layout.get_neighbor_nodes(source)
 
