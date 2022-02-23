@@ -62,7 +62,7 @@ class EmbeddingSolver():
             if h == 0:
                 g = 0  # start with node 0 for embedding in graph G
             else:
-                gs = self.embedding.get_mapping_H_to_G_node(h)
+                gs = self.embedding.get_nodes_G(h)
                 g = get_first_from(gs)
 
             free_neighbors_g = self.embedding.get_free_neighbors(g)
@@ -71,7 +71,7 @@ class EmbeddingSolver():
                     'Not enough free neighbors to embed node of H in G (breadth first search)')
 
             for neighbor_h in neighbors_h:
-                neighbor_h_on_g = self.embedding.get_mapping_H_to_G_node(
+                neighbor_h_on_g = self.embedding.get_nodes_G(
                     neighbor_h)
                 # Neighbor already embedded embedded?
                 if neighbor_h_on_g:
@@ -114,15 +114,9 @@ class EmbeddingSolver():
             if from_h == 0:
                 from_g = 0
             else:
-                from_g = self.embedding.get_mapping_H_to_G_node(from_h)
+                from_g = self.embedding.get_nodes_G(from_h)
                 from_g = get_first_from(from_g)  # no chains yet
 
-            # Get to_g
-            # to_gs = self.embedding.get_mapping_H_to_G_node(to_h)
-            # to_g = get_first_from_set(to_gs)  # no chains yet
-            # if not to_g:  # this is often the case
-            #     free_neighbors_g = self.embedding.get_free_neighbors(from_g)
-            #     to_g = random.choice(free_neighbors_g)
             free_neighbors_g = self.embedding.get_free_neighbors(from_g)
             to_g = random.choice(list(free_neighbors_g))
 
@@ -155,8 +149,7 @@ class EmbeddingSolver():
         # Choose source
         embedded_nodes = self.embedding.get_embedded_nodes()
         if not embedded_nodes:
-            logger.info('❌ Extend random supernode operation failed: '
-                        'No nodes embedded yet')
+            logger.info('❌ No nodes embedded yet')
             return None
         source = random.choice(list(embedded_nodes))
 
@@ -164,74 +157,79 @@ class EmbeddingSolver():
         targets = self.embedding.get_embedded_neighbors(source)
         target = random.choice(list(targets))
 
-        logger.info(f'🔗 Trying to construct supernode: {source}, {target}')
+        logger.info(f'🔗🔗 Trying to construct supernode: {source}, {target}')
 
         # Avoid unnecessary calculations
         if (source, target) in self.non_viable_mutations:
-            logger.info('Already considered but not viable -> skip')
+            logger.info('❌ Already considered but not viable -> skip')
             return None
 
-        target_supernode_nodes = self.embedding.get_nodes_in_supernode_of(target)
-        if len(target_supernode_nodes) > 1:
-            res = self._construct_supernode_where_target_in_chain(
-                source, target, target_supernode_nodes)
+        try:
+            target_free_neighbors = self.embedding.get_free_neighbors(target)
+        except NoFreeNeighborNodes:
+            logger.info(f'Target {target} has no free neighbors')
+            return None
+
+        # Adjust so that new super node placement is viable
+        target_neighbors = self.embedding.get_embedded_neighbors(target)
+        # no need to reach source from shifted_target
+        target_neighbors.discard(source)
+        logger.info(f'Target neighbors are: {target_neighbors}')
+
+        # --- Try out possible positions for shifted_target
+        # Always check if we can reach all super nodes previously connected
+        # to target from the shifted_target
+        for shifted_target in target_free_neighbors:
+            logger.info(f'▶ Try out shifted target on node: {shifted_target}')
+            res = self._construct_supernode_with_shifted_target(source, target,
+                                                                shifted_target, target_neighbors)
             if res:
                 return res
-        else:
-            # Adjust so that new super node placement is viable
-            target_neighbors = self.embedding.get_embedded_neighbors(target)
-            # no need to reach source from shifted_target
-            target_neighbors.discard(source)
-            try:
-                target_free_neighbors = self.embedding.get_free_neighbors(target)
-            except NoFreeNeighborNodes:
-                logging.info(f'Target {target} has no free neighbors')
-                return None
-
-            # --- Try out possible positions for shifted_target
-            # Always check if we can reach all super nodes previously connected
-            # to target from the shifted_target
-            for shifted_target in target_free_neighbors:
-                logger.info(f'▶ Try out shifted target on node: {shifted_target}')
-                res = self._construct_supernode_with_shifted_target(source, target,
-                                                                    shifted_target, target_neighbors,
-                                                                    target_free_neighbors)
-                if res:
-                    return res
 
         # If it didn't work, mark the mutation as failed
         self.non_viable_mutations.append((source, target))
-        logger.info('❌ Extend random supernode operation failed: '
-                    'No viable supernode placement')
+        logger.info('❌ No viable supernode placement')
         return None
 
-    def _construct_supernode_where_target_in_chain(self, source: int, target: int, target_supernode_nodes: set[int]):
-        """Constructs a supernode in the case where the target is in another
-        supernode consisting of more than 1 node, which we call "chain".
+    def get_reachable_node_in_neighbor_supernode(self, playground: Embedding, ignore_neighbors: set[int],
+                                                 reachable: set[int], neighbor: int) -> Optional[int]:
+        """We need to discard some nodes here as they are not actually part of the
+        neighbor supernode. This is because we construct supernodes first to be
+        able to embed edges correctly. However, we then need to compare with
+        the a priori state and not this temporary state, which is why we
+        have to discard some nodes."""
+        neighbor_supernode = playground.get_supernode(neighbor)
+        neighbor_supernode_nodes = playground.get_nodes_in_supernode(neighbor_supernode)
+        for ignore in ignore_neighbors:
+            neighbor_supernode_nodes.discard(ignore)
 
-        In this case we shrink the chain by removing the target from it.
+        logger.info(f'? Can we reach neighbor {neighbor} '
+                    f'(supernode: {neighbor_supernode} -> {neighbor_supernode_nodes})')
+        reachable_neighbor = any_of_one_in_other(reachable, neighbor_supernode_nodes)
+        return reachable_neighbor
+
+    def check_supernode_sanity(self, playground: Embedding, supernode: int) -> bool:
+        """Checks that no supernodes are split up into multiple groups
+        by the mutation. All nodes in a supernode must have an edge to at least
+        one other supernode.
         """
-        playground = self.embedding.get_playground()
+        supernode_nodes = self.embedding.get_nodes_in_supernode(supernode)
+        for node in supernode_nodes:
+            embedded_neighbors = self.embedding.get_embedded_neighbors(node)
 
-        target_neighbors = playground.get_embedded_neighbors(target)
-        embedded_edge = False
-        for neighbor in target_neighbors:
-            if target_neighbors in target_supernode_nodes:
-                embedded_edge = True
-                playground.embed_edge(target, neighbor)
+            reached = False
+            for neighbor in embedded_neighbors:
+                neighbor_supernode = self.embedding.get_supernode(neighbor)
+                if neighbor_supernode == supernode:
+                    reached = True
 
-        if not embedded_edge:
-            logger.error(f'❌ Fatal error: Could not embed edge from '
-                         f'target {target} to one of its supernode neighbors: '
-                         f'{target_supernode_nodes}')
-            return None
+            if not reached:
+                return False
 
-        playground.construct_supernode(source, target)
-        return playground
+        return True
 
     def _construct_supernode_with_shifted_target(self, source: int, target: int,
-                                                 shifted_target: int, target_neighbors: set[int],
-                                                 target_free_neighbors: set[int]):
+                                                 shifted_target: int, target_neighbors: set[int]):
         """Tries to embed the shifted target, so that the node placement is viable.
 
         This means that we check if the new place for ``target`` - which is
@@ -241,51 +239,98 @@ class EmbeddingSolver():
         """
         playground = self.embedding.get_playground()
 
+        target_original_supernode = playground.get_supernode(target)
+
         # Get reachable neighbors
+        # has to be calculated prior to supernode handover (!)
         shifted_target_reachable = \
             playground.get_reachable_neighbors(shifted_target)
-        shifted_target_reachable.discard(source)  # prevent cycles
-        shifted_target_reachable.discard(target)  # prevent cycles
+        shifted_target_reachable.discard(source)  # no need to check this
+        shifted_target_reachable.discard(target)  # no need to check this
 
-        if not target_neighbors:
-            logger.info(f'No target neighbors to check')
-
-        for neighbor in target_neighbors:
-            supernode = playground.get_supernode(neighbor)
-            supernode_nodes = playground.get_nodes_in_supernode(supernode)
-
-            logger.info(f'Can we reach neighbor {neighbor} '
-                        f'(supernode: {supernode} -> {supernode_nodes})')
-            other = any_of_one_in_other(shifted_target_reachable, supernode_nodes)
-            if other == -1:
-                logger.info(f'Could not reach with any of {shifted_target_reachable}')
-
-                # Try out to construct another chain
-                shifted_target_partner = get_first_from(target_free_neighbors)
-                logger.info(f'🔗 Trying to construct another supernode: '
-                            f'{shifted_target}, {shifted_target_partner}')
-
-                shifted_target_partner_reachable = \
-                    playground.get_reachable_neighbors(shifted_target_partner)
-                shifted_target_partner_reachable.discard(source)  # prevent cycles
-                shifted_target_partner_reachable.discard(target)  # prevent cycles
-
-                other = any_of_one_in_other(
-                    shifted_target_partner_reachable, supernode_nodes)
-                if other == -1:
-                    logger.error(f'Could also not reach with any of '
-                                 f'{shifted_target_partner_reachable}')
-                    return None
-
-                playground.construct_supernode(shifted_target, shifted_target_partner)
-
-            playground.add_to_supernode(supernode, node_in_supernode=other,
-                                        node_to_include=shifted_target)
-
-        playground.embed_edge_with_source_supernode_mapping(target, shifted_target)
+        # supernode handover from target to shifted_target
+        playground.construct_supernode(target, shifted_target)
         playground.construct_supernode(source, target)
 
-        return playground
+        if not target_neighbors:
+            logger.info(f'No target neighbors to check: {target_neighbors}')
+            return playground
+
+        # --- Check that previous connections still work
+        # --- Try with one chain first
+        neighbors_done = set()
+        for neighbor in target_neighbors:
+            target_neighbor = self.get_reachable_node_in_neighbor_supernode(
+                playground, {shifted_target}, shifted_target_reachable, neighbor)
+
+            if target_neighbor != None:
+                logger.info(f'Could reach {target_neighbor}')
+                neighbors_done.add(neighbor)
+                playground.embed_edge(shifted_target, target_neighbor)
+            else:
+                logger.info(f'Could not reach '
+                            f'(reachable nodes are: {shifted_target_reachable})')
+                # Continue normally with next neighbor as next one might be
+                # reachable with this strategy
+
+        # Check if this strategy was successfull
+        if neighbors_done == target_neighbors:
+            if self.check_supernode_sanity(playground, target_original_supernode):
+                logger.info(f'Worked with 1st strategy (seldom !)')
+                return playground
+            else:
+                logger.info(f'Supernode sanity not ensured.')
+                return None
+
+        # --- Try out to construct another chain to see if we can reach
+        # remaining neighbors
+        try:
+            shifted_target_free_neighbors = playground.get_free_neighbors(shifted_target)
+        except NoFreeNeighborNodes:
+            logger.error(f'Could not construct another supernode '
+                         f'from shifted_target: {shifted_target} '
+                         f'(no free neighbor of shifted_target)')
+            return None
+        shifted_target_partner = get_first_from(shifted_target_free_neighbors)
+
+        logger.info(f'🔗 Trying to construct another supernode: '
+                    f'{shifted_target}, {shifted_target_partner}')
+        # Chain shifted target and shifted target partner
+        # prior to calling this, we need to make sure that shifted_target
+        # now has the prior supernode of target
+        # The call itself needs to take place prior to embedding edges outgoing
+        # from shifted_target_partner (otherwise shifted_target_partner would
+        # not have a viable supernode)
+        playground.construct_supernode(shifted_target, shifted_target_partner)
+
+        # Do not try to compute shifted_target reachable again here (!)
+        # as these are different now since shifted_target has the previous
+        # supernode of target
+        shifted_target_partner_reachable = \
+            playground.get_reachable_neighbors(shifted_target_partner)
+        shifted_target_partner_reachable.discard(source)  # no need to check this
+        shifted_target_partner_reachable.discard(target)  # no need to check this
+
+        for neighbor in target_neighbors:
+            if neighbor in neighbors_done:
+                continue
+
+            target_neighbor = self.get_reachable_node_in_neighbor_supernode(
+                playground, {shifted_target, shifted_target_partner}, shifted_target_partner_reachable, neighbor)
+
+            if target_neighbor != None:
+                logger.info(f'Could reach (with 2nd chain) {target_neighbor}')
+                playground.embed_edge(shifted_target_partner, target_neighbor)
+            else:
+                logger.error(f'Could also not reach (reachable nodes are: '
+                             f'{shifted_target_partner_reachable})')
+                return None  # did not achieve a viable mutation even with 2nd strategy
+
+        if self.check_supernode_sanity(playground, target_original_supernode):
+            return playground
+        else:
+            logger.info(f'Supernode sanity not ensured.')
+            return None
 
     def mutate(self):
         """

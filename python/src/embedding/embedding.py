@@ -59,26 +59,35 @@ class Embedding():
             raise NoFreeNeighborNodes(source)
         return neighbors_free
 
-    def get_embedded_neighbors(self, source) -> set:
+    def get_embedded_neighbors(self, source) -> set[int]:
         return self.G_embedding.get_neighbor_nodes(source)
 
     def embed_edge(self, node1, node2) -> None:
+        # Embed edge
         if not self.G_layout.exists_edge(node1, node2):
             raise NoViableEdge(node1, node2)
         self.G_embedding.embed_edge(node1, node2)
+
+        # Adjust view graph
         supernode1 = self.mapping.get_supernode_create_if_not_available(node1)
         supernode2 = self.mapping.get_supernode_create_if_not_available(node2)
-        self.G_embedding_view.embed_edge(supernode1, supernode2)
+        if supernode1 != supernode2:  # avoid unnecessary selfloops
+            self.G_embedding_view.embed_edge(supernode1, supernode2)
+
+    # def embed_edge_without_mapping(self, node1, node2) -> None:
+    #     # TODO: add warning on how to use this as this will leave inconsistent states
+    #     # if not called correctly
+    #     if not self.G_layout.exists_edge(node1, node2):
+    #         raise NoViableEdge(node1, node2)
+    #     self.G_embedding.embed_edge(node1, node2)
 
     def embed_edge_with_mapping(self, source_H, source_G, target_H, target_G) -> None:
+        # TODO: add warning that this will overwrite the mapping (!)
+        # not extend it
         self.G_embedding.embed_edge(source_G, target_G)
         self.mapping.set_mapping(source_H, source_G)
         self.mapping.set_mapping(target_H, target_G)
         self.G_embedding_view.embed_edge(source_H, target_H)
-
-    def embed_edge_with_source_supernode_mapping(self, source: int, target: int) -> None:
-        source_supernode = self.mapping.get_node_H(source)
-        self.embed_edge_with_mapping(source_supernode, source, source_supernode, target)
 
     def remove_edge_inconsistently(self, source, target):
         self.G_embedding.remove_edge(source, target)
@@ -100,18 +109,21 @@ class Embedding():
         supernode = self.get_supernode(node_G)
         return self.get_nodes_in_supernode(supernode)
 
-    def add_to_supernode(self, supernode, node_in_supernode, node_to_include):
-        self.mapping.extend_mapping(supernode, node_to_include)
-        self.embed_edge(node_in_supernode, node_to_include)
-
     def construct_supernode(self, source: int, target: int) -> None:
+        # TODO: add javadoc describing that it takes supernode of source as default,
+        # but can be modified with optional param
+
+        # Embed edge
+        self.G_embedding.embed_edge(source, target)
+
+        # Adjust mapping
         supernode = self.mapping.get_supernode_create_if_not_available(source)
         self.mapping.extend_mapping(supernode, target)
 
     def is_valid_embedding(self) -> bool:
-        for frm in self.H.get_nodes():
-            expected_targets = self.H.get_neighbor_nodes(frm)
-            actual_targets = self.G_embedding_view.get_neighbor_nodes(frm)
+        for source in self.H.get_nodes():
+            expected_targets = self.H.get_neighbor_nodes(source)
+            actual_targets = self.G_embedding_view.get_neighbor_nodes(source)
             if actual_targets != expected_targets:
                 return False
         return True
@@ -133,11 +145,8 @@ class Embedding():
     def get_mapping_G_to_H(self):
         return self.mapping.get_mapping_G_to_H()
 
-    def get_mapping_H_to_G_node(self, node_H) -> set:
-        try:
-            return self.mapping.get_mapping_H_to_G()[node_H]
-        except KeyError:
-            return set()
+    def get_nodes_G(self, node_H: int) -> set[int]:
+        return self.mapping.get_nodes_G(node_H)
 
     def try_embed_missing_edges(self) -> int:
         """Tries to embed missing edges if possible.
@@ -179,7 +188,7 @@ class NoFreeNeighborNodes(Exception):
         self.source = source
 
     def __str__(self):
-        return f'NoFreeNeighborNodes from node: {self.source}'
+        return f'Node {self.source} has no free neighbors'
 
 
 class NoViableEdge(Exception):
@@ -187,4 +196,4 @@ class NoViableEdge(Exception):
         self.edge = (node1, node2)
 
     def __str__(self):
-        return f'NoViableEdge: {self.edge[0]}-{self.edge[1]}'
+        return f'Not a valid edge: {self.edge[0]}-{self.edge[1]}'

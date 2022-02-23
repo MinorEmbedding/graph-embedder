@@ -8,9 +8,9 @@ def get_first_from(s: set[int]) -> int:
     raise KeyError('Set is empty')
 
 
-def any_of_one_in_other(set1: set[int], set2: set[int]) -> int:
+def any_of_one_in_other(set1: set[int], set2: set[int]) -> Optional[int]:
     # https://stackoverflow.com/a/16138094/9655481
     for element in set1:
         if element in set2:
             return element
-    return -1
+    return None

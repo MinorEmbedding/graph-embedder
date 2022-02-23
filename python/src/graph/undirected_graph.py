@@ -260,7 +260,7 @@ class AdjListEntryWithCosts():
         Returns:
             set[int]: All neighboring nodes (from the current node).
         """
-        return self._to_nodes
+        return self._to_nodes.copy()
 
     def get_neighbors_with_costs(self) -> list[tuple[int, int]]:
         """Returns all neighboring nodes with costs (from the current node).
