@@ -124,7 +124,13 @@ def output_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding):
     d.show_embedding()
 
 
-def save_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding, i: int, title=''):
+def save_embedding(nodes: set[int], edges: set[tuple[int, int, int]],
+                   mapping_G_to_H, d: DrawEmbedding, i: int, title=''):
+    logger.info('')
+    logger.info('🎈 Current embedding')
+    logger.info(f'edges: {edges}')
+    logger.info(f'mapping_G_to_H: {mapping_G_to_H}')
+
     d.draw_whole_embedding_step(nodes, edges, mapping_G_to_H, title=title)
     # d.draw_embedding(nodes, edges, mapping_G_to_H)
     # d.save_and_clear(f'./out/{i}.svg')

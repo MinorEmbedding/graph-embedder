@@ -42,7 +42,8 @@ class DrawEmbedding():
                          node_color='#858585',
                          edge_color='#BABABA')
 
-    def draw_embedding(self, nodes, edges, mapping_G_to_H):
+    def draw_embedding(self, nodes: set[int], edges: set[tuple[int, int, int]],
+                       mapping_G_to_H):
         """Draws the embedding onto the Chimera graph.
 
         Args:
@@ -79,7 +80,6 @@ class DrawEmbedding():
             # and between supernodes with the first color
             node1_H = mapping_G_to_H[node1]
             node2_H = mapping_G_to_H[node2]
-            print(f'💨 Edge {node1}-{node2} (in H: {node1_H}-{node2_H})')
             if node1_H != node2_H:
                 chain_color = self.supernode_default_color
             else:
@@ -97,7 +97,8 @@ class DrawEmbedding():
                                    edge_color=chain_color)
             G.remove_edge(node1, node2)
 
-    def draw_chimera_and_embedding(self, nodes, edges, mapping_G_to_H):
+    def draw_chimera_and_embedding(self, nodes: set[int], edges: set[tuple[int, int, int]],
+                                   mapping_G_to_H):
         self.draw_chimera_graph(3, 3, 4)
         self.draw_embedding(nodes, edges, mapping_G_to_H)
 
@@ -106,7 +107,8 @@ class DrawEmbedding():
 
     ############################ Embedding step ################################
 
-    def draw_whole_embedding_step(self, nodes, edges, mapping_G_to_H, title=''):
+    def draw_whole_embedding_step(self, nodes: set[int], edges: set[tuple[int, int, int]],
+                                  mapping_G_to_H, title=''):
         ax = self.construct_subplot_to_the_right()
         ax.set_title(title)
         self.draw_chimera_and_embedding(nodes, edges, mapping_G_to_H)

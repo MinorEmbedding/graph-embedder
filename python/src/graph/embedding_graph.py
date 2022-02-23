@@ -45,11 +45,11 @@ class EmbeddingGraph(UndirectedGraphAdjList):
         """
         super().set_edge(frm, to, cost=0)
 
-    def get_embedded_edges(self) -> list[tuple[int, int, int]]:
+    def get_embedded_edges(self) -> set[tuple[int, int, int]]:
         """Returns all embedded edges.
 
         Returns:
-            list[tuple[int, int, int]]: A List of entries (frm, to, cost) \
+            set[tuple[int, int, int]]: A set of entries (frm, to, cost) \
                 describing all embedded edges of this Graph with their \
                 respective costs.
         """
@@ -69,7 +69,7 @@ class EmbeddingGraph(UndirectedGraphAdjList):
 
     ############################### Embedding ##################################
 
-    def get_embedding(self) -> tuple[list[int], list[tuple[int, int, int]]]:
+    def get_embedding(self) -> tuple[set[int], set[tuple[int, int, int]]]:
         """Returns the current embedding.
 
         Returns:

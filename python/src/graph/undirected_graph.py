@@ -22,11 +22,11 @@ class UndirectedGraphAdjList:
 
     ############################### Edges ######################################
 
-    def get_edges(self) -> list[tuple[int, int, int]]:
+    def get_edges(self) -> set[tuple[int, int, int]]:
         """Returns all edges of this Graph.
 
         Returns:
-            list[tuple[int, int, int]]: A List of entries (frm, to, cost) \
+            set[tuple[int, int, int]]: A set of entries (frm, to, cost) \
             describing all edges of this Graph with their respective costs.
         """
         edges = set()
@@ -38,7 +38,7 @@ class UndirectedGraphAdjList:
                     edges.add((frm, to, cost))
                 else:
                     edges.add((to, frm, cost))
-        return list(edges)
+        return set(edges)
 
     def exists_edge(self, frm: int, to: int) -> bool:
         """Checks if an edge between two nodes exists.
