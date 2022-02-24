@@ -167,7 +167,7 @@ class EmbeddingSolver():
         try:
             target_free_neighbors = self.embedding.get_free_neighbors(target)
         except NoFreeNeighborNodes:
-            logger.info(f'Target {target} has no free neighbors')
+            logger.info(f'❌ Target {target} has no free neighbors')
             return None
 
         # Adjust so that new super node placement is viable
@@ -213,13 +213,13 @@ class EmbeddingSolver():
         by the mutation. All nodes in a supernode must have an edge to at least
         one other supernode.
         """
-        supernode_nodes = self.embedding.get_nodes_in_supernode(supernode)
+        supernode_nodes = playground.get_nodes_in_supernode(supernode)
         for node in supernode_nodes:
-            embedded_neighbors = self.embedding.get_embedded_neighbors(node)
+            embedded_neighbors = playground.get_embedded_neighbors(node)
 
             reached = False
             for neighbor in embedded_neighbors:
-                neighbor_supernode = self.embedding.get_supernode(neighbor)
+                neighbor_supernode = playground.get_supernode(neighbor)
                 if neighbor_supernode == supernode:
                     reached = True
 
@@ -229,7 +229,7 @@ class EmbeddingSolver():
         return True
 
     def _construct_supernode_with_shifted_target(self, source: int, target: int,
-                                                 shifted_target: int, target_neighbors: set[int]):
+                                                 shifted_target: int, target_neighbors: set[int]) -> Optional[Embedding]:
         """Tries to embed the shifted target, so that the node placement is viable.
 
         This means that we check if the new place for ``target`` - which is
@@ -332,7 +332,7 @@ class EmbeddingSolver():
             logger.info(f'Supernode sanity not ensured.')
             return None
 
-    def mutate(self):
+    def mutate(self) -> Optional[Embedding]:
         """
         Mutates the embedding. Supports adding random chains rights now.
         """
@@ -351,8 +351,8 @@ class EmbeddingSolver():
         # maybe from this perspective, we can leverage some better mutations
         # and reduce the costs faster
 
-    def local_maximum(self):
-        self.embedding.try_embed_missing_edges()
+    def local_maximum(self) -> int:
+        return self.embedding.try_embed_missing_edges()
 
     def found_embedding(self) -> bool:
         return self.embedding.is_valid_embedding()
