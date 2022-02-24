@@ -109,9 +109,23 @@ class Embedding():
         # Embed edge
         self.G_embedding.embed_edge(source, target)
 
-        # Adjust mapping
-        supernode = self.mapping.get_supernode_create_if_not_available(source)
-        self.mapping.extend_mapping(supernode, target)
+        # Remove target from previous chain
+        self.try_remove_from_supernode(target)
+
+        # Add to new chain
+        source_supernode = self.mapping.get_supernode_create_if_not_available(source)
+        self.mapping.extend_mapping(source_supernode, target)
+
+    def try_remove_from_supernode(self, node: int):
+        """Removes node from its supernode, leaving us with an inconsistent state.
+
+        If ``node`` was in no supernode, we silently do nothing.
+        """
+        try:
+            supernode = self.get_supernode(node)
+            self.mapping.remove_mapping(supernode, node)
+        except KeyError:
+            pass
 
     def is_valid_embedding(self) -> bool:
         for source in self.H.get_nodes():
