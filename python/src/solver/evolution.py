@@ -99,7 +99,7 @@ def main(d: DrawEmbedding) -> bool:
         # save_embedding(*best_mutation.get_embedding(G_to_H_mapping=True), d, i,
         #                title=f'Generation {i} (before remove)')
 
-        best_mutation.remove_unnecessary_edges()
+        best_mutation.remove_unnecessary_edges_between_supernodes()
         solver.commit(best_mutation)
         save_embedding(*solver.get_embedding(), d, i,
                        title=f'Generation {i}')

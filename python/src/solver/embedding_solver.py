@@ -208,26 +208,6 @@ class EmbeddingSolver():
         reachable_neighbor = any_of_one_in_other(reachable, neighbor_supernode_nodes)
         return reachable_neighbor
 
-    def check_supernode_sanity(self, playground: Embedding, supernode: int) -> bool:
-        """Checks that no supernodes are split up into multiple groups
-        by the mutation. All nodes in a supernode must have an edge to at least
-        one other supernode.
-        """
-        supernode_nodes = playground.get_nodes_in_supernode(supernode)
-        for node in supernode_nodes:
-            embedded_neighbors = playground.get_embedded_neighbors(node)
-
-            reached = False
-            for neighbor in embedded_neighbors:
-                neighbor_supernode = playground.get_supernode(neighbor)
-                if neighbor_supernode == supernode:
-                    reached = True
-
-            if not reached:
-                return False
-
-        return True
-
     def _construct_supernode_with_shifted_target(self, source: int, target: int,
                                                  shifted_target: int, target_neighbors: set[int]) -> Optional[Embedding]:
         """Tries to embed the shifted target, so that the node placement is viable.
@@ -275,7 +255,7 @@ class EmbeddingSolver():
 
         # Check if this strategy was successfull
         if neighbors_done == target_neighbors:
-            if self.check_supernode_sanity(playground, target_original_supernode):
+            if playground.check_supernode_connectiveness(target_original_supernode):
                 logger.info(f'Worked with 1st strategy (seldom !)')
                 return playground
             else:
@@ -326,7 +306,7 @@ class EmbeddingSolver():
                              f'{shifted_target_partner_reachable})')
                 return None  # did not achieve a viable mutation even with 2nd strategy
 
-        if self.check_supernode_sanity(playground, target_original_supernode):
+        if playground.check_supernode_connectiveness(target_original_supernode):
             return playground
         else:
             logger.info(f'Supernode sanity not ensured.')

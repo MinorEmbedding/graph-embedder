@@ -188,7 +188,7 @@ class Embedding():
 
         return missing_edges_added
 
-    def remove_unnecessary_edges(self) -> None:
+    def remove_unnecessary_edges_between_supernodes(self) -> None:
         """Tries to remove unnecessary edges, e.g. multiple edges between
         two supernodes.
         """
@@ -221,6 +221,26 @@ class Embedding():
                         self.G_embedding.remove_edge(node, neighbor)
                         # No need adjust G_embedding_view as
                         # this must be preserved by this method
+
+    def check_supernode_connectiveness(self, supernode: int) -> bool:
+        """Checks that no supernodes are split up into multiple groups
+        by the mutation. All nodes in a supernode must have an edge to at least
+        one other supernode.
+        """
+        supernode_nodes = self.get_nodes_in_supernode(supernode)
+        for node in supernode_nodes:
+            embedded_neighbors = self.get_embedded_neighbors(node)
+
+            reached = False
+            for neighbor in embedded_neighbors:
+                neighbor_supernode = self.get_supernode(neighbor)
+                if neighbor_supernode == supernode:
+                    reached = True
+
+            if not reached:
+                return False
+
+        return True
 
 
 ############################### Exceptions #####################################
