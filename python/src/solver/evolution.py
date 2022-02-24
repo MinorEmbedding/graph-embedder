@@ -13,16 +13,16 @@ logger = logging.getLogger('evolution')
 
 ################################# Params #######################################
 
-solver_iterations = 15
-mutation_trials = 30
 max_total = 1
+max_mutations_trials = 12
+population_size = 5
+max_generations = 20
 
 
 ############################### Evolution ######################################
 
 def main_loop():
-    i = 0
-    while i < max_total:
+    for i in range(max_total):
         logger.info('')
         logger.info('#############')
         logger.info('🎈 NEW MAIN 🎈')
@@ -30,13 +30,14 @@ def main_loop():
         logger.info('')
         logger.info(f'Calling main: {i}')
 
-        res = main()
+        d = DrawEmbedding(3, 3, 4)
+        res = main(d)
+        save_final(d)
         if res:
             break
-        i += 1
 
 
-def main() -> bool:
+def main(d: DrawEmbedding) -> bool:
     # logger.info('--- Main ---')
 
     # --- Clear
@@ -48,8 +49,7 @@ def main() -> bool:
     os.mkdir('./out/')
 
     # --- Setup
-    d = DrawEmbedding(3, 3, 4)
-    H = TestGraph.k(4)
+    H = TestGraph.k(6)
 
     solver = EmbeddingSolver(H)
     solver.init_dfs()
@@ -64,51 +64,53 @@ def main() -> bool:
         return True
 
     # --- Start solver
-    i = 0
-    while i < solver_iterations:
+    for i in range(max_generations):
         logger.info('')
-        logger.info(f'🔄 New solver iteration: {i}')
+        logger.info(f'🔄 Generation: {i}')
 
-        # output_embedding(*solver.get_embedding(), d)
-        # save_embedding(*solver.get_embedding(), d, i)
+        # Generate children for one population
+        population = []  # list of Embeddings
+        for _ in range(population_size):
+            logger.info('')
+            logger.info(f'--- Try find a new viable mutation')
+            mutation = None
 
-        # --- Mutation
-        mutation_count = 0
-        playground = None
+            for mutation in range(max_mutations_trials):
+                # Do one mutation
+                mutation = solver.mutate()
+                if mutation:
+                    population.append(mutation)
+                    break  # try to construct next child
 
-        while mutation_count < mutation_trials:
-            playground = solver.mutate()
-            if playground:
-                break
-            else:
-                mutation_count += 1
+            if not mutation:
+                if not len(population):
+                    logger.info(f'🔳 All {max_mutations_trials} mutations failed, '
+                                'could not construct a single child -> Abort')
+                    return False
+                logger.info(f'🔳 Mutation failed, will continue '
+                            f'with smaller population: {len(population)}/{population_size}')
+                break  # since it is improbable that we will be able to generate more children
 
-        if not playground:
-            logger.info(
-                f'🔴 Not a viable mutation after '
-                f'{mutation_trials} trials (in solver iteration: {i})')
-            save_final(d)
-            return False
+        # Choose best child
+        improvements = [mutation.try_embed_missing_edges() for mutation in population]
+        best_mutation_index = improvements.index(max(improvements))
+        best_mutation = population[best_mutation_index]
 
-        solver.commit(playground)
-        # save_embedding(*solver.get_embedding(), d, i,
-        #                title=f'{i}: Mutation')
+        # save_embedding(*best_mutation.get_embedding(G_to_H_mapping=True), d, i,
+        #                title=f'Generation {i} (before remove)')
 
-        # Local maximum
-        solver.local_maximum()
+        best_mutation.remove_unnecessary_edges()
+        solver.commit(best_mutation)
         save_embedding(*solver.get_embedding(), d, i,
-                       title=f'{i}: Local maximum')
+                       title=f'Generation {i}')
 
-        if playground.is_valid_embedding():
+        # Check if we found valid embedding
+        if best_mutation.is_valid_embedding():
             logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
-            save_final(d)
             return True
         else:
-            logger.info('✅ Mutation succeeded')
+            logger.info('✅ Generation passed')
 
-        i += 1
-
-    save_final(d)
     return False
 
 

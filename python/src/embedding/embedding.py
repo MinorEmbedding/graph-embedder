@@ -188,6 +188,40 @@ class Embedding():
 
         return missing_edges_added
 
+    def remove_unnecessary_edges(self) -> None:
+        """Tries to remove unnecessary edges, e.g. multiple edges between
+        two supernodes.
+        """
+        # For every supernode (chain)
+        for supernode in self.H.get_nodes():
+            considered_supernodes = []
+            logger.info(f'💫 Supernode {supernode}')
+
+            # For every node in supernode (chain)
+            for node in self.get_nodes_in_supernode(supernode):
+                logger.info(f'💫 Node {node}')
+
+                # Go through every edge to a neighbor
+                # that is in ANOTHER supernode
+                for neighbor in self.get_embedded_neighbors(node):
+                    neighbor_supernode = self.get_supernode(neighbor)
+                    logger.info(f'💫 Neighbor {neighbor} '
+                                f'(supernode: {neighbor_supernode})')
+
+                    # Do not consider edges inside of supernodes
+                    if supernode == neighbor_supernode:
+                        continue
+
+                    # Only keep the edge if we didn't have any connection
+                    # to neighbor's supernode yet
+                    if neighbor_supernode not in considered_supernodes:
+                        considered_supernodes.append(neighbor_supernode)
+                    else:
+                        logger.info(f'💫 Remove edge: {node}-{neighbor}')
+                        self.G_embedding.remove_edge(node, neighbor)
+                        # No need adjust G_embedding_view as
+                        # this must be preserved by this method
+
 
 ############################### Exceptions #####################################
 class NoFreeNeighborNodes(Exception):
