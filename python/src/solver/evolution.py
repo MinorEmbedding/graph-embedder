@@ -48,7 +48,7 @@ def main() -> bool:
     os.mkdir('./out/')
 
     # --- Setup
-    d = DrawEmbedding()
+    d = DrawEmbedding(3, 3, 4)
     H = TestGraph.k(4)
 
     solver = EmbeddingSolver(H)

@@ -7,7 +7,7 @@ from matplotlib.axes import Axes
 
 class DrawEmbedding():
 
-    def __init__(self):
+    def __init__(self, m, n, t):
         self.total_steps = 0
 
         self.supernode_default_color = '#55C1D9'
@@ -30,17 +30,31 @@ class DrawEmbedding():
 
         self.col = 0
 
-    def draw_chimera_graph(self, m, n, t):
-        """Draws a Chimera graph."""
-        G = dnx.chimera_graph(m, n, t)
-        self.pos_chimera = dnx.chimera_layout(G)
+        self.init_chimera_graph(m, n, t)
 
-        nx.draw_networkx(G,
+    def init_chimera_graph(self, m, n, t):
+        self.chimera_G = dnx.chimera_graph(m, n, t)
+        self.pos_chimera = dnx.chimera_layout(self.chimera_G)
+
+    def draw_chimera_graph(self):
+        """Draws a Chimera graph."""
+
+        # Nodes & Edges
+        nx.draw_networkx(self.chimera_G,
                          pos=self.pos_chimera,
                          width=2,
-                         with_labels=True,
+                         with_labels=False,
                          node_color='#858585',
                          edge_color='#BABABA')
+
+        # Labels
+        # Shift labels
+        pos_labels = {node: [pos[0] - 0.025, pos[1]]
+                      for (node, pos) in self.pos_chimera.items()}
+        nx.draw_networkx_labels(self.chimera_G,
+                                pos=pos_labels,
+                                font_size=8,
+                                font_color='#858585')
 
     def draw_embedding(self, nodes: set[int], edges: set[tuple[int, int, int]],
                        mapping_G_to_H):
@@ -48,7 +62,7 @@ class DrawEmbedding():
 
         Args:
             nodes (set[int]): nodes
-            edges (tuple[int, int, int]): tuple (node1, node2, chain)
+            edges (set[tuple[int, int, int]]): set of tuples (node1, node2, chain)
         """
         labels = {}
         for node in nodes:
@@ -56,12 +70,6 @@ class DrawEmbedding():
 
         G = nx.Graph()
         G.add_nodes_from(nodes)
-
-        # Nodes
-        nx.draw_networkx_nodes(G,
-                               pos=self.pos_chimera,
-                               node_color='#00000066',
-                               linewidths='2')
 
         # Labels
         nx.draw_networkx_labels(G,
@@ -71,7 +79,8 @@ class DrawEmbedding():
                                 font_color='whitesmoke',
                                 font_family='serif')
 
-        # Edges
+        # Nodes & Edges
+        remember_nodes_in_chain = []
         for i, edge in enumerate(edges):
             node1 = edge[0]
             node2 = edge[1]
@@ -89,6 +98,22 @@ class DrawEmbedding():
                     chain_color = self.supernode_colors[i % len(self.supernode_colors)]
                     self.remember_colors[node1_H] = chain_color
 
+            # Nodes
+            if node1_H == node2_H:
+                # Draw over nodes when they are in the same chain
+                self.draw_node(node1, chain_color)
+                remember_nodes_in_chain.append(node1)
+                self.draw_node(node2, chain_color)
+                remember_nodes_in_chain.append(node2)
+            else:
+                # Don't draw over nodes if they are not in the same chain now
+                # but have been
+                if not node1 in remember_nodes_in_chain:
+                    self.draw_node(node1, self.supernode_default_color)
+                if not node2 in remember_nodes_in_chain:
+                    self.draw_node(node2, self.supernode_default_color)
+
+            # Edges
             G.add_edge(node1, node2)
             nx.draw_networkx_edges(G,
                                    pos=self.pos_chimera,
@@ -97,9 +122,18 @@ class DrawEmbedding():
                                    edge_color=chain_color)
             G.remove_edge(node1, node2)
 
+    def draw_node(self, node: int, color):
+        G = nx.Graph()
+        G.add_node(node)
+        nx.draw_networkx_nodes(G,
+                               pos=self.pos_chimera,
+                               node_color=f'{color}66',  # RGBA transparency
+                               linewidths='2',
+                               edgecolors=color)
+
     def draw_chimera_and_embedding(self, nodes: set[int], edges: set[tuple[int, int, int]],
                                    mapping_G_to_H):
-        self.draw_chimera_graph(3, 3, 4)
+        self.draw_chimera_graph()
         self.draw_embedding(nodes, edges, mapping_G_to_H)
 
     def show_embedding(self):
