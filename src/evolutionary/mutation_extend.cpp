@@ -14,7 +14,7 @@ MutationExtend::MutationExtend(const EmbeddingState& state, EmbeddingManager& em
     m_time(m_embeddingManager.getTimestamp()) { }
 
 double MutationExtend::checkImprovement(fuint32_t extendNode, int delta, bool useManager)
-{ // TODO: refactor
+{
   m_degraded.clear();
 
   const EmbeddingBase* base = (useManager ?
@@ -74,8 +74,7 @@ void MutationExtend::execute()
       ss << "ExtendMutation applied " << m_sourceVertex
          << " -> { ..., " << m_extendedTarget << " }; improvement: "
          << improvement << std::endl;
-      // TODO: disgusting
-      const_cast<EmbeddingState*>(&m_state)->getVisualizer()->draw(m_embeddingManager.getMapping(), ss.str().c_str());
+      m_embeddingManager.getVisualizer()->draw(m_embeddingManager.getMapping(), ss.str().c_str());
     }
   }
 }

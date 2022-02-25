@@ -26,6 +26,9 @@
 namespace majorminer
 {
   typedef uint_fast32_t fuint32_t;
+  typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
+
+  const static fuint32_t FUINT32_UNDEF = (fuint32_t)-1;
 
   template<typename K, typename V = K>
   struct PairHashFunc
@@ -49,6 +52,19 @@ namespace majorminer
 
     fuint32_t m_id;
     fuint32_t m_nbConnections;
+  };
+
+  struct NodePair
+  {
+    NodePair() : source(FUINT32_UNDEF), target(FUINT32_UNDEF) {}
+    NodePair(fuint32_t s, fuint32_t t) : source(s), target(t) {}
+    NodePair(const fuint32_pair_t& p): source(p.first), target(p.second) {}
+
+    friend bool operator==(const NodePair& p1, const NodePair& p2)
+    { return p1.source == p2.source && p1.target == p2.target; }
+
+    fuint32_t source;
+    fuint32_t target;
   };
 
   template<typename T, typename Allocator = std::allocator<T>>
@@ -78,17 +94,17 @@ namespace majorminer
   template<typename K, typename V>
   using Cache = tbb::concurrent_lru_cache<K, V>;
 
-  typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
   typedef fuint32_pair_t edge_t;
 
   typedef UnorderedSet<edge_t, PairHashFunc<fuint32_t>> graph_t;
   typedef UnorderedMultiMap<fuint32_t, fuint32_t> adjacency_list_t;
   typedef adjacency_list_t embedding_mapping_t;
   typedef UnorderedSet<fuint32_t> nodeset_t;
+  typedef UnorderedSet<fuint32_pair_t, PairHashFunc<fuint32_t, fuint32_t>> nodepairset_t;
   typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
   typedef std::pair<adjacency_list_t::const_iterator, adjacency_list_t::const_iterator> adjacency_list_range_iterator_t;
 
-  typedef std::pair<fuint32_t, std::shared_ptr<fuint32_t[]>> ShiftingCandidates;
+  typedef std::pair<fuint32_t, std::shared_ptr<fuint32_pair_t[]>> ShiftingCandidates;
   typedef Cache<fuint32_t, ShiftingCandidates> CandidateCache;
 
   class EmbeddingVisualizer;
@@ -105,7 +121,6 @@ namespace majorminer
 
   struct FrontierShiftingData;
 
-  const static fuint32_t FUINT32_UNDEF = (fuint32_t)-1;
 }
 
 

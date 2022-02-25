@@ -14,13 +14,14 @@ namespace majorminer
       ~MutationFrontierShifting() {}
 
       void execute() override;
+      bool isValid() override;
+      bool prepare() override;
       fuint32_t getConqueror() const { return m_conqueror; }
       fuint32_t getVictim() const { return m_victim; }
       fuint32_t getContested() const { return m_bestContested; }
 
     private:
-      bool isCrucial(fuint32_t candidateNode);
-      double calculateImprovement(fuint32_t candidateNode);
+      double calculateImprovement();
 
     private:
       const EmbeddingState& m_state;

@@ -48,9 +48,9 @@ namespace majorminer
 
   class EmbeddingManager : public EmbeddingBase
   {
-      friend EmbeddingSuite;
       friend SuperVertexPlacer;
       friend NetworkSimplexWrapper;
+      friend MutationManager;
     public:
       EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state);
       void setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors);
@@ -68,9 +68,11 @@ namespace majorminer
       fuint32_t getLastNode() const { return m_lastNode; }
 
       ShiftingCandidates getCandidatesFor(fuint32_t conquerorNode);
-      ShiftingCandidates setCandidatesFor(fuint32_t conquerorNode, nodeset_t& candidates);
+      ShiftingCandidates setCandidatesFor(fuint32_t conquerorNode, nodepairset_t& candidates);
 
       RandomGen& getRandomGen() { return m_random; }
+
+      EmbeddingVisualizer* getVisualizer();
 
     public:
       const graph_t* getSourceGraph() const override;

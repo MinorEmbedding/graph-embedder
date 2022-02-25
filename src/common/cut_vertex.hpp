@@ -12,6 +12,8 @@ namespace majorminer
   // check whether node is a cut vertex (needed for validation in FrontierShifting)
   bool isCutVertex(const adjacency_list_t& subgraph, fuint32_t node, fuint32_t n);
 
+  // check whether targetNode (which is a node sourceNode is mapped to) is a cut vertex
+  bool isCutVertex(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode);
 
 }
 

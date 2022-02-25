@@ -42,6 +42,19 @@ namespace majorminer
       }
     }
   }
+
+  void insertMappedTargetNodes(const EmbeddingBase& base, nodeset_t& nodes, fuint32_t sourceNode);
+
+  inline bool isDefined(fuint32_t value) { return value != FUINT32_UNDEF; }
+  inline bool isDefined(fuint32_pair_t& p) { return isDefined(p.first) && isDefined(p.second); }
+  inline bool isDefined(NodePair& p) { return isDefined(p.source) && isDefined(p.target); }
+
+  template<typename T>
+  inline std::shared_ptr<T[]> make_shared_array(std::size_t size)
+  {
+      return std::shared_ptr<T[]>( new T[size], []( T *p ){ delete [] p; } );
+  }
+
 }
 
 

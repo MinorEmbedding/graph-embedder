@@ -9,7 +9,7 @@
 using namespace majorminer;
 
 
-void MutationManager::mutate()
+void MutationManager::operator()()
 {
   prepare();
   m_done = false;
@@ -47,6 +47,7 @@ void MutationManager::mutate()
 
 void MutationManager::prepare()
 {
+  m_embeddingManager.clear();
   m_prepQueue.clear();
   m_incorporationQueue.clear();
 
@@ -54,25 +55,27 @@ void MutationManager::prepare()
   auto lastNode = m_embeddingManager.getLastNode();
   if (lastNode != (fuint32_t)-1)
   {
-    prepareAffectedExtendCandidates(lastNode);
+    prepareMutations(lastNode);
   }
 
 }
-void MutationManager::prepareAffectedExtendCandidates(fuint32_t node)
+void MutationManager::prepareMutations(fuint32_t node)
 {
-  nodeset_t extendAffected{};
+  nodeset_t affected{};
   m_state.iterateSourceMappingAdjacent<false>(node, [&](fuint32_t target, fuint32_t /* */){
     m_state.iterateReverseMapping(target, [&](fuint32_t revSourceNode){
-      extendAffected.insert(revSourceNode);
+      affected.insert(revSourceNode);
     });
     return false;
   });
 
-  for (auto extendCandidate : extendAffected)
+  for (auto candidate : affected)
   {
-    m_prepQueue.push(std::make_unique<MutationExtend>(m_state, m_embeddingManager, extendCandidate));
+    m_prepQueue.push(std::make_unique<MutationExtend>(m_state, m_embeddingManager, candidate));
+    // m_prepQueue.push(std::make_unique<MutationFrontierShifting>(m_state, m_embeddingManager, candidate));
   }
 }
+
 
 void MutationManager::incorporate()
 {

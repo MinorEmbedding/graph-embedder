@@ -11,7 +11,17 @@ namespace majorminer
     public:
       RandomGen(){}
       fuint32_t getRandomUint(fuint32_t upper);
-      void shuffle(fuint32_t* data, fuint32_t size);
+
+      template<typename T>
+      void shuffle(T* data, fuint32_t size)
+      {
+        if (size == 0) return;
+        while(!m_shuffleLock.try_lock()) {}
+
+        std::shuffle(data, data + size, m_shuffleGenerator);
+
+        m_shuffleLock.unlock();
+      }
 
     private:
       std::mutex m_lock;

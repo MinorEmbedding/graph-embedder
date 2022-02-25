@@ -23,7 +23,25 @@ adjacency_list_t majorminer::extractSubgraph(const EmbeddingBase& base, fuint32_
 }
 
 
-bool majorminer::isNodeCrucial(const adjacency_list_t& /* subgraph */, const EmbeddingBase& /* base */, fuint32_t /* targetNode */)
+bool majorminer::isNodeCrucial(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode)
 {
-  return true;
+  // 1. Check whether targetNode is crucial due to it being a cut vertex
+  if (isCutVertex(base, sourceNode, targetNode)) return true;
+
+  // 1. Check whether targetNode is crucial connections to other super vertices
+  nodeset_t sourceConnections{};
+  base.iterateSourceGraphAdjacent(sourceNode, [&](fuint32_t adjSourceNode){
+    sourceConnections.insert(adjSourceNode);
+  });
+
+  nodeset_t connections{};
+  base.iterateTargetAdjacentReverseMapping(targetNode, [&](fuint32_t adjSourceNode){
+    if (sourceConnections.contains(adjSourceNode)) connections.insert(adjSourceNode);
+  });
+
+  base.iterateSourceMappingAdjacentReverse(sourceNode, targetNode, [&](fuint32_t adjSourceNode){
+    connections.unsafe_erase(adjSourceNode);
+    return connections.empty();
+  });
+  return connections.empty();
 }

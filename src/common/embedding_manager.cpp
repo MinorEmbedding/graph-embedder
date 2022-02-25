@@ -2,6 +2,7 @@
 
 #include <common/utils.hpp>
 #include <common/embedding_state.hpp>
+
 #define CACHE_CAPACITY 128
 
 using namespace majorminer;
@@ -10,7 +11,7 @@ namespace
 {
   ShiftingCandidates getEmptyCandidate()
   {
-    return ShiftingCandidates{0, std::shared_ptr<fuint32_t[]>() };
+    return ShiftingCandidates{0, std::shared_ptr<fuint32_pair_t[]>() };
   }
 }
 
@@ -164,17 +165,22 @@ ShiftingCandidates EmbeddingManager::getCandidatesFor(fuint32_t conquerorNode)
   else return getEmptyCandidate();
 }
 
-ShiftingCandidates EmbeddingManager::setCandidatesFor(fuint32_t conquerorNode, nodeset_t& candidates)
+
+ShiftingCandidates EmbeddingManager::setCandidatesFor(fuint32_t conquerorNode, nodepairset_t& candidates)
 {
   fuint32_t size = candidates.size();
-  ShiftingCandidates element = std::make_pair(size, std::make_shared<fuint32_t[]>(size));
+  ShiftingCandidates element = std::make_pair(size, majorminer::make_shared_array<fuint32_pair_t>(size));
   m_random.shuffle(element.second.get(), size);
-  fuint32_t* writePtr = element.second.get();
-  for (auto candidate : candidates) *writePtr++ = candidate;
+  fuint32_pair_t* writePtr = element.second.get();
+  for (const auto& candidate : candidates) *writePtr++ = candidate;
   m_candidateCache[conquerorNode].value() = element;
   return element;
 }
 
+EmbeddingVisualizer* EmbeddingManager::getVisualizer()
+{
+  return m_state.getVisualizer();
+}
 
 const graph_t* EmbeddingManager::getSourceGraph() const { return m_state.getSourceGraph(); }
 const graph_t* EmbeddingManager::getTargetGraph() const { return m_state.getTargetGraph(); }

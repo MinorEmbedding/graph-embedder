@@ -63,6 +63,31 @@ namespace majorminer
         }
       }
 
+      // Iterate for a sourceNode over all target nodes source Node is mapped to.
+      // For these target nodes iterate over their adjacent nodes and for the adjacent nodes
+      // iterate over their reverse mapping. Awful everything.
+      template<typename Functor>
+      void iterateSourceMappingAdjacentReverse(fuint32_t sourceNode, fuint32_t skipTarget, Functor func) const
+      {
+        auto embeddedPathIt = getMapping().equal_range(sourceNode);
+        const auto& target = getTargetAdjGraph();
+        const auto& reverseMapping = getReverseMapping();
+
+        for (auto targetNode = embeddedPathIt.first; targetNode != embeddedPathIt.second; ++targetNode)
+        {
+          auto targetGraphAdjacentIt = target.equal_range(targetNode->second);
+          for (auto targetAdjacent = targetGraphAdjacentIt.first; targetAdjacent != targetGraphAdjacentIt.second; ++targetAdjacent)
+          {
+            if (targetAdjacent->second == skipTarget) continue;
+            auto revRange = reverseMapping.equal_range(targetAdjacent->second);
+            for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
+            {
+              if (revIt->second != sourceNode && func(revIt->second)) return;
+            }
+          }
+        }
+      }
+
       template<typename Functor>
       void iterateTargetGraphAdjacent(fuint32_t targetNode, Functor func) const
       {

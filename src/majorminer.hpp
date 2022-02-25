@@ -18,27 +18,13 @@ namespace majorminer
       bool connectsNodes() const;
 
     private:
-      void prepareFrontierShifting(fuint32_t victimNode, fuint32_t nbConnectedTo);
-
-      void identifyAffected(fuint32_t node);
-
-      // query the delta between the number of free nodes
-      // and the needed amount of by the sourceNode
-      double checkExtendCandidate(fuint32_t extendNode, fuint32_t sourceNode, int delta);
-
-      void tryMutations();
-
-    private:
       EmbeddingState m_state;
       EmbeddingVisualizer* m_visualizer;
       EmbeddingManager m_embeddingManager;
       MutationManager m_mutationManager;
       SuperVertexPlacer m_placer;
 
-      // TODO: change to priority queue depending on fitness function
       Queue<std::unique_ptr<GenericMutation>> m_taskQueue;
-
-      // FrontierShiftingData m_frontierData;
   };
 
 }

@@ -12,13 +12,3 @@ fuint32_t RandomGen::getRandomUint(fuint32_t upper)
   m_lock.unlock();
   return randomVal;
 }
-
-void RandomGen::shuffle(fuint32_t* data, fuint32_t size)
-{
-  if (size == 0) return;
-  while(!m_shuffleLock.try_lock()) {}
-
-  std::shuffle(data, data + size, m_shuffleGenerator);
-
-  m_shuffleLock.unlock();
-}
