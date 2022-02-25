@@ -161,7 +161,7 @@ class Embedding():
         Returns:
             int: How many missing edges were successfully added.
         """
-        missing_edges_added = 0
+        missing_edges_added = set()
 
         for source_H in self.H.get_nodes():
             expected_targets = self.H.get_neighbor_nodes(source_H)
@@ -179,14 +179,19 @@ class Embedding():
                     for possible_edge in possible_edges:
                         try:
                             self.embed_edge(possible_edge[0], possible_edge[1])
-                            logger.info(
-                                f'➕ Added missing edge in H: {source_H}-{target_H}')
-                            missing_edges_added += 1
+                            # logger.info(
+                            #     f'➕ Added missing edge in H: {source_H}-{target_H}')
+                            missing_edges_added.add((source_H, target_H))
                             break  # successfully added missing edge
                         except:
                             pass  # it's ok if we found no possible edge
 
-        return missing_edges_added
+        # Log
+        logger.info('Try to add missing edges')
+        for edge in missing_edges_added:
+            logger.info(f'➕ Added missing edge in H: {edge[0]}-{edge[1]}')
+
+        return len(missing_edges_added)
 
     def remove_unnecessary_edges_between_supernodes(self) -> None:
         """Tries to remove unnecessary edges, e.g. multiple edges between
@@ -195,18 +200,14 @@ class Embedding():
         # For every supernode (chain)
         for supernode in self.H.get_nodes():
             considered_supernodes = []
-            logger.info(f'💫 Supernode {supernode}')
 
             # For every node in supernode (chain)
             for node in self.get_nodes_in_supernode(supernode):
-                logger.info(f'💫 Node {node}')
 
                 # Go through every edge to a neighbor
                 # that is in ANOTHER supernode
                 for neighbor in self.get_embedded_neighbors(node):
                     neighbor_supernode = self.get_supernode(neighbor)
-                    logger.info(f'💫 Neighbor {neighbor} '
-                                f'(supernode: {neighbor_supernode})')
 
                     # Do not consider edges inside of supernodes
                     if supernode == neighbor_supernode:
@@ -217,10 +218,78 @@ class Embedding():
                     if neighbor_supernode not in considered_supernodes:
                         considered_supernodes.append(neighbor_supernode)
                     else:
-                        logger.info(f'💫 Remove edge: {node}-{neighbor}')
                         self.G_embedding.remove_edge(node, neighbor)
                         # No need adjust G_embedding_view as
                         # this must be preserved by this method
+
+    def remove_redundant_supernode_nodes(self) -> None:
+        removed_nodes = []
+        for supernode in self.H.get_nodes():
+            supernode_nodes = self.get_nodes_in_supernode(supernode)
+
+            # Try to complete remove every node
+            for node_to_remove in supernode_nodes:
+                valid_remove = True
+                rest_nodes_reachable = []
+
+                # Check supernode connectivity
+                for node in supernode_nodes:  # again
+                    # Skip node that we want to remove -> only consider "rest" nodes
+                    if node == node_to_remove:
+                        continue  # pretend we have removed the node
+
+                    # Do not consider an already removed node here to avoid key error
+                    if node in removed_nodes:
+                        continue
+
+                    # --- Can we still reach every node with another node in supernode?
+                    # Every node in supernode should have at least one neighbor
+                    # in the same supenode to still be a valid, connected supernode
+                    neighbors = self.get_embedded_neighbors(node)
+
+                    if len(supernode_nodes) != 2:
+                        one_neighbor_in_supernode = False
+                        for neighbor in neighbors:
+                            if neighbor == node_to_remove:
+                                continue  # pretend we have removed the node
+
+                            neighbor_supernode = self.get_supernode(neighbor)
+                            if neighbor_supernode == supernode:
+                                one_neighbor_in_supernode = True
+                                break
+
+                        if not one_neighbor_in_supernode:
+                            valid_remove = False
+                            break
+
+                    rest_nodes_reachable.extend(neighbors)
+
+                if not valid_remove:
+                    continue  # try to remove another node
+
+                # --- Can we also reach node's neighbors using that chain?
+                node_to_remove_neighbors = self.get_embedded_neighbors(node_to_remove)
+                if not all([neighbor in rest_nodes_reachable
+                            for neighbor in node_to_remove_neighbors
+                            if neighbor not in supernode_nodes]):  # chain connectivity already ensured
+                    continue
+
+                # We can now safely remove the node
+                self.remove_node(node_to_remove)
+                removed_nodes.append(node_to_remove)
+
+                if len(supernode_nodes) == 2:
+                    break
+
+        logger.info(f'✂ Removed nodes: {removed_nodes}')
+
+    def remove_node(self, node: int) -> None:
+        # Embedding
+        self.G_embedding.remove_node(node)
+
+        # Mapping
+        supernode = self.get_supernode(node)
+        self.mapping.remove_mapping(supernode, node)
 
     def check_supernode_connectiveness(self, supernode: int) -> bool:
         """Checks that no supernodes are split up into multiple groups

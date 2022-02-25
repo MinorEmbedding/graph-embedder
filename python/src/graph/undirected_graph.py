@@ -10,15 +10,18 @@ class UndirectedGraphAdjList:
             nodes_count (int): The number of nodes this Graph \
                 has initially.
         """
-        self.nodes_count = nodes_count
         self._adj_list: dict[int, AdjListEntryWithCosts] = dict()
-        for i in range(nodes_count):
-            self._adj_list[i] = AdjListEntryWithCosts()
+        self.current_index = -1
+        self.nodes_count = 0  # gets incremented in for loop
+        for _ in range(nodes_count):
+            self.add_node()
 
     def _validate_index(self, index: int):
         """Checks if the given index is valid for the current Graph."""
-        if not 0 <= index < self.nodes_count:
-            raise GraphNodeIndexError(self.nodes_count, index)
+        try:
+            self._adj_list[index]
+        except KeyError:
+            raise GraphNodeIndexError(index)
 
     ############################### Edges ######################################
 
@@ -113,11 +116,11 @@ class UndirectedGraphAdjList:
         if not tos:
             return  # nothing to delete
 
-        # Delete outgoing edges (by resetting)
-        self._adj_list[frm] = AdjListEntryWithCosts()
-
-        # Delete incoming edges
         for to in tos:
+            # Delete outgoing edges (by resetting)
+            self._adj_list[frm].remove_edge_to(to)
+
+            # Delete incoming edges
             self._adj_list[to].remove_edge_to(frm)
 
     ################################# Nodes ####################################
@@ -137,9 +140,15 @@ class UndirectedGraphAdjList:
             int: The new node number.
         """
         self.nodes_count += 1
-        # add node to the end
         self._adj_list[self.nodes_count-1] = AdjListEntryWithCosts()
-        return self.nodes_count
+        return self.nodes_count-1
+
+    def remove_node(self, node: int) -> None:
+        self.remove_all_edges_from_node(node)
+
+        # We don't delete the key completely as we use the following encoding:
+        # Nodes are only embedded nodes later if they have neighbors
+        # del self._adj_list[node]
 
     def get_neighbor_nodes(self, source: int) -> set[int]:
         """Returns all neighboring nodes.
@@ -201,12 +210,11 @@ class GraphNodeIndexError(Exception):
     """Error that occurs when accessing a node that does not exist in the Graph.
 
     Args:
-        nodes_count (int): Number of nodes in the Graph.
         index (int): Invalid node (represented as integer index in the Graph).
     """
 
-    def __init__(self, nodes_count: int, index: int):
-        message = f'Graph contains {nodes_count} nodes, cannot access node no. {index}'
+    def __init__(self, index: int):
+        message = f'Node {index} does not exist in the graph'
         super().__init__(message)
 
 

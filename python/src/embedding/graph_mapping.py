@@ -15,7 +15,7 @@ class GraphMapping():
     def get_nodes_G(self, node_H: int) -> set[int]:
         # Note that we do not handle KeyErrors here as they should never occur
         # Might want to use method: get_supernode_create_if_not_available()
-        return self.H_to_G[node_H]
+        return self.H_to_G[node_H].copy()
 
     def get_node_H(self, node_G: int) -> int:
         # Note that we do not handle KeyErrors here as they should never occur
@@ -59,7 +59,7 @@ class GraphMapping():
         return supernode
 
     def get_mapping_H_to_G(self):
-        return self.H_to_G
+        return self.H_to_G.copy()
 
     def get_mapping_G_to_H(self):
-        return self.G_to_H
+        return self.G_to_H.copy()

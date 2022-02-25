@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+from random import random
 
 from src.drawing.draw import DrawEmbedding
 from src.graph.test_graph import TestGraph
@@ -14,9 +15,10 @@ logger = logging.getLogger('evolution')
 ################################# Params #######################################
 
 max_total = 1
-max_mutations_trials = 12
+max_mutations_trials = 15
 population_size = 5
 max_generations = 20
+remove_redundant_nodes_probability = 0.2
 
 
 ############################### Evolution ######################################
@@ -100,6 +102,12 @@ def main(d: DrawEmbedding) -> bool:
         #                title=f'Generation {i} (before remove)')
 
         best_mutation.remove_unnecessary_edges_between_supernodes()
+
+        # save_embedding(*best_mutation.get_embedding(), d, i, title=f'My test')
+
+        if random() < remove_redundant_nodes_probability:
+            logger.info('Try to remove redundant supernode nodes')
+            best_mutation.remove_redundant_supernode_nodes()
         solver.commit(best_mutation)
         save_embedding(*solver.get_embedding(), d, i,
                        title=f'Generation {i}')
@@ -122,7 +130,7 @@ def output_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding):
     logger.info(edges)
     logger.info(mapping_G_to_H)
 
-    d.draw_embedding(nodes, edges, mapping_G_to_H)
+    d.draw_chimera_and_embedding(nodes, edges, mapping_G_to_H)
     d.show_embedding()
 
 
@@ -134,7 +142,6 @@ def save_embedding(nodes: set[int], edges: set[tuple[int, int, int]],
     logger.info(f'mapping_G_to_H: {mapping_G_to_H}')
 
     d.draw_whole_embedding_step(nodes, edges, mapping_G_to_H, title=title)
-    # d.draw_embedding(nodes, edges, mapping_G_to_H)
     # d.save_and_clear(f'./out/{i}.svg')
 
 
