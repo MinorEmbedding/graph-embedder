@@ -6,6 +6,7 @@ from src.embedding.graph_mapping import GraphMapping
 from src.graph.chimera_graph import ChimeraGraphLayout
 from src.graph.embedding_graph import EmbeddingGraph
 from src.graph.undirected_graph import UndirectedGraphAdjList
+from src.embedding.articulation_point import ArticulationPointCalculator
 
 logger = logging.getLogger('evolution')
 
@@ -103,9 +104,6 @@ class Embedding():
         return self.get_nodes_in_supernode(supernode)
 
     def construct_supernode(self, source: int, target: int) -> None:
-        # TODO: add javadoc describing that it takes supernode of source as default,
-        # but can be modified with optional param
-
         # Embed edge
         self.G_embedding.embed_edge(source, target)
 
@@ -227,58 +225,41 @@ class Embedding():
         for supernode in self.H.get_nodes():
             supernode_nodes = self.get_nodes_in_supernode(supernode)
 
-            # Try to complete remove every node
+            articulation_points = ArticulationPointCalculator(self.G_embedding)\
+                .calc_articulation_points(supernode_nodes)
+            logger.info(f'-- Articulation points for supernode '
+                        f' {supernode} (-> {supernode_nodes}) are: '
+                        f'{articulation_points}')
+
+            # Try to remove every node of supernode
+            remove_count = 0
             for node_to_remove in supernode_nodes:
-                valid_remove = True
-                rest_nodes_reachable = []
-
-                # Check supernode connectivity
-                for node in supernode_nodes:  # again
-                    # Skip node that we want to remove -> only consider "rest" nodes
-                    if node == node_to_remove:
-                        continue  # pretend we have removed the node
-
-                    # Do not consider an already removed node here to avoid key error
-                    if node in removed_nodes:
-                        continue
-
-                    # --- Can we still reach every node with another node in supernode?
-                    # Every node in supernode should have at least one neighbor
-                    # in the same supenode to still be a valid, connected supernode
-                    neighbors = self.get_embedded_neighbors(node)
-
-                    if len(supernode_nodes) != 2:
-                        one_neighbor_in_supernode = False
-                        for neighbor in neighbors:
-                            if neighbor == node_to_remove:
-                                continue  # pretend we have removed the node
-
-                            neighbor_supernode = self.get_supernode(neighbor)
-                            if neighbor_supernode == supernode:
-                                one_neighbor_in_supernode = True
-                                break
-
-                        if not one_neighbor_in_supernode:
-                            valid_remove = False
-                            break
-
-                    rest_nodes_reachable.extend(neighbors)
-
-                if not valid_remove:
-                    continue  # try to remove another node
-
-                # --- Can we also reach node's neighbors using that chain?
-                node_to_remove_neighbors = self.get_embedded_neighbors(node_to_remove)
-                if not all([neighbor in rest_nodes_reachable
-                            for neighbor in node_to_remove_neighbors
-                            if neighbor not in supernode_nodes]):  # chain connectivity already ensured
+                # Don't remove articulation points (aka "cut nodes")
+                if node_to_remove in articulation_points:
                     continue
+
+                # Can we reach all previous neighbors of supernode?
+                node_to_remove_neighbors = self.get_embedded_neighbors(node_to_remove)
+
+                if node_to_remove_neighbors:
+                    rest_nodes_reachable = [self.get_embedded_neighbors(node)
+                                            for node in supernode_nodes
+                                            if node != node_to_remove]
+                    rest_nodes_reachable = itertools.chain(*rest_nodes_reachable)
+
+                    if not all([neighbor in rest_nodes_reachable
+                                for neighbor in node_to_remove_neighbors
+                                # chain connectivity already ensured
+                                if neighbor not in supernode_nodes]):
+                        continue
 
                 # We can now safely remove the node
                 self.remove_node(node_to_remove)
+                remove_count += 1
                 removed_nodes.append(node_to_remove)
 
-                if len(supernode_nodes) == 2:
+                # Leave at least one node left of every supernode
+                if remove_count == (len(supernode_nodes) - 1):
                     break
 
         logger.info(f'✂ Removed nodes: {removed_nodes}')

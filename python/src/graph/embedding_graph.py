@@ -1,7 +1,4 @@
-from typing import Optional
-
 from src.graph.undirected_graph import UndirectedGraphAdjList
-from src.util.util import get_first_from
 
 
 class EmbeddingGraph(UndirectedGraphAdjList):

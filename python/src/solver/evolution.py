@@ -98,16 +98,14 @@ def main(d: DrawEmbedding) -> bool:
         best_mutation_index = improvements.index(max(improvements))
         best_mutation = population[best_mutation_index]
 
-        # save_embedding(*best_mutation.get_embedding(G_to_H_mapping=True), d, i,
-        #                title=f'Generation {i} (before remove)')
-
-        best_mutation.remove_unnecessary_edges_between_supernodes()
-
-        # save_embedding(*best_mutation.get_embedding(), d, i, title=f'My test')
-
+        # Leave room for next generation
         if random() < remove_redundant_nodes_probability:
             logger.info('Try to remove redundant supernode nodes')
             best_mutation.remove_redundant_supernode_nodes()
+            # do again, maybe we can remove even more nodes
+            best_mutation.remove_redundant_supernode_nodes()
+        # best_mutation.remove_unnecessary_edges_between_supernodes()
+
         solver.commit(best_mutation)
         save_embedding(*solver.get_embedding(), d, i,
                        title=f'Generation {i}')
