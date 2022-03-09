@@ -12,10 +12,12 @@ namespace majorminer
       MutationReduceOverlap(EmbeddingState& state, EmbeddingManager& manager)
         : m_state(state), m_manager(manager) {}
 
+        bool prepare();
+        void execute();
+
     private:
       EmbeddingState& m_state;
       EmbeddingManager& m_manager;
-
   };
 }
 

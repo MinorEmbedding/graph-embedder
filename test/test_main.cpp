@@ -71,6 +71,17 @@ TEST(EmbeddingTest, Complete_Graph_8_On_3_3_Chimera)
   ASSERT_TRUE(suite.connectsNodes());
 }
 
+
+TEST(EmbeddingTest, Complete_Graph_12_On_5_5_Chimera)
+{
+  graph_t clique = generate_completegraph(12);
+  graph_t chimera = generate_chimera(5, 5);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_12_On_5_5_Chimera/chimera_clique_12", 5, 5);
+  EmbeddingSuite suite{clique, chimera, visualizer.get()};
+  auto embedding = suite.find_embedding();
+  ASSERT_TRUE(suite.connectsNodes());
+}
+
 TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
 {
   graph_t cycle = generate_cyclegraph(8);

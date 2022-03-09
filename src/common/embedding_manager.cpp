@@ -190,3 +190,5 @@ const embedding_mapping_t& EmbeddingManager::getMapping() const { return m_mappi
 const embedding_mapping_t& EmbeddingManager::getReverseMapping() const { return m_reverseMapping; }
 const nodeset_t& EmbeddingManager::getNodesOccupied() const { return m_nodesOccupied; }
 const nodeset_t& EmbeddingManager::getRemainingTargetNodes() const { return m_targetNodesRemaining; }
+
+

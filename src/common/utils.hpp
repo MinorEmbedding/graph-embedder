@@ -1,7 +1,8 @@
 #ifndef __MAJORMINER_UTILS_HPP_
 #define __MAJORMINER_UTILS_HPP_
 
-#include "majorminer_types.hpp"
+#include <majorminer_types.hpp>
+#include <common/debug_utils.hpp>
 
 
 namespace majorminer
@@ -26,8 +27,6 @@ namespace majorminer
   void setMin(T& val, const T& v) { if (v < val) val = v; }
   template<typename T>
   void setMax(T& val, const T& v) { if (v > val) val = v; }
-
-  void printAdjacencyList(const adjacency_list_t& adj);
 
   template<typename K, typename V>
   void eraseSinglePair(UnorderedMultiMap<K, V>& umap, const K& key, const V& val)
@@ -54,6 +53,8 @@ namespace majorminer
   {
       return std::shared_ptr<T[]>( new T[size], []( T *p ){ delete [] p; } );
   }
+
+
 
 }
 

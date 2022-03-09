@@ -1,5 +1,6 @@
 
 target_sources(majorminer PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/debug_utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/graph_gen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/cut_vertex.cpp

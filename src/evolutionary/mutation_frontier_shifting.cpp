@@ -28,18 +28,23 @@ MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state, 
 
 bool MutationFrontierShifting::isValid()
 {
-  return m_valid && isDefined(m_bestContested) && calculateImprovement() < 0
-        && isNodeCrucial(m_manager, m_victim, m_bestContested);
+  // std::cout << "Valid=" << m_valid << "; bestContested=" << m_bestContested << "; improvement=" << calculateImprovement(m_victim)
+  //   << "; crucial=" << !isNodeCrucial(m_manager, m_victim, m_bestContested) << std::endl;
+  //char c=getchar();
+  //if (c=='E') return false;
+  // std::cout << "------------------------------" << std::endl;
+  return m_valid && isDefined(m_bestContested) && calculateImprovement(m_victim) < 0
+        && !isNodeCrucial(m_manager, m_victim, m_bestContested);
 }
 
 bool MutationFrontierShifting::prepare()
 {
   // find a victim node for which conqueror is connected to and
   // all other node is not crucial for victim
-  std::cout << "Preparing shifting. " << m_conqueror << std::endl;
+  // std::cout << "Preparing shifting. " << m_conqueror << std::endl;
   m_valid = false;
   ShiftingCandidates cands = m_manager.getCandidatesFor(m_conqueror);
-  if (!isCandidateValid(cands))
+  if (!isCandidateValid(cands) || true )
   {
     nodepairset_t candidateSet{};
     m_state.iterateSourceMappingAdjacent<false>(m_conqueror, [&](fuint32_t target, fuint32_t){
@@ -61,11 +66,12 @@ bool MutationFrontierShifting::prepare()
     candidates[idx] = std::make_pair(FUINT32_UNDEF, FUINT32_UNDEF);
 
     if (!isDefined(candidate)) continue;
-    double improvement = calculateImprovement();
-    std::cout << "Shifting " << m_conqueror << ": " << improvement << std::endl;
+    double improvement = calculateImprovement(candidate.first);
+    // std::cout << "Shifting " << m_conqueror << " - (" << candidate.first << "," << candidate.second << "): " << improvement << std::endl;
+    //if (improvement < 0) { char c = getchar(); if (c == 'E') return false; }
     if (improvement < 0 && !isNodeCrucial(m_state, candidate.first, candidate.second))
     {
-      std::cout << "Found valid shifting!" << std::endl;
+      // std::cout << "Found valid shifting!" << std::endl;
       m_bestImprovement = improvement;
       m_valid = true;
       m_bestContested = candidate.second;
@@ -76,10 +82,10 @@ bool MutationFrontierShifting::prepare()
   return m_valid;
 }
 
-double MutationFrontierShifting::calculateImprovement()
+double MutationFrontierShifting::calculateImprovement(fuint32_t victim)
 { // todo: generic on EmbeddingBase
-  fuint32_t victimLength = m_state.getSuperVertexSize(m_victim);
-  fuint32_t conquerorLength = m_state.getSuperVertexSize(m_conqueror);
+  int victimLength = static_cast<int>(m_state.getSuperVertexSize(victim));
+  int conquerorLength = static_cast<int>(m_state.getSuperVertexSize(m_conqueror));
   if (victimLength == 0) return MAXFLOAT;
 
   return pow(victimLength - 1, 2) + pow(conquerorLength + 1, 2)
@@ -88,8 +94,11 @@ double MutationFrontierShifting::calculateImprovement()
 
 void MutationFrontierShifting::execute()
 {
+  // std::cout << "Conqueror=" << m_conqueror << "; Contested=" << m_bestContested << "; Victim=" << m_victim << std::endl;
+  // getchar();
   m_manager.insertMappingPair(m_conqueror, m_bestContested);
   m_manager.deleteMappingPair(m_victim, m_bestContested);
+  m_manager.commit();
 
   if (m_state.hasVisualizer())
   {

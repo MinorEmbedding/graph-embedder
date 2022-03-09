@@ -136,11 +136,10 @@ bool majorminer::isCutVertex(const EmbeddingBase& base, fuint32_t sourceNode, fu
   while(!nodeStack.empty())
   {
     auto& top = nodeStack.top();
-    if (top.first == top.second) nodeStack.pop();
+    if (top.first == top.second || top.first->second == targetNode) nodeStack.pop();
     else
     {
       fuint32_t next = top.first->second;
-      mapped.unsafe_erase(next);
       top.first++;
       auto val = mapped.unsafe_extract(next);
       if (!val.empty())

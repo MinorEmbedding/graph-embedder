@@ -1,7 +1,8 @@
-#include "network_simplex.hpp"
+#include "initial/network_simplex.hpp"
 
 #include <common/embedding_state.hpp>
 #include <common/embedding_manager.hpp>
+
 
 using namespace majorminer;
 
@@ -121,8 +122,8 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
         m_mapped.insert(arc.first.second);
       }
     }
-    OUT_S << "Number outflows " << nbOutFlows << std::endl;
-    if (nbOutFlows < 2 && m_mapped.size() > 1) m_mapped.unsafe_erase(m_sConnected);
+    // OUT_S << "Number outflows " << nbOutFlows << std::endl;
+    //if (nbOutFlows < 2 && m_mapped.size() > 1) m_mapped.unsafe_erase(m_sConnected);
     m_embeddingManager.mapNode(node, m_mapped);
   }
   else if(status == NetworkSimplex::INFEASIBLE)

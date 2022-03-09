@@ -21,6 +21,7 @@ void MutationManager::operator()()
   auto& incorporationQueue = m_incorporationQueue;
   const auto& done = m_done;
   auto& runningPreps = m_runningPreps;
+  auto& remaining = m_numberRemaining;
   // const auto& wait = m_wait;
   auto& free = m_free;
   std::thread prep{ [&](){
@@ -30,7 +31,11 @@ void MutationManager::operator()()
       bool success = prepQueue.try_pop(mutation);
       if (!success) continue;
       bool valid = mutation->prepare();
-      if (!valid) continue;
+      if (!valid)
+      {
+        remaining--;
+        continue;
+      }
       else
       {
         free.lock();
@@ -43,6 +48,8 @@ void MutationManager::operator()()
   }};
   incorporate();
   prep.join();
+  m_embeddingManager.synchronize();
+  // std::cout << "Ending mutations with " << m_prepQueue.unsafe_size() << " in prep queue and " << m_incorporationQueue.size() << " in incorporation queue." << std::endl;
 }
 
 void MutationManager::prepare()
@@ -57,8 +64,9 @@ void MutationManager::prepare()
   {
     prepareMutations(lastNode);
   }
-
+  m_numberRemaining = m_prepQueue.unsafe_size();
 }
+
 void MutationManager::prepareMutations(fuint32_t node)
 {
   nodeset_t affected{};
@@ -68,30 +76,34 @@ void MutationManager::prepareMutations(fuint32_t node)
     });
     return false;
   });
+  affected.insert(node);
 
   for (auto candidate : affected)
   {
     m_prepQueue.push(std::make_unique<MutationExtend>(m_state, m_embeddingManager, candidate));
-    // m_prepQueue.push(std::make_unique<MutationFrontierShifting>(m_state, m_embeddingManager, candidate));
+    m_prepQueue.push(std::make_unique<MutationFrontierShifting>(m_state, m_embeddingManager, candidate));
   }
 }
 
 
 void MutationManager::incorporate()
 {
-  while(!m_prepQueue.empty() || !m_incorporationQueue.empty())
+  MutationPtr mutation;
+  while(m_numberRemaining > 0)
   {
-    MutationPtr mutation;
     bool success = m_incorporationQueue.try_pop(mutation);
     if (!success) continue;
 
     if (!mutation->isValid())
     {
+      std::cout << "Invalid mutation. Requeuing." << std::endl;
       m_prepQueue.push(std::move(mutation));
+      // m_numberRemaining--; // REMOVE AGAIN!
     }
     else
     {
       mutation->execute();
+      m_numberRemaining--;
       m_wait = true;
     }
     if (m_wait)

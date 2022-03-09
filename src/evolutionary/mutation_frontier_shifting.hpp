@@ -21,7 +21,7 @@ namespace majorminer
       fuint32_t getContested() const { return m_bestContested; }
 
     private:
-      double calculateImprovement();
+      double calculateImprovement(fuint32_t victim);
 
     private:
       const EmbeddingState& m_state;

@@ -3,6 +3,7 @@
 #include <common/embedding_manager.hpp>
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
+#include <common/csc_problem.hpp>
 
 using namespace majorminer;
 
@@ -12,6 +13,8 @@ SuperVertexPlacer::SuperVertexPlacer(EmbeddingState& state, EmbeddingManager& em
 
 void SuperVertexPlacer::operator()()
 {
+  //char c = getchar();
+  //if (c=='E') return;
   if (!m_nodesToProcess.empty())
   {
     if (!connectedNode()) return;
@@ -65,6 +68,9 @@ bool SuperVertexPlacer::connectedNode()
 void SuperVertexPlacer::embeddNode(fuint32_t node)
 {
   embeddNodeNetworkSimplex(node);
+
+  SuperVertexReducer reducer{m_state, node};
+  reducer.optimize();
 }
 
 

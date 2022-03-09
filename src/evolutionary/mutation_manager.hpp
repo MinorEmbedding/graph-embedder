@@ -30,6 +30,8 @@ namespace majorminer
       std::atomic<bool> m_done;
       std::atomic<fuint32_t> m_runningPreps;
       std::atomic<bool> m_wait;
+
+      std::atomic<int> m_numberRemaining;
       std::mutex m_free;
   };
 

@@ -39,7 +39,7 @@ namespace majorminer
       {
         auto embeddedPathIt = getMapping().equal_range(sourceNode);
         const auto& target = getTargetAdjGraph();
-        const auto& occupied = getNodesOccupied();
+        const auto& remaining = getRemainingTargetNodes();
 
         for (auto targetNode = embeddedPathIt.first; targetNode != embeddedPathIt.second; ++targetNode)
         {
@@ -47,7 +47,7 @@ namespace majorminer
           auto targetGraphAdjacentIt = target.equal_range(targetNode->second);
           for (auto targetAdjacent = targetGraphAdjacentIt.first; targetAdjacent != targetGraphAdjacentIt.second; ++targetAdjacent)
           {
-            if (skipOccupied && occupied.contains(targetAdjacent->second)) continue;
+            if (skipOccupied && !remaining.contains(targetAdjacent->second)) continue;
             if (func(targetAdjacent->second, targetNode->second)) return;
           }
         }
@@ -151,6 +151,17 @@ namespace majorminer
           {
             func(mapped1It->second, mapped2It->second);
           }
+        }
+      }
+
+      template<typename Functor>
+      void iterateSourceMapping(fuint32_t sourceVertex, Functor func) const
+      {
+        const auto& mapping = getMapping();
+        auto mappingRange = mapping.equal_range(sourceVertex);
+        for (auto it = mappingRange.first; it != mappingRange.second; ++it)
+        {
+          func(it->second);
         }
       }
   };
