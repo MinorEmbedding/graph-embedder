@@ -68,10 +68,8 @@ bool SuperVertexPlacer::connectedNode()
 void SuperVertexPlacer::embeddNode(fuint32_t node)
 {
   embeddNodeNetworkSimplex(node);
-
-  SuperVertexReducer reducer{m_state, node};
-  reducer.optimize();
 }
+
 
 
 void SuperVertexPlacer::visualize(fuint32_t node, PlacedNodeType type, fuint32_t nbConnections)
@@ -113,6 +111,12 @@ void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
 {
   if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(m_state, m_embeddingManager);
   m_nsWrapper->embeddNode(node);
+
+  SuperVertexReducer reducer{m_state, node};
+  reducer.initialize(m_nsWrapper->getMapped());
+  reducer.optimize();
+  const auto& superVertex = reducer.getSuperVertex();
+  m_embeddingManager.mapNode(node, superVertex);
 }
 
 void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)

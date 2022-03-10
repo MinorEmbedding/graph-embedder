@@ -118,8 +118,7 @@ namespace majorminer
   class MuationFrontierShifting;
   class MutationManager;
   class NetworkSimplexWrapper;
-
-  struct FrontierShiftingData;
+  class RandomGen;
 
 }
 

@@ -25,6 +25,7 @@ namespace majorminer
         : m_state(state), m_embeddingManager(embeddingManager) { }
 
       void embeddNode(fuint32_t node);
+      const nodeset_t& getMapped() const { return m_mapped; }
 
     private:
       LemonNode createNode(fuint32_t node);

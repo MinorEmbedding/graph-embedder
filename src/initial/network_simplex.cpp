@@ -124,7 +124,7 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
     }
     // OUT_S << "Number outflows " << nbOutFlows << std::endl;
     //if (nbOutFlows < 2 && m_mapped.size() > 1) m_mapped.unsafe_erase(m_sConnected);
-    m_embeddingManager.mapNode(node, m_mapped);
+    // m_embeddingManager.mapNode(node, m_mapped);
   }
   else if(status == NetworkSimplex::INFEASIBLE)
   {

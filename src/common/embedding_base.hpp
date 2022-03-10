@@ -119,6 +119,16 @@ namespace majorminer
       }
 
       template<typename Functor>
+      void iterateTargetGraphAdjacentBreak(fuint32_t targetNode, Functor func) const
+      {
+        auto adjRange = getTargetAdjGraph().equal_range(targetNode);
+        for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
+        {
+          if (func(adj->second)) return;
+        }
+      }
+
+      template<typename Functor>
       void iterateTargetAdjacentReverseMapping(fuint32_t target, Functor func) const
       {
         const auto& targetGraph = getTargetAdjGraph();

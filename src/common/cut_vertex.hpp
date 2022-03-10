@@ -14,6 +14,7 @@ namespace majorminer
 
   // check whether targetNode (which is a node sourceNode is mapped to) is a cut vertex
   bool isCutVertex(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode);
+  bool isCutVertex(const EmbeddingBase& base, nodeset_t& mappedNodes, fuint32_t targetNode);
 
 }
 

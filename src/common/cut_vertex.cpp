@@ -111,25 +111,32 @@ bool majorminer::isCutVertex(const adjacency_list_t& subgraph, fuint32_t node, f
   return visited.size() < n;
 }
 
+
+
 bool majorminer::isCutVertex(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode)
 {
   nodeset_t mapped {};
   insertMappedTargetNodes(base, mapped, sourceNode);
-  if (mapped.size() <= 1) return true;
-  mapped.unsafe_erase(targetNode);
+  return isCutVertex(base, mapped, targetNode);
+}
+
+bool majorminer::isCutVertex(const EmbeddingBase& base, nodeset_t& mappedNodes, fuint32_t targetNode)
+{
+  if (mappedNodes.size() <= 1) return true;
+  mappedNodes.unsafe_erase(targetNode);
   const auto& targetAdj = base.getTargetAdjGraph();
   fuint32_t adjacentTarget = FUINT32_UNDEF; // cannot use targetNode here
   auto range = targetAdj.equal_range(targetNode);
   for (auto it = range.first; it != range.second; ++it)
   {
-    if (mapped.contains(it->second))
+    if (mappedNodes.contains(it->second))
     {
       adjacentTarget = it->second;
       break;
     }
   }
   if (!isDefined(adjacentTarget)) return true;
-
+  mappedNodes.unsafe_erase(adjacentTarget);
 
   Stack<equal_range_t> nodeStack{};
   nodeStack.push(targetAdj.equal_range(adjacentTarget));
@@ -141,13 +148,13 @@ bool majorminer::isCutVertex(const EmbeddingBase& base, fuint32_t sourceNode, fu
     {
       fuint32_t next = top.first->second;
       top.first++;
-      auto val = mapped.unsafe_extract(next);
+      auto val = mappedNodes.unsafe_extract(next);
       if (!val.empty())
       {
-        if (mapped.empty()) return false;
+        if (mappedNodes.empty()) return false;
         nodeStack.push(targetAdj.equal_range(val.value()));
       }
     }
   }
-  return !mapped.empty();
+  return !mappedNodes.empty();
 }
