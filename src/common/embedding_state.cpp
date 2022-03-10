@@ -65,7 +65,6 @@ void EmbeddingState::updateConnections(fuint32_t node, PrioNodeQueue& nodesToPro
       nodesToProcess.push(PrioNode{findIt->first, findIt->second});
     }
   });
-  // identifyAffected(node);
 }
 
 int EmbeddingState::numberFreeNeighborsNeeded(fuint32_t sourceNode) const

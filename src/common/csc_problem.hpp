@@ -17,11 +17,13 @@ namespace majorminer
       void optimize();
       const nodeset_t& getSuperVertex() const { return m_superVertex; }
       void initialize(const nodeset_t& currentMapping);
+      const nodeset_t& getBetterPlacement(const nodeset_t& previous) const;
 
     private:
       bool isBadNode(fuint32_t target) const;
       void addNode(fuint32_t target);
       void removeNode(fuint32_t target);
+      fuint32_t checkScore(const nodeset_t& placement) const;
 
       // checks whether a new target node would be connected to the super vertex
       bool isConnected(fuint32_t target) const;

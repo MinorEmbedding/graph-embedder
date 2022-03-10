@@ -4,6 +4,7 @@
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
 #include <common/csc_problem.hpp>
+#include <common/debug_utils.hpp>
 
 using namespace majorminer;
 
@@ -13,8 +14,8 @@ SuperVertexPlacer::SuperVertexPlacer(EmbeddingState& state, EmbeddingManager& em
 
 void SuperVertexPlacer::operator()()
 {
-  //char c = getchar();
-  //if (c=='E') return;
+  // char c = getchar();
+  // if (c=='E') return;
   if (!m_nodesToProcess.empty())
   {
     if (!connectedNode()) return;
@@ -23,6 +24,7 @@ void SuperVertexPlacer::operator()()
   {
     trivialNode();
   }
+  std::cout << "===================================" << std::endl;
 }
 
 void SuperVertexPlacer::trivialNode()
@@ -50,8 +52,6 @@ bool SuperVertexPlacer::connectedNode()
 
     embeddNode(node.m_id);
     if (m_state.hasVisualizer()) visualize(node.m_id, COMPLEX, node.m_nbConnections);
-
-    // prepareFrontierShifting(node.m_id, node.m_nbConnections);
   }
   else
   { // nbConnections = 1
@@ -68,6 +68,7 @@ bool SuperVertexPlacer::connectedNode()
 void SuperVertexPlacer::embeddNode(fuint32_t node)
 {
   embeddNodeNetworkSimplex(node);
+  m_state.updateConnections(node, m_nodesToProcess);
 }
 
 
@@ -115,8 +116,10 @@ void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
   SuperVertexReducer reducer{m_state, node};
   reducer.initialize(m_nsWrapper->getMapped());
   reducer.optimize();
-  const auto& superVertex = reducer.getSuperVertex();
+  const auto& superVertex = reducer.getBetterPlacement(m_nsWrapper->getMapped());
   m_embeddingManager.mapNode(node, superVertex);
+  printNodeset(m_nsWrapper->getMapped());
+  printNodeset(superVertex);
 }
 
 void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)

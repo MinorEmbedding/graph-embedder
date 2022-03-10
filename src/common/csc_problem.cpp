@@ -108,18 +108,33 @@ void SuperVertexReducer::optimize()
   if (m_done) return;
   RandomGen rand{};
   m_rand = &rand;
-  fuint32_t maxIters = 4 * m_potentialNodes.size();
+  fuint32_t maxIters = 8 * m_potentialNodes.size();
   fuint32_t halfMax = maxIters / 2;
-  for (fuint32_t iteration = 0; iteration <  maxIters; ++iteration)
+  fuint32_t iteration = 0;
+  for (; iteration <  halfMax; ++iteration)
   {
     fuint32_t flipIdx = rand.getRandomUint(m_potentialNodes.size() - 1);
     fuint32_t target = m_verticesList[flipIdx];
     if (m_superVertex.contains(target)) removeNode(target);
-    else if (iteration < halfMax) addNode(target);
+    else addNode(target);
   }
+  // std::cout << "Removing bad nodes..." << std::endl;
+  // printNodeset(m_superVertex);
+
   for (auto& node : m_potentialNodes)
   {
-    if (m_superVertex.contains(node) && isBadNode(node)) removeNode(node);
+    if (m_superVertex.contains(node) && isBadNode(node))
+    {
+      // std::cout << "Bad node " << node << std::endl;
+      removeNode(node);
+    }
+  }
+  // std::cout << "Done removing bad nodes. " << std::endl;
+  for (; iteration <  maxIters; ++iteration)
+  {
+    fuint32_t flipIdx = rand.getRandomUint(m_potentialNodes.size() - 1);
+    fuint32_t target = m_verticesList[flipIdx];
+    if (m_superVertex.contains(target)) removeNode(target);
   }
   m_done = true;
   printNodeset(m_superVertex);
@@ -133,7 +148,6 @@ bool SuperVertexReducer::isBadNode(fuint32_t target) const
 void SuperVertexReducer::addNode(fuint32_t target)
 {
   if (m_superVertex.contains(target) || isBadNode(target) || !isConnected(target)) return;
-  if (m_rand->getRandomUint(1) > 0) return;
 
   m_superVertex.insert(target);
   auto range = m_adjacencies.equal_range(target);
@@ -148,16 +162,20 @@ void SuperVertexReducer::removeNode(fuint32_t target)
   if (!m_superVertex.contains(target)) return;
   // 1. Check whether for each adjacent source vertex, there is another adjacent target node
   auto range = m_adjacencies.equal_range(target);
+  // std::cout << "-----" << std::endl;
   for (auto it = range.first; it != range.second; ++it)
   {
+    // std::cout << "Node " << it->second << ": " << m_sourceConnections[it->second] << std::endl;
     if (m_sourceConnections[it->second] <= 1) return;
   }
+  // std::cout << "-----" << std::endl;
 
   // 2. Check whether cut vertex
   nodeset_t temp {};
   temp.insert(m_superVertex.begin(), m_superVertex.end());
-  temp.insert(target);
-  if (isCutVertex(m_embedding, temp, target)) return;
+  bool isCutV = isCutVertex(m_embedding, temp, target);
+  // std::cout << "Node " <<  target << " cutV? " << isCutV << std::endl;
+  if (isCutV) return;
 
   // Now remove the vertex
   m_superVertex.unsafe_erase(target);
@@ -175,4 +193,19 @@ bool SuperVertexReducer::isConnected(fuint32_t target) const
     return connected;
   });
   return connected;
+}
+
+fuint32_t SuperVertexReducer::checkScore(const nodeset_t& placement) const
+{
+  fuint32_t numberBad = 0;
+  for (auto node : placement) if (isBadNode(node)) numberBad++;
+  return numberBad;
+}
+
+const nodeset_t& SuperVertexReducer::getBetterPlacement(const nodeset_t& previous) const
+{
+  fuint32_t scorePrevious = checkScore(previous);
+  fuint32_t scoreOwn = checkScore(m_superVertex);
+  return (scorePrevious < scoreOwn || (scorePrevious == scoreOwn && previous.size() < m_superVertex.size()))
+    ? previous : m_superVertex;
 }
