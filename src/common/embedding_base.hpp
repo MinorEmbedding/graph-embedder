@@ -73,12 +73,12 @@ namespace majorminer
         const auto& target = getTargetAdjGraph();
         const auto& reverseMapping = getReverseMapping();
 
-        for (auto targetNode = embeddedPathIt.first; targetNode != embeddedPathIt.second; ++targetNode)
+        for (auto mapIt = embeddedPathIt.first; mapIt != embeddedPathIt.second; ++mapIt)
         {
-          auto targetGraphAdjacentIt = target.equal_range(targetNode->second);
+          if (mapIt->second == skipTarget) continue;
+          auto targetGraphAdjacentIt = target.equal_range(mapIt->second);
           for (auto targetAdjacent = targetGraphAdjacentIt.first; targetAdjacent != targetGraphAdjacentIt.second; ++targetAdjacent)
           {
-            if (targetAdjacent->second == skipTarget) continue;
             auto revRange = reverseMapping.equal_range(targetAdjacent->second);
             for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
             {

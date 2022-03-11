@@ -54,21 +54,21 @@ double MutationExtend::checkImprovement(fuint32_t extendNode, int delta, bool us
 // use embedding manager only
 void MutationExtend::execute()
 {
-  std::cout << "---------------------------" << std::endl;
-  std::cout << "1. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << "; improving=" << m_improving << "; contains="
-            << m_embeddingManager.getRemainingTargetNodes().contains(m_extendedTarget) << std::endl;
+  // std::cout << "---------------------------" << std::endl;
+  // std::cout << "1. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << "; improving=" << m_improving << "; contains="
+  //           << m_embeddingManager.getRemainingTargetNodes().contains(m_extendedTarget) << std::endl;
   //m_embeddingManager.printRemainingTargetNodes();
   if(!m_improving || !m_embeddingManager.getRemainingTargetNodes().contains(m_extendedTarget)) return;
-  std::cout << "2. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << std::endl;
+  // std::cout << "2. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << std::endl;
   int delta = m_embeddingManager.numberFreeNeighborsNeeded(m_sourceVertex);
   if (delta <= 0) return;
-  std::cout << "3. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << std::endl;
+  // std::cout << "3. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << std::endl;
   double improvement = checkImprovement(m_extendedTarget, delta, true);
 
-  std::cout << "4. Extend execute node "<<m_sourceVertex << " improves by " <<improvement << std::endl;
+  // std::cout << "4. Extend execute node "<<m_sourceVertex << " improves by " <<improvement << std::endl;
   if (improvement < 0)
   { // adopt mutation
-    std::cout << "Applying extend on " << m_sourceVertex << " towards " << m_extendedTarget << std::endl;
+    // std::cout << "Applying extend on " << m_sourceVertex << " towards " << m_extendedTarget << std::endl;
     m_embeddingManager.occupyNode(m_extendedTarget);
 
     m_embeddingManager.insertMappingPair(m_sourceVertex, m_extendedTarget);

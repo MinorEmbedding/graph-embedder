@@ -25,23 +25,20 @@ adjacency_list_t majorminer::extractSubgraph(const EmbeddingBase& base, fuint32_
 }
 
 
-bool majorminer::isNodeCrucial(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode)
+bool majorminer::isNodeCrucial(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode, fuint32_t conqueror)
 {
   // 1. Check whether targetNode is crucial due to it being a cut vertex
   // std::cout << "Checking whether cut vertex " << std::endl;
   if (isCutVertex(base, sourceNode, targetNode)) return true;
   // std::cout << "Is no cut vertex" << std::endl;
-  // 1. Check whether targetNode is crucial connections to other super vertices
-  nodeset_t sourceConnections{};
-  base.iterateSourceGraphAdjacent(sourceNode, [&](fuint32_t adjSourceNode){
-    sourceConnections.insert(adjSourceNode);
-  });
-
+  // 2. Check whether targetNode is crucial connections to other super vertices
+  const auto& mapping = base.getMapping();
   nodeset_t connections{};
-  base.iterateTargetAdjacentReverseMapping(targetNode, [&](fuint32_t adjSourceNode){
-    if (sourceConnections.contains(adjSourceNode)) connections.insert(adjSourceNode);
+
+  base.iterateSourceGraphAdjacent(sourceNode, [&](fuint32_t adjSourceNode){
+    if (mapping.contains(adjSourceNode)) connections.insert(adjSourceNode);
   });
-  // std::cout << "Number connections" << connections.size() << std::endl;
+  connections.unsafe_erase(conqueror);
 
   base.iterateSourceMappingAdjacentReverse(sourceNode, targetNode, [&](fuint32_t adjSourceNode){
     connections.unsafe_erase(adjSourceNode);
@@ -130,7 +127,7 @@ void SuperVertexReducer::optimize()
     }
   }
   // std::cout << "Done removing bad nodes. " << std::endl;
-  for (; iteration <  maxIters; ++iteration)
+  for (; iteration <  maxIters && m_superVertex.size() > 1; ++iteration)
   {
     fuint32_t flipIdx = rand.getRandomUint(m_potentialNodes.size() - 1);
     fuint32_t target = m_verticesList[flipIdx];

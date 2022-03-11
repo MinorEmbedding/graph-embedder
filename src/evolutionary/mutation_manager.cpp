@@ -98,7 +98,6 @@ void MutationManager::incorporate()
     {
       std::cout << "Invalid mutation. Requeuing." << std::endl;
       m_prepQueue.push(std::move(mutation));
-      // m_numberRemaining--; // REMOVE AGAIN!
     }
     else
     {

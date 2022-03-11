@@ -29,12 +29,13 @@ MutationFrontierShifting::MutationFrontierShifting(const EmbeddingState& state, 
 bool MutationFrontierShifting::isValid()
 {
   // std::cout << "Valid=" << m_valid << "; bestContested=" << m_bestContested << "; improvement=" << calculateImprovement(m_victim)
-  //   << "; crucial=" << !isNodeCrucial(m_manager, m_victim, m_bestContested) << std::endl;
+  //    << "; crucial=" << !isNodeCrucial(m_manager, m_victim, m_bestContested, m_conqueror) << std::endl;
+  // std::cout << "Victim=" << m_victim << "; Conqueror=" << m_conqueror << std::endl;
   //char c=getchar();
   //if (c=='E') return false;
   // std::cout << "------------------------------" << std::endl;
   return m_valid && isDefined(m_bestContested) && calculateImprovement(m_victim) < 0
-        && !isNodeCrucial(m_manager, m_victim, m_bestContested);
+        && !isNodeCrucial(m_manager, m_victim, m_bestContested, m_conqueror);
 }
 
 bool MutationFrontierShifting::prepare()
@@ -69,7 +70,7 @@ bool MutationFrontierShifting::prepare()
     double improvement = calculateImprovement(candidate.first);
     // std::cout << "Shifting " << m_conqueror << " - (" << candidate.first << "," << candidate.second << "): " << improvement << std::endl;
     //if (improvement < 0) { char c = getchar(); if (c == 'E') return false; }
-    if (improvement < 0 && !isNodeCrucial(m_state, candidate.first, candidate.second))
+    if (improvement < 0 && !isNodeCrucial(m_state, candidate.first, candidate.second, m_conqueror))
     {
       // std::cout << "Found valid shifting!" << std::endl;
       m_bestImprovement = improvement;
