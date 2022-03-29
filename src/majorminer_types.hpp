@@ -113,9 +113,11 @@ namespace majorminer
   class EmbeddingState;
   class EmbeddingManager;
   class SuperVertexPlacer;
+  class SuperVertexReducer;
   class GenericMutation;
   class MutationExtend;
   class MuationFrontierShifting;
+  class MutationReduceOverlap;
   class MutationManager;
   class NetworkSimplexWrapper;
   class RandomGen;

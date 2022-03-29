@@ -26,6 +26,7 @@ void EmbeddingState::initialize()
     m_sourceNeededNeighbors[arc.first]++;
     m_sourceNeededNeighbors[arc.second]++;
   }
+  m_numberSourceVertices = m_nodesRemaining.size();
 }
 
 fuint32_t EmbeddingState::getTrivialNode()

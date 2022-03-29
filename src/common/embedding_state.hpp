@@ -53,6 +53,8 @@ namespace majorminer
       UnorderedMap<fuint32_t, std::atomic<int>>& getSourceFreeNeighbors() { return m_sourceFreeNeighbors; }
       UnorderedMap<fuint32_t, std::atomic<int>>& getSourceNeededNeighbors() { return m_sourceNeededNeighbors; }
 
+      fuint32_t getNumberSourceVertices() const { return m_numberSourceVertices; }
+
     private:
       void initialize();
 
@@ -71,6 +73,7 @@ namespace majorminer
       UnorderedMap<fuint32_t, std::atomic<int>> m_sourceNeededNeighbors;
       UnorderedMap<fuint32_t, std::atomic<int>> m_sourceFreeNeighbors;
       nodeset_t m_sourceNodesAffected;
+      fuint32_t m_numberSourceVertices;
 
       EmbeddingVisualizer* m_visualizer;
   };

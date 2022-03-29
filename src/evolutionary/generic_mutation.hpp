@@ -19,6 +19,9 @@ namespace majorminer
       // Incorporate changes of this mutation
       virtual void execute() = 0;
 
+      // Should an invalid mutation be requeued? Default: Yes.
+      virtual bool requeue() const { return true; }
+
     protected:
       void generateTimestamp();
 

@@ -25,6 +25,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
     m_placer();
     m_mutationManager();
   }
+  m_mutationManager(true);
   return m_state.getMapping();
 }
 

@@ -13,7 +13,8 @@ namespace majorminer
     INS_MAPPING,
     FREE_NEIGHBORS,
     OCCUPY_NODE,
-    COMMIT
+    COMMIT,
+    FREE_NODE
   };
 
   struct EmbeddingChange
@@ -57,6 +58,7 @@ namespace majorminer
       void deleteMappingPair(fuint32_t source, fuint32_t target);
       void insertMappingPair(fuint32_t source, fuint32_t target);
       void occupyNode(fuint32_t target);
+      void freeNode(fuint32_t target);
       void synchronize();
       void commit();
       fuint32_t getTimestamp() { return m_time++; }

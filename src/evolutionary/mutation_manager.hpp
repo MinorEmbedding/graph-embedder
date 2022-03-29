@@ -15,10 +15,12 @@ namespace majorminer
       MutationManager(EmbeddingState& state, EmbeddingManager& embeddingManager)
         : m_state(state), m_embeddingManager(embeddingManager) {}
 
-      void operator()();
+      void operator()(bool finalIteration = false);
 
     private:
+      void clear();
       void prepare();
+      void prepareFinal();
       void incorporate();
       void prepareMutations(fuint32_t node);
 

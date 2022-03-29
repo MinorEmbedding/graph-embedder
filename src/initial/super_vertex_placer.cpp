@@ -1,10 +1,12 @@
 #include "super_vertex_placer.hpp"
 
+#include "super_vertex_reducer.hpp"
+
 #include <common/embedding_manager.hpp>
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
-#include <common/csc_problem.hpp>
 #include <common/debug_utils.hpp>
+#include <initial/super_vertex_reducer.hpp>
 
 using namespace majorminer;
 

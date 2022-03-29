@@ -9,15 +9,20 @@ namespace majorminer
   class MutationReduceOverlap : public GenericMutation
   {
     public:
-      MutationReduceOverlap(EmbeddingState& state, EmbeddingManager& manager)
-        : m_state(state), m_manager(manager) {}
+      MutationReduceOverlap(EmbeddingState& state, EmbeddingManager& manager, fuint32_t sourceVertex);
+      ~MutationReduceOverlap();
 
-        bool prepare();
-        void execute();
+      bool prepare() override;
+      void execute() override;
+      bool isValid() override;
+
+      bool requeue() const override { return false; }
 
     private:
       EmbeddingState& m_state;
       EmbeddingManager& m_manager;
+      SuperVertexReducer* m_reducer;
+      fuint32_t m_sourceVertex;
   };
 }
 

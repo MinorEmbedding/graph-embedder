@@ -84,6 +84,13 @@ void EmbeddingManager::occupyNode(fuint32_t target)
   m_targetNodesRemaining.unsafe_erase(target);
 }
 
+void EmbeddingManager::freeNode(fuint32_t target)
+{
+  m_changesToPropagate.push(EmbeddingChange{ChangeType::FREE_NODE, target});
+  m_nodesOccupied.unsafe_erase(target);
+  m_targetNodesRemaining.insert(target);
+}
+
 int EmbeddingManager::numberFreeNeighborsNeeded(fuint32_t sourceNode) const
 { // TODO: rework and correct?!
   auto it = m_sourceFreeNeighbors.find(sourceNode);
@@ -134,6 +141,13 @@ void EmbeddingManager::synchronize()
       case ChangeType::OCCUPY_NODE:
       {
         targetNodesRemaining.unsafe_erase(change.m_a);
+        nodesOccupied.insert(change.m_a);
+        m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
+        break;
+      }
+      case ChangeType::FREE_NODE:
+      {
+        targetNodesRemaining.insert(change.m_a);
         nodesOccupied.unsafe_erase(change.m_a);
         m_changeHistory[change.m_a].m_timestampNodeChanged = m_time.load();
         break;

@@ -2,6 +2,7 @@
 
 #include <evolutionary/mutation_extend.hpp>
 #include <evolutionary/mutation_frontier_shifting.hpp>
+#include <evolutionary/mutation_reduce_overlap.hpp>
 #include <common/embedding_state.hpp>
 #include <common/embedding_manager.hpp>
 
@@ -9,9 +10,10 @@
 using namespace majorminer;
 
 
-void MutationManager::operator()()
+void MutationManager::operator()(bool finalIteration)
 {
-  prepare();
+  if (!finalIteration) prepare();
+  else prepareFinal();
   m_done = false;
   m_runningPreps = 0;
   m_wait = false;
@@ -54,9 +56,7 @@ void MutationManager::operator()()
 
 void MutationManager::prepare()
 {
-  m_embeddingManager.clear();
-  m_prepQueue.clear();
-  m_incorporationQueue.clear();
+  clear();
 
   // insert potential mutations
   auto lastNode = m_embeddingManager.getLastNode();
@@ -65,6 +65,39 @@ void MutationManager::prepare()
     prepareMutations(lastNode);
   }
   m_numberRemaining = m_prepQueue.unsafe_size();
+}
+
+void MutationManager::prepareFinal()
+{
+  clear();
+  std::vector<fuint32_t> vertices{};
+  vertices.reserve(m_state.getNumberSourceVertices());
+  const auto& source = m_state.getSourceAdjGraph();
+
+  for (const auto& vertexPair : source)
+  {
+    if (vertices.empty() || vertices.back() != vertexPair.first)
+    {
+      vertices.push_back(vertexPair.first);
+    }
+  }
+
+
+  RandomGen rand{};
+  rand.shuffle(vertices.data(), vertices.size());
+  for (auto vertex : vertices)
+  {
+    m_prepQueue.push(std::make_unique<MutationReduceOverlap>(m_state, m_embeddingManager, vertex));
+  }
+  std::cout << "Prepare final with " << vertices.size() <<" vertices." << std::endl;
+  m_numberRemaining = m_prepQueue.unsafe_size();
+}
+
+void MutationManager::clear()
+{
+  m_embeddingManager.clear();
+  m_prepQueue.clear();
+  m_incorporationQueue.clear();
 }
 
 void MutationManager::prepareMutations(fuint32_t node)
@@ -93,18 +126,19 @@ void MutationManager::incorporate()
   {
     bool success = m_incorporationQueue.try_pop(mutation);
     if (!success) continue;
-
-    if (!mutation->isValid())
+    bool valid = mutation->isValid();
+    if (!valid && mutation->requeue())
     {
       std::cout << "Invalid mutation. Requeuing." << std::endl;
       m_prepQueue.push(std::move(mutation));
+      continue;
     }
-    else
+    else if (valid)
     {
       mutation->execute();
-      m_numberRemaining--;
       m_wait = true;
     }
+    m_numberRemaining--;
     if (m_wait)
     {
       m_free.lock();
