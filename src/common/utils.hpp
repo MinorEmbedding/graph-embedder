@@ -42,6 +42,20 @@ namespace majorminer
     }
   }
 
+  template<typename K, typename V>
+  bool containsPair(const UnorderedMultiMap<K, V>& umap, const K& key, const V& val)
+  {
+    auto range = umap.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it)
+    {
+      if (it->second == val)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
   void insertMappedTargetNodes(const EmbeddingBase& base, nodeset_t& nodes, fuint32_t sourceNode);
 
   inline bool isDefined(fuint32_t value) { return value != FUINT32_UNDEF; }
@@ -54,6 +68,15 @@ namespace majorminer
       return std::shared_ptr<T[]>( new T[size], []( T *p ){ delete [] p; } );
   }
 
+  template<typename T, typename Hash>
+  inline bool overlappingSets(const UnorderedSet<T, Hash>& map1, const UnorderedSet<T, Hash>& map2)
+  {
+    for (const auto& key : map1)
+    {
+      if (map2.contains(key)) return true;
+    }
+    return false;
+  }
 
 
 }

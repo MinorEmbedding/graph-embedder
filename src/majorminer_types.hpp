@@ -27,6 +27,7 @@ namespace majorminer
 {
   typedef uint_fast32_t fuint32_t;
   typedef std::pair<fuint32_t, fuint32_t> fuint32_pair_t;
+  typedef fuint32_t vertex_t;
 
   const static fuint32_t FUINT32_UNDEF = (fuint32_t)-1;
 
@@ -44,27 +45,27 @@ namespace majorminer
   struct PrioNode
   {
     PrioNode() : m_id(-1), m_nbConnections(0) {}
-    PrioNode(fuint32_t id, fuint32_t nbConnections = 0)
+    PrioNode(vertex_t id, fuint32_t nbConnections = 0)
       : m_id(id), m_nbConnections(nbConnections) {}
 
     friend bool operator<(const PrioNode& n1, const PrioNode& n2)
     { return n1.m_nbConnections < n2.m_nbConnections; }
 
-    fuint32_t m_id;
+    vertex_t m_id;
     fuint32_t m_nbConnections;
   };
 
   struct NodePair
   {
     NodePair() : source(FUINT32_UNDEF), target(FUINT32_UNDEF) {}
-    NodePair(fuint32_t s, fuint32_t t) : source(s), target(t) {}
+    NodePair(vertex_t s, vertex_t t) : source(s), target(t) {}
     NodePair(const fuint32_pair_t& p): source(p.first), target(p.second) {}
 
     friend bool operator==(const NodePair& p1, const NodePair& p2)
     { return p1.source == p2.source && p1.target == p2.target; }
 
-    fuint32_t source;
-    fuint32_t target;
+    vertex_t source;
+    vertex_t target;
   };
 
   template<typename T, typename Allocator = std::allocator<T>>
@@ -96,16 +97,17 @@ namespace majorminer
 
   typedef fuint32_pair_t edge_t;
 
-  typedef UnorderedSet<edge_t, PairHashFunc<fuint32_t>> graph_t;
-  typedef UnorderedMultiMap<fuint32_t, fuint32_t> adjacency_list_t;
+  typedef UnorderedMap<vertex_t, fuint32_t> VertexNumberMap;
+  typedef UnorderedSet<edge_t, PairHashFunc<vertex_t>> graph_t;
+  typedef UnorderedMultiMap<vertex_t, vertex_t> adjacency_list_t;
   typedef adjacency_list_t embedding_mapping_t;
-  typedef UnorderedSet<fuint32_t> nodeset_t;
-  typedef UnorderedSet<fuint32_pair_t, PairHashFunc<fuint32_t, fuint32_t>> nodepairset_t;
+  typedef UnorderedSet<vertex_t> nodeset_t;
+  typedef UnorderedSet<fuint32_pair_t, PairHashFunc<vertex_t, vertex_t>> nodepairset_t;
   typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
   typedef std::pair<adjacency_list_t::const_iterator, adjacency_list_t::const_iterator> adjacency_list_range_iterator_t;
 
-  typedef std::pair<fuint32_t, std::shared_ptr<fuint32_pair_t[]>> ShiftingCandidates;
-  typedef Cache<fuint32_t, ShiftingCandidates> CandidateCache;
+  typedef std::pair<vertex_t, std::shared_ptr<fuint32_pair_t[]>> ShiftingCandidates;
+  typedef Cache<vertex_t, ShiftingCandidates> CandidateCache;
 
   class EmbeddingVisualizer;
   class EmbeddingSuite;
@@ -114,6 +116,7 @@ namespace majorminer
   class EmbeddingManager;
   class SuperVertexPlacer;
   class SuperVertexReducer;
+  class EvolutionaryCSCReducer;
   class GenericMutation;
   class MutationExtend;
   class MuationFrontierShifting;

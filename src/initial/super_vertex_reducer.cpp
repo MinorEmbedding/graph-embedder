@@ -39,7 +39,7 @@ void SuperVertexReducer::setup()
 
   // prepare m_adjacencies
   m_verticesList = std::make_unique<fuint32_t[]>(m_potentialNodes.size());
-  UnorderedSet<fuint32_pair_t, PairHashFunc<fuint32_t, fuint32_t>> adjacentSource;
+  nodepairset_t adjacentSource;
   fuint32_t idx = 0;
   for (auto node : m_potentialNodes)
   {

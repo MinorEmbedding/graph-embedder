@@ -7,6 +7,7 @@
 #include <common/embedding_visualizer.hpp>
 #include <common/debug_utils.hpp>
 #include <initial/super_vertex_reducer.hpp>
+#include <initial/csc_evolutionary.hpp>
 
 using namespace majorminer;
 

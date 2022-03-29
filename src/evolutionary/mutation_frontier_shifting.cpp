@@ -97,8 +97,8 @@ void MutationFrontierShifting::execute()
 {
   // std::cout << "Conqueror=" << m_conqueror << "; Contested=" << m_bestContested << "; Victim=" << m_victim << std::endl;
   // getchar();
-  m_manager.insertMappingPair(m_conqueror, m_bestContested);
   m_manager.deleteMappingPair(m_victim, m_bestContested);
+  if (!containsPair(m_manager.getMapping(), m_conqueror, m_bestContested)) m_manager.insertMappingPair(m_conqueror, m_bestContested);
   m_manager.commit();
 
   if (m_state.hasVisualizer())
