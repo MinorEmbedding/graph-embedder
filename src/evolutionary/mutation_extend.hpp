@@ -16,7 +16,7 @@ namespace majorminer
       bool prepare() override;
 
     private:
-      double checkImprovement(fuint32_t extendNode, int delta, bool useManager = false);
+      double checkImprovement(fuint32_t extendNode, const EmbeddingBase& base);
       void updateFreeNeighbors();
 
     private:
