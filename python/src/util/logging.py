@@ -20,8 +20,10 @@ def init_logger():
 
     # write to stderr
     console_handler = logging.StreamHandler()
-    # console.setLevel(logging.WARNING)
+    console_handler.setLevel(logging.WARNING)
     logging.getLogger().addHandler(console_handler)
+
+    # logging.disable()
 
 # logging.basicConfig(filename="evolution.log",
 #                     # filemode='a',
