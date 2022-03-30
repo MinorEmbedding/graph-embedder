@@ -220,27 +220,38 @@ class Embedding():
                         # No need adjust G_embedding_view as
                         # this must be preserved by this method
 
-    def remove_redundant_supernode_nodes(self) -> None:
-        removed_nodes = []
+    def remove_redundant_supernode_nodes(self):
         for supernode in self.H.get_nodes():
-            supernode_nodes = self.get_nodes_in_supernode(supernode)
+            self.remove_redundant_nodes_in_supernode(supernode)
 
+    def remove_redundant_nodes_in_supernode(self, supernode) -> None:
+        supernode_nodes = self.get_nodes_in_supernode(supernode)
+
+        if len(supernode_nodes) == 1:
+            return
+
+        removed_nodes = set()
+
+        while True:
+            removed_in_this_iteration = False
+
+            # Calculate articulation points
+            # We need to recalculate them every time a node was removed
+            # since the articulation points might change in this case
             articulation_points = ArticulationPointCalculator(self.G_embedding)\
                 .calc_articulation_points(supernode_nodes)
-            logger.info(f'-- Articulation points for supernode '
-                        f' {supernode} (-> {supernode_nodes}) are: '
-                        f'{articulation_points}')
 
-            # Try to remove every node of supernode
-            remove_count = 0
+            # Try to remove ONE node in the supernode
             for node_to_remove in supernode_nodes:
+                if node_to_remove in removed_nodes:
+                    continue
+
                 # Don't remove articulation points (aka "cut nodes")
                 if node_to_remove in articulation_points:
                     continue
 
                 # Can we reach all previous neighbors of supernode?
                 node_to_remove_neighbors = self.get_embedded_neighbors(node_to_remove)
-
                 if node_to_remove_neighbors:
                     rest_nodes_reachable = [self.get_embedded_neighbors(node)
                                             for node in supernode_nodes
@@ -255,14 +266,18 @@ class Embedding():
 
                 # We can now safely remove the node
                 self.remove_node(node_to_remove)
-                remove_count += 1
-                removed_nodes.append(node_to_remove)
+                removed_in_this_iteration = True
+                removed_nodes.add(node_to_remove)
+                logger.info(f'✂ Removed node: {node_to_remove}')
 
                 # Leave at least one node left of every supernode
-                if remove_count == (len(supernode_nodes) - 1):
-                    break
+                if len(removed_nodes) == (len(supernode_nodes) - 1):
+                    return
 
-        logger.info(f'✂ Removed nodes: {removed_nodes}')
+                break
+
+            if not removed_in_this_iteration:
+                return
 
     def remove_node(self, node: int) -> None:
         # Embedding
