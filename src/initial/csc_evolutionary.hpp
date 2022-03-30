@@ -15,11 +15,13 @@ namespace majorminer
       void initialize(EvolutionaryCSCReducer& reducer, vertex_t sourceVertex);
 
       void fromInitial(const nodeset_t& placement);
-      void fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB);
+      bool fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB);
       void optimize();
       const nodeset_t& getSuperVertex() const { return m_superVertex; }
 
     private:
+      void mutate();
+      void reduce();
       void setupConnectivity();
       size_t getSolutionSize() const;
       size_t getFitness() const;
@@ -31,13 +33,13 @@ namespace majorminer
           || (in1.getFitness() == in2.getFitness() && in1.getSolutionSize() < in2.getSolutionSize());
       }
 
-
     private:
       EvolutionaryCSCReducer* m_reducer;
+      const EmbeddingState* m_state;
       vertex_t m_sourceVertex;
       nodeset_t m_superVertex;
       VertexNumberMap m_connectivity;
-      fuint32_t m_fitness;
+      size_t m_fitness;
   };
 
   class EvolutionaryCSCReducer
@@ -58,7 +60,7 @@ namespace majorminer
 
     private:
       void addConnectivity(VertexNumberMap& connectivity, vertex_t target);
-      fuint32_t getFitness(const nodeset_t& placement) const;
+      size_t getFitness(const nodeset_t& placement) const;
       const nodeset_t& getAdjacentSourceVertices() const { return m_adjacentSourceVertices; }
 
     private:

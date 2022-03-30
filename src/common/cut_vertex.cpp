@@ -159,3 +159,18 @@ bool majorminer::isCutVertex(const EmbeddingBase& base, nodeset_t& mappedNodes, 
   }
   return !mappedNodes.empty();
 }
+
+
+bool majorminer::areSetsConnected(const EmbeddingBase& base, const nodeset_t& setA, const nodeset_t& setB)
+{
+  bool connected = false;
+  for (auto target : setA)
+  {
+    base.iterateTargetGraphAdjacentBreak(target, [&](fuint32_t adjTarget){
+      if (setB.contains(adjTarget)) connected = true;
+      return connected;
+    });
+    if (connected) return true;
+  }
+  return false;
+}

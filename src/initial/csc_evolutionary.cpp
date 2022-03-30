@@ -1,6 +1,7 @@
 #include "initial/csc_evolutionary.hpp"
 
 #include <common/utils.hpp>
+#include <common/cut_vertex.hpp>
 #include <common/embedding_state.hpp>
 
 #define POPULATION_SIZE 10
@@ -129,10 +130,11 @@ void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopu
   }
 }
 
-void EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& /* parentPopulation */,
-  Vector<CSCIndividual>& /* childPopulation */)
+void EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentPopulation,
+  Vector<CSCIndividual>& childPopulation)
 {
-
+  childPopulation[0].fromCrossover(parentPopulation[0], parentPopulation[1]);
+  // TODO: ...
 }
 
 void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
@@ -158,9 +160,22 @@ void EvolutionaryCSCReducer::addConnectivity(VertexNumberMap& connectivity, vert
   }
 }
 
+size_t EvolutionaryCSCReducer::getFitness(const nodeset_t& placement) const
+{
+  size_t fitness = 0;
+  VertexNumberMap::const_iterator findIt;
+  for (auto vertex : placement)
+  {
+    findIt = m_vertexFitness.find(vertex);
+    if (findIt != m_vertexFitness.end()) fitness += findIt->second;
+  }
+  return fitness;
+}
+
 void CSCIndividual::initialize(EvolutionaryCSCReducer& reducer, vertex_t sourceVertex)
 {
   m_reducer = &reducer;
+  m_state = &reducer.m_state;
   m_sourceVertex = sourceVertex;
 }
 
@@ -172,19 +187,21 @@ void CSCIndividual::fromInitial(const nodeset_t& placement)
   setupConnectivity();
 }
 
-void CSCIndividual::fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB)
+bool CSCIndividual::fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB)
 {
   m_superVertex.clear();
   const auto& superVertexA = individualA.getSuperVertex();
   const auto& superVertexB = individualB.getSuperVertex();
-  if (!overlappingSets(superVertexA, superVertexB))
+  if (!overlappingSets(superVertexA, superVertexB)
+    && !areSetsConnected(*m_state, superVertexA, superVertexB))
   {
-    // TODO: check whether connected
+    return false;
   }
   m_superVertex.insert(superVertexA.begin(), superVertexA.end());
   m_superVertex.insert(superVertexB.begin(), superVertexB.end());
 
   setupConnectivity();
+  return true;
 }
 
 void CSCIndividual::setupConnectivity()
@@ -203,7 +220,9 @@ void CSCIndividual::setupConnectivity()
 
 void CSCIndividual::optimize()
 {
-
+  mutate();
+  reduce();
+  m_fitness = m_reducer->getFitness(m_superVertex);
 }
 
 
@@ -215,4 +234,14 @@ size_t CSCIndividual::getSolutionSize() const
 size_t CSCIndividual::getFitness() const
 {
   return m_fitness;
+}
+
+void CSCIndividual::mutate()
+{
+
+}
+
+void CSCIndividual::reduce()
+{
+
 }
