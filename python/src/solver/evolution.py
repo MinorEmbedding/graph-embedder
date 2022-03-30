@@ -16,9 +16,9 @@ logger = logging.getLogger('evolution')
 
 max_total = 1
 max_mutations_trials = 30
-population_size = 5
-max_generations = 100
-remove_redundant_nodes_probability = 0.2
+population_size = 7
+max_generations = 300
+remove_redundant_nodes_probability = 0.1
 mutation_trials_until_extend_to_free_neighbors = int(max_mutations_trials / 2)
 
 
@@ -33,7 +33,7 @@ def main_loop():
         logger.info('')
         logger.info(f'Calling main: {i}')
 
-        d = DrawEmbedding(3, 3, 4)
+        d = DrawEmbedding(5, 5, 4)
         res = main(d)
         save_final(d)
         if res:
@@ -49,7 +49,7 @@ def main(d: DrawEmbedding) -> bool:
         shutil.rmtree('./out/')
     except FileNotFoundError:
         pass
-    os.mkdir('./out/')
+    os.mkdir('./out')
 
     # --- Setup
     H = TestGraph.k(12)
@@ -73,6 +73,7 @@ def main(d: DrawEmbedding) -> bool:
 
         # Generate children for one population
         population = []  # list of Embeddings
+        last_trial_used = False
         for _ in range(population_size):
             logger.info('')
             logger.info(f'--- Try find a new viable mutation')
@@ -90,15 +91,23 @@ def main(d: DrawEmbedding) -> bool:
 
             if not mutation:
                 if not len(population):
-                    logger.info(f'🔳 All {max_mutations_trials} mutations failed, '
-                                'could not construct a single child -> Abort')
-                    return False
-
-                logger.info(f'🔳 Mutation failed, will continue '
-                            f'with smaller population: {len(population)}/{population_size}')
-                # break early since it is improbable that we will be able
-                # to generate more children
-                break
+                    if not last_trial_used:
+                        # Before all fails: try to remove unnecessary supernode nodes
+                        # and try once more
+                        solver.remove_redundant_supernode_nodes()
+                        logger.info(f'🔳 Last trial, remove redundant nodes')
+                        continue
+                    else:
+                        logger.info(f'🔳 All {max_mutations_trials} mutations failed, '
+                                    'could not construct a single child -> Abort')
+                        return False
+                else:
+                    logger.info(f'🔳 {max_mutations_trials} mutations to construct '
+                                ' a new child failed, will continue '
+                                f'with smaller population: {len(population)}/{population_size}')
+                    # break early since it is improbable that we will be able
+                    # to generate more children
+                    break
 
         # Choose best child
         improvements = [mutation.try_embed_missing_edges() for mutation in population]
@@ -112,6 +121,8 @@ def main(d: DrawEmbedding) -> bool:
         # best_mutation.remove_unnecessary_edges_between_supernodes()
 
         solver.commit(best_mutation)
+
+        # Save every x generations
         save_embedding(*solver.get_embedding(), d, i,
                        title=f'Generation {i}')
 

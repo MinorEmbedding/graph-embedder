@@ -23,7 +23,7 @@ class Embedding():
 
         # --- Layout Graph
         # Graph to embed H onto
-        self.G_layout = ChimeraGraphLayout(3, 3, 4)
+        self.G_layout = ChimeraGraphLayout(5, 5, 4)
 
         # --- Embedding Graph
         # Full graph: nodes are labeled according to G

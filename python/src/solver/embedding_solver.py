@@ -312,9 +312,9 @@ class EmbeddingSolver():
         try:
             shifted_target_free_neighbors = playground.get_free_neighbors(shifted_target)
         except NoFreeNeighborNodes:
-            logger.error(f'Could not construct another supernode '
-                         f'from shifted_target: {shifted_target} '
-                         f'(no free neighbor of shifted_target)')
+            logger.info(f'Could not construct another supernode '
+                        f'from shifted_target: {shifted_target} '
+                        f'(no free neighbor of shifted_target)')
             return None
         shifted_target_partner = get_first_from(shifted_target_free_neighbors)
 
@@ -347,8 +347,8 @@ class EmbeddingSolver():
                 logger.info(f'Could reach (with 2nd chain) {target_neighbor}')
                 playground.embed_edge(shifted_target_partner, target_neighbor)
             else:
-                logger.error(f'Could also not reach (reachable nodes are: '
-                             f'{shifted_target_partner_reachable})')
+                logger.info(f'Could also not reach (reachable nodes are: '
+                            f'{shifted_target_partner_reachable})')
                 return None  # did not achieve a viable mutation even with 2nd strategy
 
         if playground.check_supernode_connectiveness(target_original_supernode):
@@ -375,6 +375,9 @@ class EmbeddingSolver():
         # TODO: with low probability: view reduced graph from completely different view
         # maybe from this perspective, we can leverage some better mutations
         # and reduce the costs faster
+
+    def remove_redundant_supernode_nodes(self):
+        self.embedding.remove_redundant_supernode_nodes()
 
     def local_maximum(self) -> int:
         return self.embedding.try_embed_missing_edges()
