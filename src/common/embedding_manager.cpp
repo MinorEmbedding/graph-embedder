@@ -47,6 +47,17 @@ void EmbeddingManager::mapNode(fuint32_t node, const nodeset_t& targetNodes)
 }
 #undef ADJUST
 
+void EmbeddingManager::unmapNode(vertex_t sourceVertex)
+{
+  auto range = m_mapping.equal_range(sourceVertex);
+  for (auto mappedIt = range.first; mappedIt != range.second; ++mappedIt)
+  {
+    eraseSinglePair(m_reverseMapping, mappedIt->second, mappedIt->first);
+  }
+  m_mapping.unsafe_erase(sourceVertex);
+  m_state.unmapNode(sourceVertex);
+}
+
 EmbeddingManager::EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state)
   : m_suite(suite), m_state(state),
     m_candidateCache([](fuint32_t) {return getEmptyCandidate(); }, CACHE_CAPACITY),

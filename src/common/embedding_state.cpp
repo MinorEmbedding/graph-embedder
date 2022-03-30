@@ -43,6 +43,16 @@ bool EmbeddingState::removeRemainingNode(fuint32_t node)
   return true;
 }
 
+void EmbeddingState::unmapNode(vertex_t sourceVertex)
+{
+  auto range = m_mapping.equal_range(sourceVertex);
+  for (auto mappedIt = range.first; mappedIt != range.second; ++mappedIt)
+  {
+    eraseSinglePair(m_reverseMapping, mappedIt->second, mappedIt->first);
+  }
+  m_mapping.unsafe_erase(sourceVertex);
+}
+
 void EmbeddingState::updateNeededNeighbors(fuint32_t node)
 {
   fuint32_t nbNodes = 0;

@@ -9,7 +9,7 @@ namespace majorminer
   class RandomGen
   {
     public:
-      RandomGen(){}
+      RandomGen();
       fuint32_t getRandomUint(fuint32_t upper);
 
       template<typename T>
@@ -28,6 +28,8 @@ namespace majorminer
     private:
       std::mutex m_lock;
       std::mutex m_shuffleLock;
+      std::random_device m_rdGen;
+      std::random_device m_rdShuffle;
       std::default_random_engine m_generator;
       std::default_random_engine m_shuffleGenerator;
   };

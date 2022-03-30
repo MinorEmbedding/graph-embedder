@@ -8,7 +8,7 @@
 
 using namespace majorminer;
 
-SuperVertexReducer::SuperVertexReducer(const EmbeddingBase& base, fuint32_t sourceVertex)
+SuperVertexReducer::SuperVertexReducer(const EmbeddingBase& base, vertex_t sourceVertex)
   : m_embedding(base), m_sourceVertex(sourceVertex), m_done(false)
 { }
 
@@ -19,7 +19,7 @@ void SuperVertexReducer::setup()
   const auto& remaining = m_embedding.getRemainingTargetNodes();
   for (auto mapped : m_superVertex)
   {
-    m_embedding.iterateTargetGraphAdjacent(mapped, [&](fuint32_t targetAdj){
+    m_embedding.iterateTargetGraphAdjacent(mapped, [&](vertex_t targetAdj){
       if (remaining.contains(targetAdj)) m_potentialNodes.insert(targetAdj);
     });
   }
@@ -33,18 +33,18 @@ void SuperVertexReducer::setup()
   // prepare source vertices in m_sourceConnections
   const auto& mapping = m_embedding.getMapping();
   m_embedding.iterateSourceGraphAdjacent(m_sourceVertex,
-    [&](fuint32_t adjacent){
+    [&](vertex_t adjacent){
       if (mapping.contains(adjacent)) m_sourceConnections[adjacent] = 0;
   });
 
   // prepare m_adjacencies
-  m_verticesList = std::make_unique<fuint32_t[]>(m_potentialNodes.size());
+  m_verticesList = std::make_unique<vertex_t[]>(m_potentialNodes.size());
   nodepairset_t adjacentSource;
   fuint32_t idx = 0;
   for (auto node : m_potentialNodes)
   {
     m_verticesList[idx++] = node;
-    m_embedding.iterateTargetAdjacentReverseMapping(node, [&](fuint32_t adjSource){
+    m_embedding.iterateTargetAdjacentReverseMapping(node, [&](vertex_t adjSource){
       if (m_sourceConnections.contains(adjSource)) adjacentSource.insert(std::make_pair(node, adjSource));
     });
   }
@@ -70,6 +70,7 @@ void SuperVertexReducer::initialize(const nodeset_t& currentMapping)
 
 void SuperVertexReducer::initialize()
 {
+  clear();
   const auto& mapping = m_embedding.getMapping();
   auto range = mapping.equal_range(m_sourceVertex);
   for (auto it = range.first; it != range.second; ++it)
@@ -79,6 +80,16 @@ void SuperVertexReducer::initialize()
   m_initialSuperVertex.insert(m_superVertex.begin(), m_superVertex.end());
   acceptOnlyReduction = true;
   setup();
+}
+
+void SuperVertexReducer::clear()
+{
+  m_initialSuperVertex.clear();
+  m_superVertex.clear();
+  m_potentialNodes.clear();
+  m_adjacencies.clear();
+  m_sourceConnections.clear();
+  m_done = false;
 }
 
 void SuperVertexReducer::optimize()
@@ -92,7 +103,7 @@ void SuperVertexReducer::optimize()
   for (; iteration <  halfMax; ++iteration)
   {
     fuint32_t flipIdx = rand.getRandomUint(m_potentialNodes.size() - 1);
-    fuint32_t target = m_verticesList[flipIdx];
+    vertex_t target = m_verticesList[flipIdx];
     if (m_superVertex.contains(target)) removeNode(target);
     else addNode(target);
   }
@@ -108,7 +119,7 @@ void SuperVertexReducer::optimize()
   for (; iteration <  maxIters && m_superVertex.size() > 1; ++iteration)
   {
     fuint32_t flipIdx = rand.getRandomUint(m_potentialNodes.size() - 1);
-    fuint32_t target = m_verticesList[flipIdx];
+    vertex_t target = m_verticesList[flipIdx];
     if (m_superVertex.contains(target)) removeNode(target);
   }
 

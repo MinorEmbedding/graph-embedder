@@ -16,18 +16,20 @@ namespace majorminer
       SuperVertexPlacer(EmbeddingState& state, EmbeddingManager& embeddingManager);
 
       void operator()();
+      void replaceOverlapping();
 
     private:
+      void identifyOverlapping(nodeset_t& overlapping);
       void trivialNode();
       bool connectedNode();
 
-      void embeddNode(fuint32_t node);
-      void embeddNodeNetworkSimplex(fuint32_t node);
+      void embeddNode(vertex_t node);
+      void embeddNodeNetworkSimplex(vertex_t node);
 
-      void embeddTrivialNode(fuint32_t node);
-      void embeddSimpleNode(fuint32_t node);
+      void embeddTrivialNode(vertex_t node);
+      void embeddSimpleNode(vertex_t node);
 
-      void visualize(fuint32_t node, PlacedNodeType type, fuint32_t nbConnections = 0);
+      void visualize(vertex_t node, PlacedNodeType type, fuint32_t nbConnections = 0);
 
     private:
       EmbeddingState& m_state;

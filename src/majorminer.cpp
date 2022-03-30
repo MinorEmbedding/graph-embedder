@@ -26,6 +26,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
     m_mutationManager();
   }
   m_mutationManager(true);
+  m_placer.replaceOverlapping();
   return m_state.getMapping();
 }
 

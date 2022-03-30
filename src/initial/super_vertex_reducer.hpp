@@ -23,6 +23,7 @@ namespace majorminer
       bool remainsValid(const EmbeddingManager& manager) const;
 
     private:
+      void clear();
       void setup();
       bool isBadNode(fuint32_t target) const;
       void addNode(fuint32_t target);

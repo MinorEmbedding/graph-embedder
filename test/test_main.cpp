@@ -90,9 +90,29 @@ TEST(EmbeddingTest, Complete_Graph_15_On_7_7_Chimera)
   auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_15_On_7_7_Chimera/chimera_clique_15", 7, 7);
   EmbeddingSuite suite{clique, chimera, visualizer.get()};
   auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  ASSERT_TRUE(suite.isValid());
 }
 
+
+TEST(EmbeddingTest, Complete_Graph_18_On_9_9_Chimera)
+{
+  graph_t clique = generate_completegraph(18);
+  graph_t chimera = generate_chimera(9,9);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_18_On_9_9_Chimera/chimera_clique_18", 9, 9);
+  EmbeddingSuite suite{clique, chimera, visualizer.get()};
+  auto embedding = suite.find_embedding();
+  ASSERT_TRUE(suite.isValid());
+}
+
+TEST(EmbeddingTest, Complete_Graph_21_On_11_11_Chimera)
+{
+  graph_t clique = generate_completegraph(21);
+  graph_t chimera = generate_chimera(11, 11);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_21_On_11_11_Chimera/chimera_clique_21", 11, 11);
+  EmbeddingSuite suite{clique, chimera, visualizer.get()};
+  auto embedding = suite.find_embedding();
+  ASSERT_TRUE(suite.isValid());
+}
 
 TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
 {

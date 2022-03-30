@@ -2,6 +2,7 @@
 
 #include "super_vertex_reducer.hpp"
 
+#include <common/utils.hpp>
 #include <common/embedding_manager.hpp>
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
@@ -17,8 +18,6 @@ SuperVertexPlacer::SuperVertexPlacer(EmbeddingState& state, EmbeddingManager& em
 
 void SuperVertexPlacer::operator()()
 {
-  // char c = getchar();
-  // if (c=='E') return;
   if (!m_nodesToProcess.empty())
   {
     if (!connectedNode()) return;
@@ -27,7 +26,45 @@ void SuperVertexPlacer::operator()()
   {
     trivialNode();
   }
-  std::cout << "===================================" << std::endl;
+}
+
+void SuperVertexPlacer::replaceOverlapping()
+{
+  nodeset_t overlapping{};
+  fuint32_t maxIterations = 5;
+  identifyOverlapping(overlapping);
+  std::cout << "In replaceOverlapping. Overlapping size is " << overlapping.size() << std::endl;
+  const auto& sourceGraph = m_state.getSourceAdjGraph();
+
+  for (fuint32_t idx = 0; idx < maxIterations && !overlapping.empty(); ++idx)
+  {
+    std::cout << "Replace overlapping; iteration " << (idx + 1) << std::endl;
+    for (vertex_t vertex : overlapping)
+    {
+      m_embeddingManager.unmapNode(vertex);
+      embeddNodeNetworkSimplex(vertex);
+      visualize(vertex, PlacedNodeType::COMPLEX, sourceGraph.count(vertex));
+    }
+
+    if (idx + 1 != maxIterations) identifyOverlapping(overlapping);
+  }
+}
+
+
+void SuperVertexPlacer::identifyOverlapping(nodeset_t& overlapping)
+{
+  overlapping.clear();
+  const auto& reverse = m_state.getReverseMapping();
+  fuint32_pair_t lastPair = std::make_pair(FUINT32_UNDEF, FUINT32_UNDEF);
+  for (auto reverseMapped : reverse)
+  {
+    if (isDefined(lastPair.first) && lastPair.first == reverseMapped.first)
+    { // overlapping
+      overlapping.insert(lastPair.second);
+      overlapping.insert(reverseMapped.second);
+    }
+    lastPair = reverseMapped;
+  }
 }
 
 void SuperVertexPlacer::trivialNode()
@@ -121,10 +158,10 @@ void SuperVertexPlacer::embeddNodeNetworkSimplex(vertex_t node)
   reducer.optimize();
   const auto& superVertex = reducer.getBetterPlacement(m_nsWrapper->getMapped());
   m_embeddingManager.mapNode(node, superVertex);
-  printNodeset(m_nsWrapper->getMapped());
-  printNodeset(superVertex);
+  // printNodeset(m_nsWrapper->getMapped());
+  // printNodeset(superVertex);
 
-  /* EvolutionaryCSCReducer reducer{m_state, m_nsWrapper->getMapped(), node};
+  /*EvolutionaryCSCReducer reducer{m_state, m_nsWrapper->getMapped(), node};
   reducer.optimize();
   const auto& superVertex = reducer.getPlacement();
   m_embeddingManager.mapNode(node, superVertex);

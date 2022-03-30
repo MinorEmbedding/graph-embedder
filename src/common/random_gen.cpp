@@ -1,6 +1,10 @@
 #include "common/random_gen.hpp"
 
 using namespace majorminer;
+RandomGen::RandomGen()
+  : m_generator(m_rdGen()),
+    m_shuffleGenerator(m_rdShuffle())
+{}
 
 fuint32_t RandomGen::getRandomUint(fuint32_t upper)
 {

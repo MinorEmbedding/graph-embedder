@@ -57,6 +57,7 @@ namespace majorminer
 
     private:
       void initialize();
+      void unmapNode(vertex_t sourceVertex);
 
     private:
       const graph_t* m_sourceGraph;

@@ -14,7 +14,6 @@ MutationReduceOverlap::MutationReduceOverlap(EmbeddingState& state,
         : m_state(state), m_manager(manager), m_sourceVertex(sourceVertex)
 {
   m_reducer = new SuperVertexReducer{ m_state, sourceVertex };
-  m_reducer->initialize();
 }
 
 MutationReduceOverlap::~MutationReduceOverlap()
@@ -31,6 +30,7 @@ bool MutationReduceOverlap::isValid()
 
 bool MutationReduceOverlap::prepare()
 {
+  m_reducer->initialize();
   m_reducer->optimize();
   bool improved = m_reducer->improved();
   std::cout << "Has overlap improved. " << improved  << std::endl;

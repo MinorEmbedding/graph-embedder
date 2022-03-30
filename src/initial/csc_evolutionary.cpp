@@ -4,10 +4,10 @@
 #include <common/cut_vertex.hpp>
 #include <common/embedding_state.hpp>
 
-#define POPULATION_SIZE 10
+#define POPULATION_SIZE 5
 #define ITERATION_LIMIT 10
-#define MAX_NEW_VERTICES 10
-#define REDUCE_ITERATION_COEFFICIENT 5
+#define MAX_NEW_VERTICES 5
+#define REDUCE_ITERATION_COEFFICIENT 2
 
 using namespace majorminer;
 
@@ -54,7 +54,7 @@ void EvolutionaryCSCReducer::optimize()
       if (!success) break;
       swapPointers(current, next);
     }
-    //std::cout << "================= " << std::endl;
+    // std::cout << "================= " << std::endl;
   }
 }
 
@@ -91,7 +91,6 @@ void EvolutionaryCSCReducer::setup()
 {
   if (!canExpand()) return;
 
-  m_preparedVertices.insert(m_bestSuperVertex.begin(), m_bestSuperVertex.end());
   const auto& mapping = m_state.getMapping();
 
   // Prepare adjacent source vertices
@@ -99,19 +98,8 @@ void EvolutionaryCSCReducer::setup()
     if (mapping.contains(adjacentSource)) m_adjacentSourceVertices.insert(adjacentSource);
   });
 
-  // Prepare intial "adjacentSource" adjacency list
-  nodepairset_t targetAdjSourcePairs;
-  for (auto target : m_bestSuperVertex)
-  {
-    m_state.iterateTargetAdjacentReverseMapping(target, [&](vertex_t adjSource){
-      if (m_adjacentSourceVertices.contains(adjSource))
-      {
-        targetAdjSourcePairs.insert(std::make_pair(target, adjSource));
-      }
-    });
-  }
-
-  for (auto& adj : targetAdjSourcePairs) m_adjacentSources.insert(adj);
+  // Prepare intial "m_adjacentSources" adjacency list
+  for (vertex_t target : m_bestSuperVertex) prepareVertex(target);
 
   m_bestFitness = getFitness(m_bestSuperVertex);
   initializePopulations();
@@ -201,10 +189,14 @@ const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CS
 void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
 {
   m_temporary.clear();
-  m_state.iterateTargetAdjacentReverseMapping(target, [&](vertex_t adjacentSource){
-    if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
+  m_state.iterateTargetAdjacentReverseMapping(target,
+    [&](vertex_t adjacentSource){
+      if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
   });
-  for (auto source : m_temporary)
+  m_state.iterateReverseMapping(target, [&](vertex_t source){
+      if (m_adjacentSourceVertices.contains(source)) m_temporary.insert(source);
+  });
+  for (vertex_t source : m_temporary)
   {
     m_adjacentSources.insert(std::make_pair(target, source));
   }
@@ -245,10 +237,7 @@ bool EvolutionaryCSCReducer::isRemoveable(VertexNumberMap& connectivity, vertex_
   auto range = m_adjacentSources.equal_range(target);
   for (auto it = range.first; it != range.second; ++it)
   {
-    if (connectivity[it->second] <= 1)
-    {
-      return false;
-    }
+    if (connectivity[it->second] <= 1) return false;
   }
   return true;
 }
@@ -321,6 +310,7 @@ void CSCIndividual::optimize()
   reduce();
   m_fitness = m_reducer->getFitness(m_superVertex);
   m_done = true;
+  // printVertexNumberMap(m_connectivity);
 }
 
 
@@ -347,6 +337,7 @@ void CSCIndividual::mutate()
   if (m_temporarySet.empty()) return;
 
   vertex_t startVertex = m_random->getRandomVertex(m_temporarySet);
+
   if (!isDefined(startVertex)) return;
   m_temporarySet.clear();
   clearStack(m_iteratorStack);
@@ -419,8 +410,8 @@ void CSCIndividual::reduce()
 
 void CSCIndividual::addVertex(vertex_t target)
 {
-  m_superVertex.insert(target);
   m_reducer->addConnectivity(m_connectivity, target);
+  m_superVertex.insert(target);
 }
 
 bool CSCIndividual::tryRemove(vertex_t target)

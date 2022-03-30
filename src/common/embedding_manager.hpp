@@ -54,23 +54,23 @@ namespace majorminer
       friend MutationManager;
     public:
       EmbeddingManager(EmbeddingSuite& suite, EmbeddingState& state);
-      void setFreeNeighbors(fuint32_t node, fuint32_t nbNeighbors);
-      void deleteMappingPair(fuint32_t source, fuint32_t target);
-      void insertMappingPair(fuint32_t source, fuint32_t target);
-      void occupyNode(fuint32_t target);
-      void freeNode(fuint32_t target);
+      void setFreeNeighbors(vertex_t node, fuint32_t nbNeighbors);
+      void deleteMappingPair(vertex_t source, vertex_t target);
+      void insertMappingPair(vertex_t source, vertex_t target);
+      void occupyNode(vertex_t target);
+      void freeNode(vertex_t target);
       void synchronize();
       void commit();
       fuint32_t getTimestamp() { return m_time++; }
-      int numberFreeNeighborsNeeded(fuint32_t sourceNode) const override;
-      const NodeAffected& getHistory(fuint32_t node) { return m_changeHistory[node]; }
+      int numberFreeNeighborsNeeded(vertex_t sourceNode) const override;
+      const NodeAffected& getHistory(vertex_t node) { return m_changeHistory[node]; }
 
       const UnorderedMap<fuint32_t, std::atomic<int>>& getFreeNeighborMap() const { return m_sourceFreeNeighbors; }
 
       fuint32_t getLastNode() const { return m_lastNode; }
 
-      ShiftingCandidates getCandidatesFor(fuint32_t conquerorNode);
-      ShiftingCandidates setCandidatesFor(fuint32_t conquerorNode, nodepairset_t& candidates);
+      ShiftingCandidates getCandidatesFor(vertex_t conquerorNode);
+      ShiftingCandidates setCandidatesFor(vertex_t conquerorNode, nodepairset_t& candidates);
 
       RandomGen& getRandomGen() { return m_random; }
 
@@ -88,8 +88,9 @@ namespace majorminer
 
 
     private:
-      void mapNode(fuint32_t source, fuint32_t target);
-      void mapNode(fuint32_t source, const nodeset_t& targets);
+      void unmapNode(vertex_t sourceVertex);
+      void mapNode(vertex_t source, vertex_t target);
+      void mapNode(vertex_t source, const nodeset_t& targets);
       void clear();
 
     private:

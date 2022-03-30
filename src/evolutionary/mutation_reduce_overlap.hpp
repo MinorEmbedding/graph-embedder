@@ -16,7 +16,7 @@ namespace majorminer
       void execute() override;
       bool isValid() override;
 
-      bool requeue() const override { return false; }
+      bool requeue() const override { return true; }
 
     private:
       EmbeddingState& m_state;
