@@ -15,10 +15,11 @@ logger = logging.getLogger('evolution')
 ################################# Params #######################################
 
 max_total = 1
-max_mutations_trials = 15
+max_mutations_trials = 30
 population_size = 5
-max_generations = 20
+max_generations = 100
 remove_redundant_nodes_probability = 0.2
+mutation_trials_until_extend_to_free_neighbors = int(max_mutations_trials / 2)
 
 
 ############################### Evolution ######################################
@@ -51,7 +52,7 @@ def main(d: DrawEmbedding) -> bool:
     os.mkdir('./out/')
 
     # --- Setup
-    H = TestGraph.k(6)
+    H = TestGraph.k(12)
 
     solver = EmbeddingSolver(H)
     solver.init_dfs()
@@ -61,7 +62,7 @@ def main(d: DrawEmbedding) -> bool:
 
     if solver.found_embedding():
         logger.info('🎉 Directly found embedding after initialization')
-        save_final(d)
+        # save_final(d)
         output_embedding(*solver.get_embedding(), d)
         return True
 
@@ -77,21 +78,27 @@ def main(d: DrawEmbedding) -> bool:
             logger.info(f'--- Try find a new viable mutation')
             mutation = None
 
-            for mutation in range(max_mutations_trials):
+            for trial, mutation in enumerate(range(max_mutations_trials)):
                 # Do one mutation
-                mutation = solver.mutate()
+                logger.info('--- MUTATION')
+                mutation = solver.extend_random_supernode()
                 if mutation:
                     population.append(mutation)
                     break  # try to construct next child
+                elif trial >= mutation_trials_until_extend_to_free_neighbors:
+                    solver.extend_random_supernode_to_free_neighbors()
 
             if not mutation:
                 if not len(population):
                     logger.info(f'🔳 All {max_mutations_trials} mutations failed, '
                                 'could not construct a single child -> Abort')
                     return False
+
                 logger.info(f'🔳 Mutation failed, will continue '
                             f'with smaller population: {len(population)}/{population_size}')
-                break  # since it is improbable that we will be able to generate more children
+                # break early since it is improbable that we will be able
+                # to generate more children
+                break
 
         # Choose best child
         improvements = [mutation.try_embed_missing_edges() for mutation in population]
@@ -101,8 +108,6 @@ def main(d: DrawEmbedding) -> bool:
         # Leave room for next generation
         if random() < remove_redundant_nodes_probability:
             logger.info('Try to remove redundant supernode nodes')
-            best_mutation.remove_redundant_supernode_nodes()
-            # do again, maybe we can remove even more nodes
             best_mutation.remove_redundant_supernode_nodes()
         # best_mutation.remove_unnecessary_edges_between_supernodes()
 
@@ -140,13 +145,15 @@ def save_embedding(nodes: set[int], edges: set[tuple[int, int, int]],
     logger.info(f'mapping_G_to_H: {mapping_G_to_H}')
 
     d.draw_whole_embedding_step(nodes, edges, mapping_G_to_H, title=title)
-    # d.save_and_clear(f'./out/{i}.svg')
+    d.save_and_clear(f'./out/{i}.svg')
 
 
 def save_final(d: DrawEmbedding) -> None:
-    d.save_and_clear(f'./out/steps.svg')
+    logger.info('Save final')
+    pass
+    # d.save_and_clear(f'./out/steps.svg')
 
-################################ Main ##########################################
+    ################################ Main ##########################################
 
 
 if __name__ == "__main__":

@@ -142,16 +142,49 @@ class EmbeddingSolver():
     def reset(self):
         self.non_viable_mutations = []
 
-    def extend_random_supernode(self):
-        """Randomly merges two nodes into one super node or extends existing
-        super nodes by merging another node into it. This process might also
-        create up to two new super nodes."""
-        # Choose source
+    def _choose_random_embedded_node(self) -> Optional[int]:
         embedded_nodes = self.embedding.get_embedded_nodes()
         if not embedded_nodes:
             logger.info('❌ No nodes embedded yet')
             return None
         source = random.choice(list(embedded_nodes))
+        return source
+
+    def extend_random_supernode_to_free_neighbors(self) -> None:
+        logger.info('Trying to extend random supernode to free neighbors')
+
+        embedded_nodes = self.embedding.get_embedded_nodes()
+        if not embedded_nodes:
+            logger.info('❌ No nodes embedded yet')
+            return
+
+        max_trials = 10
+        tried_nodes = set()
+        for _ in range(min(len(embedded_nodes), max_trials)):
+            source = random.choice(list(embedded_nodes - tried_nodes))
+
+            # Check free neighbors
+            try:
+                free_neighbors = self.embedding.get_free_neighbors(source)
+            except:
+                tried_nodes.add(source)
+                continue
+
+            target = random.choice(list(free_neighbors))
+            self.embedding.construct_supernode(source, target)
+            logger.info(f'-> Extended node {source} to {target}')
+
+            return
+
+        logger.info('-> ❌ failed')
+
+    def extend_random_supernode(self):
+        """Randomly merges two nodes into one super node or extends existing
+        super nodes by merging another node into it. This process might also
+        create up to two new super nodes."""
+        source = self._choose_random_embedded_node()
+        if not source:
+            return None
 
         # Choose target
         targets = self.embedding.get_embedded_neighbors(source)
@@ -164,11 +197,22 @@ class EmbeddingSolver():
             logger.info('❌ Already considered but not viable -> skip')
             return None
 
+        # Get free neighbors
         try:
             target_free_neighbors = self.embedding.get_free_neighbors(target)
         except NoFreeNeighborNodes:
             logger.info(f'❌ Target {target} has no free neighbors')
             return None
+
+        playground = self.embedding.get_playground()
+
+        # Both nodes in same supernode?
+        if (playground.get_supernode(source) == playground.get_supernode(target)):
+            logger.info(f'🔗 Source ({source}) and target ({target}) node '
+                        + 'are in same supernode -> Easy chain extension')
+            shifted_target = random.choice(list(target_free_neighbors))
+            playground.construct_supernode(target, shifted_target)
+            return playground
 
         # Adjust so that new super node placement is viable
         target_neighbors = self.embedding.get_embedded_neighbors(target)
@@ -181,7 +225,7 @@ class EmbeddingSolver():
         # to target from the shifted_target
         for shifted_target in target_free_neighbors:
             logger.info(f'▶ Try out shifted target on node: {shifted_target}')
-            res = self._construct_supernode_with_shifted_target(source, target,
+            res = self._construct_supernode_with_shifted_target(playground, source, target,
                                                                 shifted_target, target_neighbors)
             if res:
                 return res
@@ -208,7 +252,7 @@ class EmbeddingSolver():
         reachable_neighbor = any_of_one_in_other(reachable, neighbor_supernode_nodes)
         return reachable_neighbor
 
-    def _construct_supernode_with_shifted_target(self, source: int, target: int,
+    def _construct_supernode_with_shifted_target(self, playground: Embedding, source: int, target: int,
                                                  shifted_target: int, target_neighbors: set[int]) -> Optional[Embedding]:
         """Tries to embed the shifted target, so that the node placement is viable.
 
@@ -251,7 +295,8 @@ class EmbeddingSolver():
                 logger.info(f'Could not reach '
                             f'(reachable nodes are: {shifted_target_reachable})')
                 # Continue normally with next neighbor as next one might be
-                # reachable with this strategy
+                # reachable with this strategy (we then try to reach the
+                # remaining neighbors with the next strategy down below)
 
         # Check if this strategy was successfull
         if neighbors_done == target_neighbors:
