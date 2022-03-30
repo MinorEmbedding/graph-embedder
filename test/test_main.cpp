@@ -68,7 +68,7 @@ TEST(EmbeddingTest, Complete_Graph_8_On_3_3_Chimera)
   auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_8_On_3_3_Chimera/chimera_clique_8", 3, 3);
   EmbeddingSuite suite{clique, chimera, visualizer.get()};
   auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  ASSERT_TRUE(suite.isValid());
 }
 
 
@@ -79,7 +79,7 @@ TEST(EmbeddingTest, Complete_Graph_12_On_5_5_Chimera)
   auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_12_On_5_5_Chimera/chimera_clique_12", 5, 5);
   EmbeddingSuite suite{clique, chimera, visualizer.get()};
   auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  ASSERT_TRUE(suite.isValid());
 }
 
 

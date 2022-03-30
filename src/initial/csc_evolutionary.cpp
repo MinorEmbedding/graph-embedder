@@ -6,8 +6,21 @@
 
 #define POPULATION_SIZE 10
 #define ITERATION_LIMIT 10
+#define MAX_NEW_VERTICES 10
+#define REDUCE_ITERATION_COEFFICIENT 3
 
 using namespace majorminer;
+
+namespace
+{
+  template<typename T>
+  void swapPointers(T*& from, T*& to)
+  {
+    T*& temp = to;
+    to = from;
+    from = temp;
+  }
+}
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state, fuint32_t sourceVertex)
   : m_state(state), m_sourceVertex(sourceVertex)
@@ -15,7 +28,7 @@ EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state, fuin
   initialize();
 }
 
-bool EvolutionaryCSCReducer::optimize()
+void EvolutionaryCSCReducer::optimize()
 {
   Vector<CSCIndividual>* current = &m_populationA;
   Vector<CSCIndividual>* next = &m_populationB;
@@ -26,12 +39,11 @@ bool EvolutionaryCSCReducer::optimize()
 
     if (iteration + 1 != ITERATION_LIMIT)
     {
-      createNextGeneration(*current, *next);
-      std::swap(current, next);
+      bool success = createNextGeneration(*current, *next);
+      if (!success) break;
+      swapPointers(current, next);
     }
   }
-
-  return false;
 }
 
 void EvolutionaryCSCReducer::initialize()
@@ -130,12 +142,28 @@ void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopu
   }
 }
 
-void EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentPopulation,
+bool EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentPopulation,
   Vector<CSCIndividual>& childPopulation)
 {
-  childPopulation[0].fromCrossover(parentPopulation[0], parentPopulation[1]);
-  // TODO: ...
+  fuint32_t remainingAttemps = 5 * POPULATION_SIZE;
+  for (fuint32_t idx = 3; idx < POPULATION_SIZE && remainingAttemps > 0; --remainingAttemps)
+  {
+    const CSCIndividual* parentA = tournamentSelection(parentPopulation);
+    const CSCIndividual* parentB = tournamentSelection(parentPopulation);
+    bool success = childPopulation[idx].fromCrossover(*parentA, *parentB);
+    if (success) idx++;
+  }
+  return remainingAttemps > 0;
 }
+
+const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CSCIndividual>& parentPopulation)
+{
+  fuint32_t max = POPULATION_SIZE - 1;
+  const CSCIndividual* individualA = &parentPopulation[m_random.getRandomUint(max)];
+  const CSCIndividual* individualB = &parentPopulation[m_random.getRandomUint(max)];
+  return *individualA < *individualB ? individualA : individualB;
+}
+
 
 void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
 {
@@ -172,15 +200,44 @@ size_t EvolutionaryCSCReducer::getFitness(const nodeset_t& placement) const
   return fitness;
 }
 
+size_t EvolutionaryCSCReducer::getFitness(vertex_t target) const
+{
+  auto findIt = m_vertexFitness.find(target);
+  return findIt == m_vertexFitness.end() ? 0 : findIt->second;
+}
+
+bool EvolutionaryCSCReducer::isRemoveable(VertexNumberMap& connectivity, vertex_t target) const
+{
+  auto range = m_adjacentSources.equal_range(target);
+  for (auto it = range.first; it != range.second; ++it)
+  {
+    if (connectivity[it->second] <= 1) return false;
+  }
+  return true;
+}
+
+void EvolutionaryCSCReducer::removeVertex(VertexNumberMap& connectivity, vertex_t target) const
+{
+  auto range = m_adjacentSources.equal_range(target);
+  for (auto it = range.first; it != range.second; ++it)
+  {
+    connectivity[it->second]--;
+  }
+}
+
 void CSCIndividual::initialize(EvolutionaryCSCReducer& reducer, vertex_t sourceVertex)
 {
   m_reducer = &reducer;
   m_state = &reducer.m_state;
   m_sourceVertex = sourceVertex;
+  m_random = std::make_unique<RandomGen>();
 }
+
+
 
 void CSCIndividual::fromInitial(const nodeset_t& placement)
 {
+  m_done = false;
   m_superVertex.clear();
   m_superVertex.insert(placement.begin(), placement.end());
 
@@ -189,6 +246,7 @@ void CSCIndividual::fromInitial(const nodeset_t& placement)
 
 bool CSCIndividual::fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB)
 {
+  m_done = false;
   m_superVertex.clear();
   const auto& superVertexA = individualA.getSuperVertex();
   const auto& superVertexB = individualB.getSuperVertex();
@@ -220,9 +278,11 @@ void CSCIndividual::setupConnectivity()
 
 void CSCIndividual::optimize()
 {
+  if (m_done) return;
   mutate();
   reduce();
   m_fitness = m_reducer->getFitness(m_superVertex);
+  m_done = true;
 }
 
 
@@ -238,10 +298,101 @@ size_t CSCIndividual::getFitness() const
 
 void CSCIndividual::mutate()
 {
+  m_temporarySet.clear();
+  for (vertex_t vertex : m_superVertex)
+  {
+    m_state->iterateFreeTargetAdjacent(vertex,
+      [&](vertex_t adjacentTarget){
+        m_temporarySet.insert(adjacentTarget);
+    });
+  }
+  if (m_temporarySet.empty()) return;
 
+  vertex_t startVertex = m_random->getRandomVertex(m_temporarySet);
+  if (!isDefined(startVertex)) return;
+  m_temporarySet.clear();
+  clearStack(m_iteratorStack);
+
+  const auto& targetGraph = m_state->getTargetAdjGraph();
+  const auto& remaining = m_state->getRemainingTargetNodes();
+
+  fuint32_t numerAdded = 1;
+  addVertex(m_sourceVertex);
+  m_iteratorStack.push(targetGraph.equal_range(startVertex));
+  while(!m_iteratorStack.empty() && numerAdded < MAX_NEW_VERTICES)
+  {
+    auto& top = m_iteratorStack.top();
+    if (top.first == top.second)
+    {
+      m_iteratorStack.pop();
+      continue;
+    }
+    vertex_t adjacent = top.first->second;
+    if (remaining.contains(adjacent) && !m_superVertex.contains(adjacent))
+    { // add node
+      top.first++;
+      addVertex(adjacent);
+      m_iteratorStack.push(targetGraph.equal_range(adjacent));
+    }
+    else
+    {
+      top.first++;
+    }
+  }
 }
 
 void CSCIndividual::reduce()
 {
+  if (m_superVertex.size() <= 1) return;
+  m_vertexVector.resize(m_superVertex.size());
+  fuint32_t idx = 0;
+  for (vertex_t vertex : m_superVertex) m_vertexVector[idx++] = vertex;
+  fuint32_t vectorSize = m_vertexVector.size();
 
+  // Try greedily reducing overlap vertices
+  for (idx = 0; idx < vectorSize;)
+  {
+    vertex_t* current = &m_vertexVector[idx];
+    if (m_reducer->getFitness(*current) != 0 && tryRemove(*current))
+    {
+      *current = m_vertexVector.back();
+      m_vertexVector.resize(--vectorSize);
+    }
+    else idx++;
+  }
+
+  // Try reducing all other vertices
+  fuint32_t maxIterations = REDUCE_ITERATION_COEFFICIENT * m_vertexVector.size();
+  for (fuint32_t iteration = 0; idx < maxIterations; ++iteration)
+  {
+    fuint32_t randomIdx = m_random->getRandomUint(vectorSize - 1);
+    vertex_t* current = &m_vertexVector[randomIdx];
+    if (tryRemove(*current))
+    {
+      *current = m_vertexVector.back();
+      m_vertexVector.resize(--vectorSize);
+    }
+  }
+
+  for (idx = 0; idx < vectorSize; ++idx) tryRemove(m_vertexVector[idx]);
 }
+
+void CSCIndividual::addVertex(vertex_t target)
+{
+  m_superVertex.insert(target);
+  m_reducer->addConnectivity(m_connectivity, target);
+}
+
+bool CSCIndividual::tryRemove(vertex_t target)
+{
+  // Remove if not a cut vertex
+  if (m_reducer->isRemoveable(m_connectivity, target)
+    && !isCutVertex(*m_state, m_superVertex, target))
+  {
+    m_reducer->removeVertex(m_connectivity, target);
+    m_superVertex.unsafe_erase(target);
+    return true;
+  }
+  return false;
+}
+

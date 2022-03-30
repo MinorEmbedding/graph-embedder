@@ -12,3 +12,15 @@ fuint32_t RandomGen::getRandomUint(fuint32_t upper)
   m_lock.unlock();
   return randomVal;
 }
+
+
+vertex_t RandomGen::getRandomVertex(const nodeset_t& vertices)
+{
+  if (vertices.empty()) return FUINT32_UNDEF;
+  fuint32_t idx = getRandomUint(vertices.size() - 1);
+  for (auto vertex : vertices)
+  {
+    if (idx-- == 0) return vertex;
+  }
+  return FUINT32_UNDEF;
+}

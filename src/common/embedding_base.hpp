@@ -22,8 +22,8 @@ namespace majorminer
       virtual const nodeset_t& getRemainingTargetNodes() const = 0;
 
 
-      bool isTargetNodeOccupied(fuint32_t targetNode) const { return getRemainingTargetNodes().contains(targetNode); }
-      virtual int numberFreeNeighborsNeeded(fuint32_t sourceNode) const = 0;
+      bool isTargetNodeOccupied(vertex_t targetNode) const { return getRemainingTargetNodes().contains(targetNode); }
+      virtual int numberFreeNeighborsNeeded(vertex_t sourceNode) const = 0;
 
     // Iteration methods
     public:
@@ -35,7 +35,7 @@ namespace majorminer
       // 1. fuint32_t target neighbor
       // 2. fuint32_t target sourceNode is mapped onto
       template<bool skipOccupied, typename Functor>
-      void iterateSourceMappingAdjacent(fuint32_t sourceNode, Functor func) const
+      void iterateSourceMappingAdjacent(vertex_t sourceNode, Functor func) const
       {
         auto embeddedPathIt = getMapping().equal_range(sourceNode);
         const auto& target = getTargetAdjGraph();
@@ -54,7 +54,7 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateReverseMapping(fuint32_t mappedTargetNode, Functor func) const
+      void iterateReverseMapping(vertex_t mappedTargetNode, Functor func) const
       {
         auto revRange = getReverseMapping().equal_range(mappedTargetNode);
         for (auto revIt = revRange.first; revIt != revRange.second; ++revIt)
@@ -67,7 +67,7 @@ namespace majorminer
       // For these target nodes iterate over their adjacent nodes and for the adjacent nodes
       // iterate over their reverse mapping. Awful everything.
       template<typename Functor>
-      void iterateSourceMappingAdjacentReverse(fuint32_t sourceNode, fuint32_t skipTarget, Functor func) const
+      void iterateSourceMappingAdjacentReverse(vertex_t sourceNode, vertex_t skipTarget, Functor func) const
       {
         auto embeddedPathIt = getMapping().equal_range(sourceNode);
         const auto& target = getTargetAdjGraph();
@@ -89,7 +89,7 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateTargetGraphAdjacent(fuint32_t targetNode, Functor func) const
+      void iterateTargetGraphAdjacent(vertex_t targetNode, Functor func) const
       {
         auto adjRange = getTargetAdjGraph().equal_range(targetNode);
         for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
@@ -99,7 +99,7 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateSourceGraphAdjacent(fuint32_t sourceNode, Functor func) const
+      void iterateSourceGraphAdjacent(vertex_t sourceNode, Functor func) const
       {
         auto adjRange = getSourceAdjGraph().equal_range(sourceNode);
         for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
@@ -109,7 +109,7 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateSourceGraphAdjacentBreak(fuint32_t sourceNode, Functor func) const
+      void iterateSourceGraphAdjacentBreak(vertex_t sourceNode, Functor func) const
       {
         auto adjRange = getSourceAdjGraph().equal_range(sourceNode);
         for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
@@ -119,7 +119,7 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateTargetGraphAdjacentBreak(fuint32_t targetNode, Functor func) const
+      void iterateTargetGraphAdjacentBreak(vertex_t targetNode, Functor func) const
       {
         auto adjRange = getTargetAdjGraph().equal_range(targetNode);
         for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
@@ -129,7 +129,7 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateTargetAdjacentReverseMapping(fuint32_t target, Functor func) const
+      void iterateTargetAdjacentReverseMapping(vertex_t target, Functor func) const
       {
         const auto& targetGraph = getTargetAdjGraph();
         const auto& reverse = getReverseMapping();
@@ -148,10 +148,10 @@ namespace majorminer
       /// For a given source node, iterates over every pair of two target nodes the source node
       /// is mapped to and invokes the functor func using this pair of target nodes.
       template<typename Functor>
-      void iterateSourceMappingPair(fuint32_t sourceNode, Functor func) const
+      void iterateSourceMappingPair(vertex_t sourceVertex, Functor func) const
       {
         const auto& mapping = getMapping();
-        auto mappedRange = mapping.equal_range(sourceNode);
+        auto mappedRange = mapping.equal_range(sourceVertex);
         for (auto mapped1It = mappedRange.first; mapped1It != mappedRange.second; ++mapped1It)
         {
           auto mapped2It = mapped1It;
@@ -165,13 +165,25 @@ namespace majorminer
       }
 
       template<typename Functor>
-      void iterateSourceMapping(fuint32_t sourceVertex, Functor func) const
+      void iterateSourceMapping(vertex_t sourceVertex, Functor func) const
       {
         const auto& mapping = getMapping();
         auto mappingRange = mapping.equal_range(sourceVertex);
         for (auto it = mappingRange.first; it != mappingRange.second; ++it)
         {
           func(it->second);
+        }
+      }
+
+      template<typename Functor>
+      void iterateFreeTargetAdjacent(vertex_t targetVertex, Functor func) const
+      {
+        const auto& remaining = getRemainingTargetNodes();
+        const auto& targetGraph = getTargetAdjGraph();
+        auto range = targetGraph.equal_range(targetVertex);
+        for (auto it = range.first; it != range.second; ++it)
+        {
+          if (remaining.contains(it->second)) func(it->second);
         }
       }
   };

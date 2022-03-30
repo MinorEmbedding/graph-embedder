@@ -23,6 +23,8 @@ namespace majorminer
         m_shuffleLock.unlock();
       }
 
+      vertex_t getRandomVertex(const nodeset_t& vertices);
+
     private:
       std::mutex m_lock;
       std::mutex m_shuffleLock;

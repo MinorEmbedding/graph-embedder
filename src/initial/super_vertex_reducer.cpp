@@ -104,12 +104,19 @@ void SuperVertexReducer::optimize()
       removeNode(node);
     }
   }
+
   for (; iteration <  maxIters && m_superVertex.size() > 1; ++iteration)
   {
     fuint32_t flipIdx = rand.getRandomUint(m_potentialNodes.size() - 1);
     fuint32_t target = m_verticesList[flipIdx];
     if (m_superVertex.contains(target)) removeNode(target);
   }
+
+  for (fuint32_t idx = 0; idx < m_potentialNodes.size(); ++idx)
+  {
+    if (m_superVertex.contains(m_verticesList[idx])) removeNode(m_verticesList[idx]);
+  }
+
   m_done = true;
 }
 

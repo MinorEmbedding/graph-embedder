@@ -78,6 +78,11 @@ namespace majorminer
     return false;
   }
 
+  template<typename T>
+  inline void clearStack(Stack<T>& s)
+  {
+    while(!s.empty()) s.pop();
+  }
 
 }
 
