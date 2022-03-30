@@ -7,7 +7,7 @@
 #define POPULATION_SIZE 10
 #define ITERATION_LIMIT 10
 #define MAX_NEW_VERTICES 10
-#define REDUCE_ITERATION_COEFFICIENT 3
+#define REDUCE_ITERATION_COEFFICIENT 5
 
 using namespace majorminer;
 
@@ -22,20 +22,31 @@ namespace
   }
 }
 
-EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state, fuint32_t sourceVertex)
-  : m_state(state), m_sourceVertex(sourceVertex)
+EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
+  vertex_t sourceVertex)
+  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true)
 {
   initialize();
 }
 
+EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
+  const nodeset_t& initial, vertex_t sourceVertex)
+    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false)
+{
+  initialize(initial);
+}
+
 void EvolutionaryCSCReducer::optimize()
 {
+  if (!m_expansionPossible) return;
   Vector<CSCIndividual>* current = &m_populationA;
   Vector<CSCIndividual>* next = &m_populationB;
 
   for (fuint32_t iteration = 0; iteration < ITERATION_LIMIT; ++iteration)
   {
+    //std::cout << "Iteration " << iteration << std::endl;
     optimizeIteration(*current);
+    //std::cout << "Done optimizing iteration" << std::endl;
 
     if (iteration + 1 != ITERATION_LIMIT)
     {
@@ -43,13 +54,13 @@ void EvolutionaryCSCReducer::optimize()
       if (!success) break;
       swapPointers(current, next);
     }
+    //std::cout << "================= " << std::endl;
   }
 }
 
+
 void EvolutionaryCSCReducer::initialize()
 {
-  if (!canExpand()) return;
-
   const auto& mapping = m_state.getMapping();
   const auto& reverse = m_state.getReverseMapping();
   auto range = mapping.equal_range(m_sourceVertex);
@@ -59,7 +70,29 @@ void EvolutionaryCSCReducer::initialize()
     m_vertexFitness.insert(std::make_pair(mappedIt->second,
       reverse.count(mappedIt->second) - 1));
   }
+
+  setup();
+}
+
+void EvolutionaryCSCReducer::initialize(const nodeset_t& initial)
+{
+  m_bestSuperVertex.insert(initial.begin(), initial.end());
+
+  const auto& reverse = m_state.getReverseMapping();
+  for (vertex_t target : m_bestSuperVertex)
+  {
+    m_vertexFitness.insert(std::make_pair(target,
+      reverse.count(target)));
+  }
+  setup();
+}
+
+void EvolutionaryCSCReducer::setup()
+{
+  if (!canExpand()) return;
+
   m_preparedVertices.insert(m_bestSuperVertex.begin(), m_bestSuperVertex.end());
+  const auto& mapping = m_state.getMapping();
 
   // Prepare adjacent source vertices
   m_state.iterateSourceGraphAdjacent(m_sourceVertex, [&](vertex_t adjacentSource){
@@ -94,7 +127,7 @@ void EvolutionaryCSCReducer::initializePopulations()
     individual.initialize(*this, m_sourceVertex);
     individual.fromInitial(m_bestSuperVertex); // at this point m_bestSuperVertex is initial placement
   }
-  for (auto& individual : m_populationA)
+  for (auto& individual : m_populationB)
   {
     individual.initialize(*this, m_sourceVertex);
   }
@@ -103,14 +136,13 @@ void EvolutionaryCSCReducer::initializePopulations()
 bool EvolutionaryCSCReducer::canExpand()
 {
   // Check whether there is some unoccupied adjacent target vertex
-  auto range = m_state.getMapping().equal_range(m_sourceVertex);
   const auto& targetRemaining = m_state.getRemainingTargetNodes();
   m_expansionPossible = false;
-  for (auto it = range.first; it != range.second; ++it)
+  for (vertex_t mappedTarget : m_bestSuperVertex)
   {
-    m_state.iterateTargetGraphAdjacentBreak(it->second,
+    m_state.iterateTargetGraphAdjacentBreak(mappedTarget,
       [&](fuint32_t adjTarget){
-        if (targetRemaining.contains(adjTarget))
+        if (!m_bestSuperVertex.contains(adjTarget) && targetRemaining.contains(adjTarget))
         {
           m_expansionPossible = true;
         }
@@ -131,7 +163,7 @@ void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopu
   std::sort(parentPopulation.begin(), parentPopulation.end(), std::less<CSCIndividual>());
 
   size_t newBestFitness = parentPopulation[0].getFitness();
-  size_t size = parentPopulation[0].getSolutionSize();
+  size_t size = parentPopulation.at(0).getSolutionSize();
   if (newBestFitness < m_bestFitness ||
     (newBestFitness == m_bestFitness && size < m_bestSuperVertex.size()))
   { // adopt new superior solution
@@ -159,8 +191,9 @@ bool EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentP
 const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CSCIndividual>& parentPopulation)
 {
   fuint32_t max = POPULATION_SIZE - 1;
-  const CSCIndividual* individualA = &parentPopulation[m_random.getRandomUint(max)];
-  const CSCIndividual* individualB = &parentPopulation[m_random.getRandomUint(max)];
+
+  const CSCIndividual* individualA = &parentPopulation.at(m_random.getRandomUint(max));
+  const CSCIndividual* individualB = &parentPopulation.at(m_random.getRandomUint(max));
   return *individualA < *individualB ? individualA : individualB;
 }
 
@@ -168,13 +201,14 @@ const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CS
 void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
 {
   m_temporary.clear();
-  m_state.iterateTargetAdjacentReverseMapping(target, [&](fuint32_t adjacentSource){
+  m_state.iterateTargetAdjacentReverseMapping(target, [&](vertex_t adjacentSource){
     if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
   });
   for (auto source : m_temporary)
   {
     m_adjacentSources.insert(std::make_pair(target, source));
   }
+  m_preparedVertices.insert(target);
 }
 
 void EvolutionaryCSCReducer::addConnectivity(VertexNumberMap& connectivity, vertex_t target)
@@ -211,7 +245,10 @@ bool EvolutionaryCSCReducer::isRemoveable(VertexNumberMap& connectivity, vertex_
   auto range = m_adjacentSources.equal_range(target);
   for (auto it = range.first; it != range.second; ++it)
   {
-    if (connectivity[it->second] <= 1) return false;
+    if (connectivity[it->second] <= 1)
+    {
+      return false;
+    }
   }
   return true;
 }
@@ -253,11 +290,11 @@ bool CSCIndividual::fromCrossover(const CSCIndividual& individualA, const CSCInd
   if (!overlappingSets(superVertexA, superVertexB)
     && !areSetsConnected(*m_state, superVertexA, superVertexB))
   {
+    m_done = true;
     return false;
   }
   m_superVertex.insert(superVertexA.begin(), superVertexA.end());
   m_superVertex.insert(superVertexB.begin(), superVertexB.end());
-
   setupConnectivity();
   return true;
 }
@@ -280,6 +317,7 @@ void CSCIndividual::optimize()
 {
   if (m_done) return;
   mutate();
+
   reduce();
   m_fitness = m_reducer->getFitness(m_superVertex);
   m_done = true;
@@ -316,10 +354,10 @@ void CSCIndividual::mutate()
   const auto& targetGraph = m_state->getTargetAdjGraph();
   const auto& remaining = m_state->getRemainingTargetNodes();
 
-  fuint32_t numerAdded = 1;
+  fuint32_t numberAdded = 1;
   addVertex(m_sourceVertex);
   m_iteratorStack.push(targetGraph.equal_range(startVertex));
-  while(!m_iteratorStack.empty() && numerAdded < MAX_NEW_VERTICES)
+  while(!m_iteratorStack.empty() && numberAdded < MAX_NEW_VERTICES)
   {
     auto& top = m_iteratorStack.top();
     if (top.first == top.second)
@@ -332,6 +370,7 @@ void CSCIndividual::mutate()
     { // add node
       top.first++;
       addVertex(adjacent);
+      numberAdded++;
       m_iteratorStack.push(targetGraph.equal_range(adjacent));
     }
     else
@@ -363,7 +402,8 @@ void CSCIndividual::reduce()
 
   // Try reducing all other vertices
   fuint32_t maxIterations = REDUCE_ITERATION_COEFFICIENT * m_vertexVector.size();
-  for (fuint32_t iteration = 0; idx < maxIterations; ++iteration)
+  vectorSize = m_vertexVector.size();
+  for (fuint32_t iteration = 0; iteration < maxIterations; ++iteration)
   {
     fuint32_t randomIdx = m_random->getRandomUint(vectorSize - 1);
     vertex_t* current = &m_vertexVector[randomIdx];
@@ -386,8 +426,10 @@ void CSCIndividual::addVertex(vertex_t target)
 bool CSCIndividual::tryRemove(vertex_t target)
 {
   // Remove if not a cut vertex
-  if (m_reducer->isRemoveable(m_connectivity, target)
-    && !isCutVertex(*m_state, m_superVertex, target))
+  if (!m_reducer->isRemoveable(m_connectivity, target)) return false;
+
+  m_temporarySet.insert(m_superVertex.begin(), m_superVertex.end());
+  if (!isCutVertex(*m_state, m_temporarySet, target))
   {
     m_reducer->removeVertex(m_connectivity, target);
     m_superVertex.unsafe_erase(target);

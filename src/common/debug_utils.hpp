@@ -10,6 +10,7 @@ namespace majorminer
 
   void printNodeset(const nodeset_t& nodeset);
 
+  void printVertexNumberMap(const VertexNumberMap& m);
 }
 
 #endif

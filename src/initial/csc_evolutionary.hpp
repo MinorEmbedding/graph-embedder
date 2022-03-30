@@ -57,11 +57,15 @@ namespace majorminer
     friend CSCIndividual;
     public:
       EvolutionaryCSCReducer(const EmbeddingState& state, vertex_t sourceVertex);
+      EvolutionaryCSCReducer(const EmbeddingState& state, const nodeset_t& initial, vertex_t sourceVertex);
 
       void optimize();
+      const nodeset_t& getPlacement() const { return m_bestSuperVertex; }
 
     private:
       void initialize();
+      void initialize(const nodeset_t& initial);
+      void setup();
       bool canExpand();
       void initializePopulations();
       void optimizeIteration(Vector<CSCIndividual>& parentPopulation);
@@ -80,6 +84,7 @@ namespace majorminer
     private:
       const EmbeddingState& m_state;
       vertex_t m_sourceVertex;
+      bool m_wasPlaced;
       bool m_expansionPossible;
 
       Vector<CSCIndividual> m_populationA;

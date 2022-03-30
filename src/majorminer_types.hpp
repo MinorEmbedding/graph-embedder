@@ -3,7 +3,6 @@
 
 #include "common/config.hpp"
 
-#include <tbb/concurrent_vector.h>
 #include <tbb/concurrent_set.h>
 #include <tbb/concurrent_map.h>
 #include <tbb/concurrent_unordered_set.h>
@@ -12,6 +11,7 @@
 #include <tbb/concurrent_lru_cache.h>
 #include <tbb/concurrent_queue.h>
 #include <tbb/parallel_for_each.h>
+
 #include <stack>
 #include <vector>
 
@@ -69,7 +69,7 @@ namespace majorminer
   };
 
   template<typename T, typename Allocator = std::allocator<T>>
-  using Vector = tbb::concurrent_vector<T, Allocator>;
+  using Vector = std::vector<T, Allocator>;
 
   template<class T, typename HashFunc = std::hash<T>, typename Allocator = std::allocator<T>>
   using UnorderedSet = tbb::concurrent_unordered_set<T, HashFunc, std::equal_to<T>, Allocator>;

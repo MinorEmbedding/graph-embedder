@@ -33,7 +33,7 @@ void SuperVertexPlacer::operator()()
 void SuperVertexPlacer::trivialNode()
 {
   // just pick an arbitrary node and place it somewhere
-  fuint32_t node = m_state.getTrivialNode();
+  vertex_t node = m_state.getTrivialNode();
   DEBUG(OUT_S << "Trivial node to embedd: " << node << std::endl;)
   embeddTrivialNode(node);
 
@@ -68,7 +68,7 @@ bool SuperVertexPlacer::connectedNode()
   return true;
 }
 
-void SuperVertexPlacer::embeddNode(fuint32_t node)
+void SuperVertexPlacer::embeddNode(vertex_t node)
 {
   embeddNodeNetworkSimplex(node);
   m_state.updateConnections(node, m_nodesToProcess);
@@ -76,7 +76,7 @@ void SuperVertexPlacer::embeddNode(fuint32_t node)
 
 
 
-void SuperVertexPlacer::visualize(fuint32_t node, PlacedNodeType type, fuint32_t nbConnections)
+void SuperVertexPlacer::visualize(vertex_t node, PlacedNodeType type, fuint32_t nbConnections)
 {
   auto& visualizer = *m_state.getVisualizer();
   const auto& mapping = m_state.getMapping();
@@ -111,7 +111,7 @@ void SuperVertexPlacer::visualize(fuint32_t node, PlacedNodeType type, fuint32_t
 }
 
 
-void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
+void SuperVertexPlacer::embeddNodeNetworkSimplex(vertex_t node)
 {
   if (m_nsWrapper.get() == nullptr) m_nsWrapper = std::make_unique<NetworkSimplexWrapper>(m_state, m_embeddingManager);
   m_nsWrapper->embeddNode(node);
@@ -123,13 +123,21 @@ void SuperVertexPlacer::embeddNodeNetworkSimplex(fuint32_t node)
   m_embeddingManager.mapNode(node, superVertex);
   printNodeset(m_nsWrapper->getMapped());
   printNodeset(superVertex);
+
+  /* EvolutionaryCSCReducer reducer{m_state, m_nsWrapper->getMapped(), node};
+  reducer.optimize();
+  const auto& superVertex = reducer.getPlacement();
+  m_embeddingManager.mapNode(node, superVertex);
+  printNodeset(m_nsWrapper->getMapped());
+  printNodeset(superVertex);*/
+
 }
 
-void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)
+void SuperVertexPlacer::embeddSimpleNode(vertex_t node)
 {
   // find a node that is adjacent to the node "adjacentNode"
-  fuint32_t adjacentNode = -1;
-  m_state.iterateSourceGraphAdjacentBreak(node, [&](fuint32_t adjacent){
+  vertex_t adjacentNode = -1;
+  m_state.iterateSourceGraphAdjacentBreak(node, [&](vertex_t adjacent){
     if (m_state.isNodeMapped(adjacent))
     { adjacentNode = adjacent; return true; }
     return false;
@@ -138,8 +146,9 @@ void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)
   if (adjacentNode == (fuint32_t)-1) throw std::runtime_error("Could not find the adjacent node.");
 
 
-  fuint32_t bestNodeFound = adjacentNode;
-  m_state.iterateSourceMappingAdjacent<true>(adjacentNode, [&bestNodeFound](fuint32_t candidate, fuint32_t){
+  vertex_t bestNodeFound = adjacentNode;
+  m_state.iterateSourceMappingAdjacent<true>(adjacentNode,
+    [&bestNodeFound](vertex_t candidate, vertex_t){
     bestNodeFound = candidate;
     return true;
   });
@@ -149,7 +158,7 @@ void SuperVertexPlacer::embeddSimpleNode(fuint32_t node)
   m_state.updateNeededNeighbors(node);
 }
 
-void SuperVertexPlacer::embeddTrivialNode(fuint32_t node)
+void SuperVertexPlacer::embeddTrivialNode(vertex_t node)
 {
   auto& remainingTargetNodes = m_state.getRemainingTargetNodes();
   if (!remainingTargetNodes.empty())
