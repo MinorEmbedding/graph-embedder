@@ -239,7 +239,9 @@ class Embedding():
             # We need to recalculate them every time a node was removed
             # since the articulation points might change in this case
             articulation_points = ArticulationPointCalculator(self.G_embedding)\
-                .calc_articulation_points(supernode_nodes)
+                .calc_articulation_points(supernode_nodes - removed_nodes)
+            logger.info(f'supernode {supernode} (nodes: {supernode_nodes}) '
+                        + f'has articulation points: {articulation_points}')
 
             # Try to remove ONE node in the supernode
             for node_to_remove in supernode_nodes:
