@@ -1,13 +1,12 @@
 import logging
+import random
 from dataclasses import dataclass
 from typing import Optional
 
-from src.embedding.embedding import Embedding, NoFreeNeighborNodes
+from src.embedding.embedding import Embedding
 from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.solver.initialization import Initialization
 from src.solver.supernode_extension import SupernodeExtension
-from src.util.stack import Stack
-from src.util.util import any_of_one_in_other, get_first_from
 
 logger = logging.getLogger('evolution')
 
@@ -16,7 +15,7 @@ logger = logging.getLogger('evolution')
 class EvolutionParams():
     population_size: int
     max_mutation_trials: int
-    mutation_trials_until_extend_to_free_neighbors: int
+    mutation_extend_to_free_neighbors_probability: float
 
 
 class EmbeddingSolver():
@@ -70,8 +69,8 @@ class EmbeddingSolver():
         """Generates children (Embeddings) for one population."""
         population = []  # list of Embeddings
 
-        for _ in range(params.population_size):
-            child = self._generate_child(params)
+        for i in range(params.population_size):
+            child = self._generate_child(params, i)
             if child:
                 population.append(child)
             else:
@@ -81,19 +80,20 @@ class EmbeddingSolver():
 
         return population
 
-    def _generate_child(self, params: EvolutionParams) -> Optional[Embedding]:
+    def _generate_child(self, params: EvolutionParams, child_number: int) -> Optional[Embedding]:
         logger.info('')
         logger.info(f'--- Try find a new viable mutation')
-        mutation = None
 
-        for trial in range(params.max_mutation_trials):
-            # Do one mutation
+        for _ in range(params.max_mutation_trials):
             logger.info('--- MUTATION')
+            if random.random() < params.mutation_extend_to_free_neighbors_probability:
+                mutation = self._supernode_extension.extend_random_supernode_to_free_neighbors()
+            else:
             mutation = self._supernode_extension.extend_random_supernode()
+
             if mutation:
+                logger.info(f'💚 Valid mutation for child {child_number}')
                 return mutation
-            elif trial >= params.mutation_trials_until_extend_to_free_neighbors:
-                self._supernode_extension.extend_random_supernode_to_free_neighbors()
 
         logger.info(f'🔳 All {params.max_mutation_trials} mutations failed, '
                     'could not construct a child -> Abort')
@@ -101,7 +101,11 @@ class EmbeddingSolver():
 
     def _select_best_child(self, population: list[Embedding]):
         # Try to optimize to local maximum first
-        improvements = [child.try_embed_missing_edges() for child in population]
+        improvements = []
+        for i, child in enumerate(population):
+            logger.info(f'💚 Checking local optima for child {i}')
+            improvements.append(child.try_embed_missing_edges())
+
         best_child_index = improvements.index(max(improvements))
         return population[best_child_index]
 

@@ -19,7 +19,7 @@ logger = logging.getLogger('evolution')
 params = EvolutionParams(
     population_size=7,
     max_mutation_trials=30,
-    mutation_trials_until_extend_to_free_neighbors=15
+    mutation_extend_to_free_neighbors_probability=0.3 # should be less than 0.5
 )
 
 max_total = 1

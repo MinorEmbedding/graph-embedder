@@ -1,11 +1,13 @@
 import logging
 import random
+from collections import namedtuple
 from dataclasses import dataclass
 from typing import Optional
 
 from src.embedding.embedding import Embedding, NoFreeNeighborNodes
 from src.util.util import any_of_one_in_other, get_first_from
 
+SourceTargetPair = namedtuple('SourceTargetPair', 'source target')
 logger = logging.getLogger('evolution')
 
 
@@ -23,10 +25,14 @@ class SupernodeExtension():
         self._embedding = embedding
         self._non_viable_extensions = []
 
-    def extend_random_supernode_to_free_neighbors(self) -> None:
+    def reset(self) -> None:
+        self._non_viable_extensions = []
+
+    def extend_random_supernode_to_free_neighbors(self) -> Optional[Embedding]:
         """Chooses a random supernode an extends it to a free neighbor."""
         logger.info('Trying to extend random supernode to free neighbors')
-        embedded_nodes = self._embedding.get_embedded_nodes()
+        playground = self._embedding.get_playground()
+        embedded_nodes = playground.get_embedded_nodes()
 
         max_trials = 10
         tried_nodes = set()
@@ -34,17 +40,18 @@ class SupernodeExtension():
             source = random.choice(list(embedded_nodes - tried_nodes))
 
             try:
-                free_neighbors = self._embedding.get_free_neighbors(source)
+                free_neighbors = playground.get_free_neighbors(source)
             except:
                 tried_nodes.add(source)
                 continue
 
             target = random.choice(list(free_neighbors))
-            self._embedding.construct_supernode(source, target)
+            playground.construct_supernode(source, target)
             logger.info(f'-> Extended node {source} to {target}')
-            return
+            return playground
 
         logger.info('-> ❌ failed')
+        return None
 
     def extend_random_supernode(self) -> Optional[Embedding]:
         """Chooses a random supernode and extends it to an already embedded
@@ -53,12 +60,14 @@ class SupernodeExtension():
         When the embedded neighbor is bumped to a free neighbor, this algorithm
         might construct another supernode for the neighbor in order to reach
         every node that could previously be reached from the neighbor node."""
-        source = self._choose_random_embedded_node()
-        targets = self._embedding.get_embedded_neighbors(source)
-        target = random.choice(list(targets))
+        pair = self._choose_source_and_target()
+        if not pair:
+            return None
+        source, target = pair.source, pair.target
         logger.info(f'🔗🔗 Trying to construct: {source}, {target}')
         if (source, target) in self._non_viable_extensions:
             logger.info('❌ Already considered but not viable -> skip')
+            # TODO: Don't count this case as wasted mutation
             return None
 
         try:
@@ -69,18 +78,10 @@ class SupernodeExtension():
 
         playground = self._embedding.get_playground()
 
-        # Both nodes in same supernode?
-        if (playground.get_supernode(source) == playground.get_supernode(target)):
-            logger.info(f'🔗 Source ({source}) and target ({target}) node '
-                        + 'are in same supernode -> Easy chain extension')
-            shifted_target = random.choice(list(target_free_neighbors))
-            playground.construct_supernode(target, shifted_target)
-            return playground
-
         # --- Try out possible positions for shifted_target
         # Always check if we can reach all super nodes previously connected
         # to target from the shifted_target
-        target_neighbors = self._embedding.get_embedded_neighbors(target)
+        target_neighbors = playground.get_embedded_neighbors(target)
         target_neighbors.discard(source)  # no need to reach source from shifted_target
         target_supernode = playground.get_supernode(target)
         logger.info(f'Target neighbors are: {target_neighbors}')
@@ -204,7 +205,8 @@ class SupernodeExtension():
                 continue
 
             target_neighbor = self.get_reachable_node_in_neighbor_supernode(
-                playground, neighbor, {p.shifted_target, shifted_target_partner}, shifted_target_partner_reachable)
+                playground, neighbor, {p.shifted_target, shifted_target_partner},
+                shifted_target_partner_reachable)
 
             if target_neighbor != None:
                 logger.info(f'Could reach (with 2nd chain) {target_neighbor}')
@@ -233,3 +235,24 @@ class SupernodeExtension():
                     f'(supernode: {neighbor_supernode} -> {neighbor_supernode_nodes})')
         reachable_neighbor = any_of_one_in_other(reachable, neighbor_supernode_nodes)
         return reachable_neighbor
+
+    def _choose_source_and_target(self) -> Optional[SourceTargetPair]:
+        for _ in range(5):
+            pair = self._choose_source_and_target_not_in_same_supernode()
+            if pair:
+                return pair
+        logger.info(f'Could not find valid source/target pair')
+        return None
+
+    def _choose_source_and_target_not_in_same_supernode(self) -> Optional[SourceTargetPair]:
+        source = self._choose_random_embedded_node()
+        source_supernode = self._embedding.get_supernode(source)
+
+        targets = self._embedding.get_embedded_neighbors(source)
+        targets = [t for t in targets
+                   if self._embedding.get_supernode(t) != source_supernode]
+        if not targets:
+            return None
+
+        target = random.choice(list(targets))
+        return SourceTargetPair(source, target)
