@@ -39,7 +39,10 @@ class Embedding():
         Returns:
             set[int]: The embedded nodes.
         """
-        return self.G_embedding.get_embedded_nodes()
+        embedded_nodes = self.G_embedding.get_embedded_nodes()
+        if not embedded_nodes:
+            raise Exception('No nodes embedded yet')
+        return embedded_nodes
 
     def get_reachable_neighbors(self, source):
         return self.G_layout.get_neighbor_nodes(source)
