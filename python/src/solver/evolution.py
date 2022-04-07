@@ -55,7 +55,7 @@ def main(d: DrawEmbedding) -> bool:
     H = TestGraph.k(12)
 
     solver = EmbeddingSolver(H)
-    solver.init_dfs()
+    solver.initialize_embedding()
     solver.local_maximum()
     save_embedding(*solver.get_embedding(), d, -1,
                    title=f'Initial embedding')

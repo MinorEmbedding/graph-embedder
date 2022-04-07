@@ -7,6 +7,8 @@ external/lemon.tar.gz
 
 # Python
 __pycache__
+out/
+logs/
 
 # Prerequisites
 *.d
