@@ -34,7 +34,9 @@ bool MutationFrontierShifting::isValid()
   //char c=getchar();
   //if (c=='E') return false;
   // std::cout << "------------------------------" << std::endl;
-  return m_valid && isDefined(m_bestContested) && calculateImprovement(m_victim) < 0
+  return m_valid
+        && containsPair(m_manager.getMapping(), m_victim, m_bestContested)
+        && isDefined(m_bestContested) && calculateImprovement(m_victim) < 0
         && !isNodeCrucial(m_manager, m_victim, m_bestContested, m_conqueror);
 }
 

@@ -23,23 +23,24 @@ MutationReduceOverlap::~MutationReduceOverlap()
 
 bool MutationReduceOverlap::isValid()
 {
-  bool valid = m_reducer->remainsValid(m_manager);
-  std::cout << "Is reduce overlap valid?."  << valid << std::endl;
+  // std::cout << "Checking validity 0x" << ((void*)m_reducer) << std::endl;
+  // bool valid = m_reducer->remainsValid(m_manager);
+  // std::cout << "Is reduce overlap valid?."  << valid << std::endl;
   return m_reducer->remainsValid(m_manager);
 }
 
 bool MutationReduceOverlap::prepare()
 {
+  m_requeues--;
   m_reducer->initialize();
   m_reducer->optimize();
-  bool improved = m_reducer->improved();
-  std::cout << "Has overlap improved. " << improved  << std::endl;
-  return improved;
+  // std::cout << "Has overlap improved. " << improved  << std::endl;
+  return m_reducer->improved();
 }
 
 void MutationReduceOverlap::execute()
 {
-  std::cout << "Trying to reduce overlap." << std::endl;
+  // std::cout << "Trying to reduce overlap." << std::endl;
   const auto& initial = m_reducer->getInitialSuperVertex();
   const auto& improved = m_reducer->getSuperVertex();
   const auto& reverse = m_manager.getReverseMapping();

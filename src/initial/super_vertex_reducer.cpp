@@ -201,8 +201,8 @@ const nodeset_t& SuperVertexReducer::getBetterPlacement(const nodeset_t& previou
 
 bool SuperVertexReducer::improved() const
 {
-  printNodeset(m_initialSuperVertex);
-  printNodeset(m_superVertex);
+  // printNodeset(m_initialSuperVertex);
+  // printNodeset(m_superVertex);
   fuint32_t scorePrevious = checkScore(m_initialSuperVertex);
   fuint32_t scoreOwn = checkScore(m_superVertex);
   return (scoreOwn < scorePrevious ||
@@ -213,5 +213,5 @@ bool SuperVertexReducer::remainsValid(const EmbeddingManager& manager) const
 {
   // m_superVertex is definitely connected, now check whether all
   // adjacent super vertices can be reached
-  return connectsToAdjacentVertices(manager, m_superVertex, m_sourceVertex);
+  return improved() && connectsToAdjacentVertices(manager, m_superVertex, m_sourceVertex);
 }

@@ -6,6 +6,8 @@
 #include <common/embedding_state.hpp>
 #include <common/embedding_manager.hpp>
 
+#include <common/debug_utils.hpp>
+
 
 using namespace majorminer;
 
@@ -32,18 +34,17 @@ void MutationManager::operator()(bool finalIteration)
     {
       bool success = prepQueue.try_pop(mutation);
       if (!success) continue;
-      bool valid = mutation->prepare();
-      if (!valid)
-      {
-        remaining--;
-        continue;
-      }
       else
       {
         free.lock();
         runningPreps++;
         free.unlock();
-        incorporationQueue.push(std::move(mutation));
+
+        // TEST_OUTPUT(Preparing mutation)
+        bool valid = mutation->prepare();
+        // TEST_OUTPUT(Prepared mutation)
+        if (valid) incorporationQueue.push(std::move(mutation));
+        else remaining--;
         runningPreps--;
       }
     }
@@ -89,7 +90,7 @@ void MutationManager::prepareFinal()
   {
     m_prepQueue.push(std::make_unique<MutationReduceOverlap>(m_state, m_embeddingManager, vertex));
   }
-  std::cout << "Prepare final with " << vertices.size() <<" vertices." << std::endl;
+  // std::cout << "Prepare final with " << vertices.size() <<" vertices." << std::endl;
   m_numberRemaining = m_prepQueue.unsafe_size();
 }
 
@@ -123,19 +124,24 @@ void MutationManager::incorporate()
 {
   MutationPtr mutation;
   while(m_numberRemaining > 0)
-  {
+  {// TEST_OUTPUT(popping mutation)
     bool success = m_incorporationQueue.try_pop(mutation);
+   // TEST_OUTPUT(done popping mutation)
     if (!success) continue;
+  // TEST_OUTPUT(Cheking valid)
     bool valid = mutation->isValid();
+  // TEST_OUTPUT(Done checking valid)
     if (!valid && mutation->requeue())
     {
-      std::cout << "Invalid mutation. Requeuing." << std::endl;
+      // std::cout << "Invalid mutation. Requeuing." << std::endl;
       m_prepQueue.push(std::move(mutation));
       continue;
     }
     else if (valid)
     {
+      // std::cout << "Starting exec" << std::endl;
       mutation->execute();
+      // std::cout << "Done execution" << std::endl;
       m_wait = true;
     }
     m_numberRemaining--;
@@ -143,7 +149,9 @@ void MutationManager::incorporate()
     {
       m_free.lock();
       while(m_runningPreps != 0) continue;
+      // std::cout << "Synchronizing" << std::endl;
       m_embeddingManager.synchronize();
+      // std::cout << "Done synchro" << std::endl;
       m_wait = false;
       m_free.unlock();
     }

@@ -17,7 +17,6 @@ namespace majorminer
 
     private:
       double checkImprovement(fuint32_t extendNode, const EmbeddingBase& base);
-      void updateFreeNeighbors();
 
     private:
       const EmbeddingState& m_state;

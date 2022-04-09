@@ -6,6 +6,8 @@
 namespace majorminer
 {
 
+  #define TEST_OUTPUT(content) std::cout << #content << std::endl;
+
   void printAdjacencyList(const adjacency_list_t& adj);
 
   void printNodeset(const nodeset_t& nodeset);

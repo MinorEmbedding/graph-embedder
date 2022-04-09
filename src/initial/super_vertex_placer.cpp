@@ -30,15 +30,16 @@ void SuperVertexPlacer::operator()()
 
 void SuperVertexPlacer::replaceOverlapping()
 {
+  return;
   nodeset_t overlapping{};
   fuint32_t maxIterations = 5;
   identifyOverlapping(overlapping);
-  std::cout << "In replaceOverlapping. Overlapping size is " << overlapping.size() << std::endl;
+  // std::cout << "In replaceOverlapping. Overlapping size is " << overlapping.size() << std::endl;
   const auto& sourceGraph = m_state.getSourceAdjGraph();
 
   for (fuint32_t idx = 0; idx < maxIterations && !overlapping.empty(); ++idx)
   {
-    std::cout << "Replace overlapping; iteration " << (idx + 1) << std::endl;
+    // std::cout << "Replace overlapping; iteration " << (idx + 1) << std::endl;
     for (vertex_t vertex : overlapping)
     {
       m_embeddingManager.unmapNode(vertex);
@@ -71,7 +72,7 @@ void SuperVertexPlacer::trivialNode()
 {
   // just pick an arbitrary node and place it somewhere
   vertex_t node = m_state.getTrivialNode();
-  DEBUG(OUT_S << "Trivial node to embedd: " << node << std::endl;)
+  // DEBUG(OUT_S << "Trivial node to embedd: " << node << std::endl;)
   embeddTrivialNode(node);
 
   if (m_state.hasVisualizer()) visualize(node, TRIVIAL);
@@ -88,14 +89,14 @@ bool SuperVertexPlacer::connectedNode()
 
   if (node.m_nbConnections > 1)
   {
-    DEBUG(OUT_S << "Complex node to embedd: " << node.m_id << " (" << node.m_nbConnections << ")" << std::endl;)
+    // DEBUG(OUT_S << "Complex node to embedd: " << node.m_id << " (" << node.m_nbConnections << ")" << std::endl;)
 
     embeddNode(node.m_id);
     if (m_state.hasVisualizer()) visualize(node.m_id, COMPLEX, node.m_nbConnections);
   }
   else
   { // nbConnections = 1
-    DEBUG(OUT_S << "Simple adjacent node to embedd: " << node.m_id << std::endl;)
+    // DEBUG(OUT_S << "Simple adjacent node to embedd: " << node.m_id << std::endl;)
 
     embeddSimpleNode(node.m_id);
     m_state.updateConnections(node.m_id, m_nodesToProcess);
@@ -182,13 +183,14 @@ void SuperVertexPlacer::embeddSimpleNode(vertex_t node)
 
   if (adjacentNode == (fuint32_t)-1) throw std::runtime_error("Could not find the adjacent node.");
 
-
-  vertex_t bestNodeFound = adjacentNode;
-  m_state.iterateSourceMappingAdjacent<true>(adjacentNode,
-    [&bestNodeFound](vertex_t candidate, vertex_t){
+  const auto& remaining = m_state.getRemainingTargetNodes();
+  vertex_t bestNodeFound = FUINT32_UNDEF;
+  m_state.iterateSourceMappingAdjacent<false>(adjacentNode,
+    [&bestNodeFound, &remaining](vertex_t candidate, vertex_t){
     bestNodeFound = candidate;
-    return true;
+    return remaining.contains(candidate);
   });
+  if (!isDefined(bestNodeFound)) throw std::runtime_error("Isolated vertex.");
 
   // map "node" to "bestNodeFound"
   m_embeddingManager.mapNode(node, bestNodeFound);
