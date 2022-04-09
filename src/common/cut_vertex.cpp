@@ -1,6 +1,9 @@
 
 #include "cut_vertex.hpp"
 
+#include <common/utils.hpp>
+#include <common/embedding_base.hpp>
+
 using namespace majorminer;
 
 typedef adjacency_list_t::const_iterator adj_list_const_it;
@@ -25,7 +28,6 @@ void majorminer::identifiyCutVertices(nodeset_t& cut, const adjacency_list_t& su
 {
   if (subgraph.empty()) return;
   Stack<equal_range_t> nodeStack{};
-  Vector<edge_t> edgesDfs{};
 
   UnorderedMap<fuint32_t, VertexData> properties{};
 
@@ -81,7 +83,7 @@ void majorminer::identifiyCutVertices(nodeset_t& cut, const adjacency_list_t& su
 bool majorminer::isCutVertex(const adjacency_list_t& subgraph, fuint32_t node, fuint32_t n)
 {
   auto nodeFind = subgraph.find(node);
-  if (nodeFind == subgraph.end()) return false;
+  if (nodeFind == subgraph.end()) return true;
   fuint32_t rootNode = nodeFind->second;
   if (rootNode == node) throw std::runtime_error("Loop inside subgraph!");
 
@@ -107,4 +109,68 @@ bool majorminer::isCutVertex(const adjacency_list_t& subgraph, fuint32_t node, f
     else nodeStack.pop();
   }
   return visited.size() < n;
+}
+
+
+
+bool majorminer::isCutVertex(const EmbeddingBase& base, fuint32_t sourceNode, fuint32_t targetNode)
+{
+  nodeset_t mapped {};
+  insertMappedTargetNodes(base, mapped, sourceNode);
+  return isCutVertex(base, mapped, targetNode);
+}
+
+bool majorminer::isCutVertex(const EmbeddingBase& base, nodeset_t& mappedNodes, fuint32_t targetNode)
+{
+  if (mappedNodes.size() <= 1) return true;
+  mappedNodes.unsafe_erase(targetNode);
+  const auto& targetAdj = base.getTargetAdjGraph();
+  fuint32_t adjacentTarget = FUINT32_UNDEF; // cannot use targetNode here
+  auto range = targetAdj.equal_range(targetNode);
+  for (auto it = range.first; it != range.second; ++it)
+  {
+    if (mappedNodes.contains(it->second))
+    {
+      adjacentTarget = it->second;
+      break;
+    }
+  }
+  if (!isDefined(adjacentTarget)) return true;
+  mappedNodes.unsafe_erase(adjacentTarget);
+
+  Stack<equal_range_t> nodeStack{};
+  nodeStack.push(targetAdj.equal_range(adjacentTarget));
+  while(!nodeStack.empty())
+  {
+    auto& top = nodeStack.top();
+    if (top.first == top.second) nodeStack.pop();
+    else if (top.first->second == targetNode) top.first++;
+    else
+    {
+      fuint32_t next = top.first->second;
+      top.first++;
+      auto val = mappedNodes.unsafe_extract(next);
+      if (!val.empty())
+      {
+        if (mappedNodes.empty()) return false;
+        nodeStack.push(targetAdj.equal_range(val.value()));
+      }
+    }
+  }
+  return !mappedNodes.empty();
+}
+
+
+bool majorminer::areSetsConnected(const EmbeddingBase& base, const nodeset_t& setA, const nodeset_t& setB)
+{
+  bool connected = false;
+  for (auto target : setA)
+  {
+    base.iterateTargetGraphAdjacentBreak(target, [&](fuint32_t adjTarget){
+      if (setB.contains(adjTarget)) connected = true;
+      return connected;
+    });
+    if (connected) return true;
+  }
+  return false;
 }

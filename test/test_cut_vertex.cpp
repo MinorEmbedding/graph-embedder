@@ -1,5 +1,6 @@
 #include <common/utils.hpp>
 #include <common/cut_vertex.hpp>
+#include <common/graph_gen.hpp>
 
 #include "utils/test_common.hpp"
 

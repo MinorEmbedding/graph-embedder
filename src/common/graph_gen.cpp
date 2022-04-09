@@ -1,5 +1,10 @@
 #include "graph_gen.hpp"
 
+#include <fstream>
+#include <string>
+#include <memory>
+#include <iostream>
+
 using namespace majorminer;
 
 graph_t majorminer::generate_chimera(fuint32_t rows, fuint32_t cols)

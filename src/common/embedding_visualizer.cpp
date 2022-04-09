@@ -1,5 +1,8 @@
 #include "embedding_visualizer.hpp"
 
+#include <fstream>
+#include <filesystem>
+
 using namespace majorminer;
 namespace fs = std::filesystem;
 
@@ -37,11 +40,14 @@ void EmbeddingVisualizer::setupDrawing(const embedding_mapping_t& embedding)
   m_embedding = &embedding;
   m_svg << m_prepared;
 
-  double fontSize = getWidth() / 30;
+  double fontSize = std::min(getWidth() / 30, 40.0);
+  double y = 50 + fontSize / 2.0;
 
   std::stringstream titleText {};
   titleText << "Iteration " << (m_iteration + 1) << ": ";
-  m_svg << "<text x=\"" << getRadius() << "\" y=\"50\" font-size=\"" << fontSize << "\">" << titleText.str();
+  m_svg << "<text x=\"" << getRadius() << "\" y=\"" << y
+        << "\" font-size=\"" << fontSize
+        << "\">" << titleText.str();
 }
 
 void EmbeddingVisualizer::draw(const embedding_mapping_t& embedding, const char* title)
@@ -310,4 +316,28 @@ double KingsVisualizer::getWidth() const
 double KingsVisualizer::getHeight() const
 {
   return ((1 + m_nbRows * 2) * getNodeSize());
+}
+
+
+fuint32_t GenericVisualizer::insertEdge(Vector<Coordinate_t>& /* coords */, const edge_t& /* edge */)
+{
+  return 0;
+}
+
+Coordinate_t GenericVisualizer::insertNode(fuint32_t v) const
+{
+  auto findIt = m_coordinates.find(v);
+  if (findIt == m_coordinates.end()) throw std::runtime_error("Node not contained in coordinate map!");
+
+  return Coordinate_t{ (1 + findIt->second.first) * getNodeSize(), (1 + findIt->second.second) * getNodeSize() };
+}
+
+double GenericVisualizer::getWidth() const
+{
+  return ((2 + m_width) * getNodeSize());
+}
+
+double GenericVisualizer::getHeight() const
+{
+  return ((2 + m_height) * getNodeSize());
 }
