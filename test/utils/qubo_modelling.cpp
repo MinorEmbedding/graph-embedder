@@ -361,7 +361,7 @@ bool QEnumerationVerifier::verify()
     }
     else if (returned)
     {
-      m_setting[idx] ^= true; // toggle bit
+      m_setting[idx] = (m_setting[idx] ^ true); // toggle bit
       if (m_setting[idx] == false) continue;
       else returned = false;
     }

@@ -1,17 +1,17 @@
 from src.drawing.draw import Draw
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.undirected_graph import UndirectedGraphAdjList
 from src.solver.embedding_solver import EmbeddingSolver
 
 
 def init_H():
     # K4 graph
     H = UndirectedGraphAdjList(4)
-    H._set_edge(0, 1)
-    H._set_edge(0, 2)
-    H._set_edge(0, 3)
-    H._set_edge(1, 2)
-    H._set_edge(1, 3)
-    H._set_edge(2, 3)
+    H.set_edge(0, 1)
+    H.set_edge(0, 2)
+    H.set_edge(0, 3)
+    H.set_edge(1, 2)
+    H.set_edge(1, 3)
+    H.set_edge(2, 3)
     return H
 
 
@@ -47,7 +47,7 @@ def main():
             return
 
         # --- Output
-        nodes, edges = playground.get_embedding()
+        nodes, edges, mapping_G_to_H = playground.get_embedding()
 
         length1 = len(found_embeddings)
         found_embeddings.add(frozenset(edges))
@@ -58,7 +58,6 @@ def main():
             continue
 
         print(f'{i}: Is correct: {playground.is_valid_embedding()}')
-        mapping_G_to_H = playground.get_mapping_G_to_H()
         d.draw_to_big_plot(nodes, edges, mapping_G_to_H)
 
         i += 1

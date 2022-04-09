@@ -1,5 +1,7 @@
 #include "utils/test_common.hpp"
 
+#include <common/graph_gen.hpp>
+
 using namespace majorminer;
 
 
@@ -93,3 +95,4 @@ TEST(CycleGraphGen, Cycle_1)
   EXPECT_EQ(graph.size(), 0);
   containsEdges(graph, {});
 }
+

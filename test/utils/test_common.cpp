@@ -1,5 +1,7 @@
 #include "test_common.hpp"
 
+#include <fstream>
+
 using namespace majorminer;
 
 namespace
@@ -89,16 +91,4 @@ nodeset_t majorminer::getNodeset(const graph_t& graph)
       nodes.insert(edge.second);
   });
   return nodes;
-}
-
-
-void majorminer::printNodeset(const nodeset_t& nodes)
-{
-  Vector<fuint32_t> nodeVec{};
-  nodeVec.reserve(nodes.size());
-  for (auto n : nodes) nodeVec.push_back(n);
-  tbb::parallel_sort(nodeVec.begin(), nodeVec.end());
-  std::cout << "Nodeset: { ";
-  for (auto n : nodeVec) std::cout << n << " ";
-  std::cout << "}" << std::endl;
 }

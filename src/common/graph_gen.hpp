@@ -1,12 +1,6 @@
 #ifndef __MAJORMINER_GRAPH_GEN_HPP_
 #define __MAJORMINER_GRAPH_GEN_HPP_
 
-#include <fstream>
-#include <string>
-#include <memory>
-#include <iostream>
-#include <tbb/parallel_for.h>
-
 #include "majorminer_types.hpp"
 
 

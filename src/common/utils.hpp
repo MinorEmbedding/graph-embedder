@@ -1,9 +1,8 @@
 #ifndef __MAJORMINER_UTILS_HPP_
 #define __MAJORMINER_UTILS_HPP_
 
-#include <tbb/parallel_for_each.h>
-
-#include "majorminer_types.hpp"
+#include <majorminer_types.hpp>
+#include <common/debug_utils.hpp>
 
 
 namespace majorminer
@@ -29,8 +28,6 @@ namespace majorminer
   template<typename T>
   void setMax(T& val, const T& v) { if (v > val) val = v; }
 
-  void printAdjacencyList(const adjacency_list_t& adj);
-
   template<typename K, typename V>
   void eraseSinglePair(UnorderedMultiMap<K, V>& umap, const K& key, const V& val)
   {
@@ -44,6 +41,49 @@ namespace majorminer
       }
     }
   }
+
+  template<typename K, typename V>
+  bool containsPair(const UnorderedMultiMap<K, V>& umap, const K& key, const V& val)
+  {
+    auto range = umap.equal_range(key);
+    for (auto it = range.first; it != range.second; ++it)
+    {
+      if (it->second == val)
+      {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  void insertMappedTargetNodes(const EmbeddingBase& base, nodeset_t& nodes, fuint32_t sourceNode);
+
+  inline bool isDefined(fuint32_t value) { return value != FUINT32_UNDEF; }
+  inline bool isDefined(fuint32_pair_t& p) { return isDefined(p.first) && isDefined(p.second); }
+  inline bool isDefined(NodePair& p) { return isDefined(p.source) && isDefined(p.target); }
+
+  template<typename T>
+  inline std::shared_ptr<T[]> make_shared_array(std::size_t size)
+  {
+      return std::shared_ptr<T[]>( new T[size], []( T *p ){ delete [] p; } );
+  }
+
+  template<typename T, typename Hash>
+  inline bool overlappingSets(const UnorderedSet<T, Hash>& map1, const UnorderedSet<T, Hash>& map2)
+  {
+    for (const auto& key : map1)
+    {
+      if (map2.contains(key)) return true;
+    }
+    return false;
+  }
+
+  template<typename T>
+  inline void clearStack(Stack<T>& s)
+  {
+    while(!s.empty()) s.pop();
+  }
+
 }
 
 

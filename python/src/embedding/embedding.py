@@ -1,121 +1,148 @@
 import itertools
+import logging
 from copy import deepcopy
-from typing import List
 
 from src.embedding.graph_mapping import GraphMapping
-from src.graphs.chimera_graph import ChimeraGraphLayout, GraphEmbedding
-from src.graphs.undirected_graphs import UndirectedGraphAdjList
+from src.graph.chimera_graph import ChimeraGraphLayout
+from src.graph.embedding_graph import EmbeddingGraph
+from src.graph.undirected_graph import UndirectedGraphAdjList
+from src.embedding.articulation_point import ArticulationPointCalculator
+
+logger = logging.getLogger('evolution')
 
 
-########################### Embedding blueprint ################################
 class Embedding():
     def __init__(self, H: UndirectedGraphAdjList):
+        """Initializes an Embedding.
 
-        # TODO: explain difference (!) - crucial for understanding
+        Args:
+            H (UndirectedGraphAdjList): The minor Graph to embed
+        """
+        # --- Minor H
         self.H = H
-        self.G_layout = ChimeraGraphLayout()
-        self.G_embedding = GraphEmbedding(8)
-        self.G_embedding_view = GraphEmbedding(H.nodes_count)
 
-        self.mapping = GraphMapping()
+        # --- Layout Graph
+        # Graph to embed H onto
+        self.G_layout = ChimeraGraphLayout(5, 5, 4)
 
-    def get_embedded_nodes(self) -> List:
+        # --- Embedding Graph
+        # Full graph: nodes are labeled according to G
+        self.G_embedding = EmbeddingGraph(self.G_layout.get_size())
+        # View graph: nodes are labeled according to H
+        self.G_embedding_view = EmbeddingGraph(H.nodes_count)
+
+        self.mapping = GraphMapping(H.nodes_count)
+
+    def get_embedded_nodes(self) -> set[int]:
+        """Returns all embedded nodes.
+
+        Returns:
+            set[int]: The embedded nodes.
+        """
         return self.G_embedding.get_embedded_nodes()
 
-    def get_reachable_neighbors(self, from_node):
-        return self.G_layout.get_neighbor_nodes(from_node)
+    def get_reachable_neighbors(self, source):
+        return self.G_layout.get_neighbor_nodes(source)
 
-    def get_free_neighbors(self, from_node) -> List:
-        neighbors = self.G_layout.get_neighbor_nodes(from_node)
+    def get_free_neighbors(self, source) -> set[int]:
+        neighbors = self.G_layout.get_neighbor_nodes(source)
         neighbors_used = self.G_embedding.get_embedded_nodes()
-        neighbors_free = [neighbor for neighbor in neighbors
-                          if neighbor not in neighbors_used]
+        neighbors_free = {neighbor for neighbor in neighbors
+                          if neighbor not in neighbors_used}
         if not neighbors_free:
-            raise NoFreeNeighborNodes(from_node)
+            raise NoFreeNeighborNodes(source)
         return neighbors_free
 
-    def get_connected_neighbors(self, from_node) -> List:
-        return self.G_embedding.get_neighbor_nodes(from_node)
+    def get_embedded_neighbors(self, source) -> set[int]:
+        return self.G_embedding.get_neighbor_nodes(source)
 
-    def embed_edge(self, node_from, node_to) -> None:
-        self.G_embedding.embed_edge(node_from, node_to)
-        node_from_H = self.mapping.add_mapping_new_node_H(node_from)
-        node_to_H = self.mapping.add_mapping_new_node_H(node_to)
-        self.G_embedding_view.embed_edge(node_from_H, node_to_H)
+    def embed_edge(self, node1, node2) -> None:
+        # Embed edge
+        if not self.G_layout.exists_edge(node1, node2):
+            raise NoViableEdge(node1, node2)
+        self.G_embedding.embed_edge(node1, node2)
 
-    def remove_edge_inconsistently(self, from_node, to_node):
-        self.G_embedding.remove_edge(from_node, to_node)
+        # Adjust view graph
+        supernode1 = self.mapping.get_supernode_create_if_not_available(node1)
+        supernode2 = self.mapping.get_supernode_create_if_not_available(node2)
+        if supernode1 != supernode2:  # avoid unnecessary selfloops
+            self.G_embedding_view.embed_edge(supernode1, supernode2)
 
-    def add_chain_to_used_nodes(self, from_node, to_node, to_node_new=None):
+    # def embed_edge_without_mapping(self, node1, node2) -> None:
+    #     # TODO: add warning on how to use this as this will leave inconsistent states
+    #     # if not called correctly
+    #     if not self.G_layout.exists_edge(node1, node2):
+    #         raise NoViableEdge(node1, node2)
+    #     self.G_embedding.embed_edge(node1, node2)
+
+    def embed_edge_with_mapping(self, source_H, source_G, target_H, target_G) -> None:
+        # TODO: add warning that this will overwrite the mapping (!)
+        # not extend it
+        self.G_embedding.embed_edge(source_G, target_G)
+        self.mapping.set_mapping(source_H, source_G)
+        self.mapping.set_mapping(target_H, target_G)
+        self.G_embedding_view.embed_edge(source_H, target_H)
+
+    def remove_edge_inconsistently(self, source, target):
+        self.G_embedding.remove_edge(source, target)
+
+    def exists_edge(self, source, target):
+        return self.G_layout.exists_edge(source, target)
+
+    def get_supernode(self, node_G) -> int:
+        return self.mapping.get_node_H(node_G)
+
+    def get_nodes_in_supernode(self, node_H) -> set[int]:
+        return self.mapping.get_nodes_G(node_H)
+
+    def get_nodes_in_supernode_of(self, node_G) -> set[int]:
+        """Returns the nodes in the supernode that ``node_G`` is in.
+
+        Note that ``node_G`` will be included in the resulting set.
         """
-        Adds a new chain. Does NOT check if this chain is even possible in the
-        graph at the moment. TODO: "insource" the check to this class
+        supernode = self.get_supernode(node_G)
+        return self.get_nodes_in_supernode(supernode)
+
+    def construct_supernode(self, source: int, target: int) -> None:
+        # Embed edge
+        self.G_embedding.embed_edge(source, target)
+
+        # Remove target from previous chain
+        self.try_remove_from_supernode(target)
+
+        # Add to new chain
+        source_supernode = self.mapping.get_supernode_create_if_not_available(source)
+        self.mapping.extend_mapping(source_supernode, target)
+
+    def try_remove_from_supernode(self, node: int):
+        """Removes node from its supernode, leaving us with an inconsistent state.
+
+        If ``node`` was in no supernode, we silently do nothing.
         """
-        # --- Adjust mapping
-        # mapping for from_node stays the same
-        from_node_H = self.mapping.get_node_H(node_G=from_node)
-        # mapping for to_node is adjusted so that from_node_H maps to from_node AND to_node
-        to_node_H = self.mapping.get_node_H(node_G=to_node)
-
-        self.mapping.remove_mapping(to_node_H, to_node)
-        self.mapping.extend_mapping(from_node_H, to_node)
-        self.mapping.extend_mapping(to_node_H, to_node_new)
-
-        # --- Adjust embedding
-        # Delete all edges from node_to and add respective edges from node_to_new
-        to_node_connected_neighbors = self.get_connected_neighbors(to_node)
-        self.G_embedding.delete_all_edges_from_node(to_node)
-        for prev_connected_neighbor in to_node_connected_neighbors:
-            # Avoid edge from node to itself
-            if prev_connected_neighbor in [from_node, to_node_new]:
-                continue
-
-            # to_node_new might be a chain itself
-            nodes_in_chain = self.G_embedding.get_nodes_in_same_chain(
-                to_node_new)
-            embedded = False
-            for node_in_chain in nodes_in_chain:
-                if self.G_layout.exists_edge(prev_connected_neighbor, node_in_chain):
-                    self.G_embedding.embed_edge(
-                        prev_connected_neighbor, node_in_chain
-                    )
-                    embedded = True
-                    break
-            if not embedded:
-                raise RuntimeError('Error adding a chain to used nodes')
-
-        # --- Chain
-        self.G_embedding.add_chain(from_node, to_node)
-        # Add missing edge node_to---node_to_new
-        self.G_embedding.embed_edge(to_node, to_node_new)
-
-        # TODO: adjust embedding for self.G_embedding_small_view (???)
-
-    def extend_one_node_to_chain(self, frm, to, extend_G):
-        """Extends one node to a chain.
-
-        Note that en edge from replace_G to frm must be viable. TODO: add a check
-        """
-        extend_H = self.mapping.get_node_H(node_G=extend_G)
-        self.mapping.extend_mapping(extend_H, frm)
-        self.mapping.extend_mapping(extend_H, to)
-        chain = self.G_embedding.add_chain(frm, to)
-        # avoid inconsistent state
-        self.G_embedding.embed_edge(extend_G, frm, chain=chain)
+        try:
+            supernode = self.get_supernode(node)
+            self.mapping.remove_mapping(supernode, node)
+        except KeyError:
+            pass
 
     def is_valid_embedding(self) -> bool:
-        for frm in self.H._get_nodes():
-            expected_tos = self.H._get_neighbor_nodes(frm)
-            actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
-            if actual_tos != expected_tos:
+        for source in self.H.get_nodes():
+            expected_targets = self.H.get_neighbor_nodes(source)
+            actual_targets = self.G_embedding_view.get_neighbor_nodes(source)
+            if actual_targets != expected_targets:
                 return False
         return True
 
     def get_playground(self):
         return deepcopy(self)
 
-    def get_embedding(self):
-        return self.G_embedding.get_embedding()
+    def get_embedding(self, G_to_H_mapping=True):
+        nodes, edges = self.G_embedding.get_embedding()
+        if G_to_H_mapping:
+            mapping = self.get_mapping_G_to_H()
+        else:
+            mapping = self.get_mapping_H_to_G()
+        return nodes, edges, mapping
 
     def get_mapping_H_to_G(self):
         return self.mapping.get_mapping_H_to_G()
@@ -123,45 +150,178 @@ class Embedding():
     def get_mapping_G_to_H(self):
         return self.mapping.get_mapping_G_to_H()
 
-    def try_to_add_missing_edges(self) -> int:
+    def get_nodes_G(self, node_H: int) -> set[int]:
+        return self.mapping.get_nodes_G(node_H)
+
+    def try_embed_missing_edges(self) -> int:
+        """Tries to embed missing edges if possible.
+
+        Returns:
+            int: How many missing edges were successfully added.
         """
-        Tries to add missing edges if possible.
+        missing_edges_added = set()
 
-        Returns
-        -------
-        How many missing edges were successfully added.
-        """
-        missing_edges_added = 0
+        for source_H in self.H.get_nodes():
+            expected_targets = self.H.get_neighbor_nodes(source_H)
+            actual_targets = self.G_embedding_view.get_neighbor_nodes(source_H)
 
-        for frm in self.H._get_nodes():
-            expected_tos = self.H._get_neighbor_nodes(frm)
-            actual_tos = self.G_embedding_view.get_neighbor_nodes(frm)
-            # actual_tos = [self.G_embedding_view.get_neighbor_nodes(frm)
-            #               for frm in self.mapping.get_node_G(node_H=frm)]
-            # actual_tos = list(itertools.chain(*actual_tos))  # flatten
+            for target_H in expected_targets:
+                if target_H not in actual_targets:
+                    # All possible combination (accounting for supernodes)
+                    source_supernode_nodes = self.get_nodes_in_supernode(source_H)
+                    target_supernode_nodes = self.get_nodes_in_supernode(target_H)
+                    possible_edges = itertools.product(
+                        source_supernode_nodes, target_supernode_nodes)
 
-            for to in expected_tos:
-                if to not in actual_tos:
-                    # print(f'missing edge from H: {frm}-{to}')
-                    # Can we add this edge with the current embedding?
-                    possible_edges = list(itertools.product(
-                        self.mapping.get_node_G(node_H=frm), self.mapping.get_node_G(node_H=to)))
-                    # product since we are dealing with possible chains
-
+                    # Can we add missing edge with the current embedding?
                     for possible_edge in possible_edges:
-                        if self.G_layout.exists_edge(possible_edge[0], possible_edge[1]):
+                        try:
                             self.embed_edge(possible_edge[0], possible_edge[1])
-                            print(f'added missing edge from H: {frm}-{to}')
-                            missing_edges_added += 1
+                            # logger.info(
+                            #     f'➕ Added missing edge in H: {source_H}-{target_H}')
+                            missing_edges_added.add((source_H, target_H))
                             break  # successfully added missing edge
+                        except:
+                            pass  # it's ok if we found no possible edge
 
-        return missing_edges_added
+        # Log
+        logger.info('Try to add missing edges')
+        for edge in missing_edges_added:
+            logger.info(f'➕ Added missing edge in H: {edge[0]}-{edge[1]}')
+
+        return len(missing_edges_added)
+
+    def remove_unnecessary_edges_between_supernodes(self) -> None:
+        """Tries to remove unnecessary edges, e.g. multiple edges between
+        two supernodes.
+        """
+        # For every supernode (chain)
+        for supernode in self.H.get_nodes():
+            considered_supernodes = []
+
+            # For every node in supernode (chain)
+            for node in self.get_nodes_in_supernode(supernode):
+
+                # Go through every edge to a neighbor
+                # that is in ANOTHER supernode
+                for neighbor in self.get_embedded_neighbors(node):
+                    neighbor_supernode = self.get_supernode(neighbor)
+
+                    # Do not consider edges inside of supernodes
+                    if supernode == neighbor_supernode:
+                        continue
+
+                    # Only keep the edge if we didn't have any connection
+                    # to neighbor's supernode yet
+                    if neighbor_supernode not in considered_supernodes:
+                        considered_supernodes.append(neighbor_supernode)
+                    else:
+                        self.G_embedding.remove_edge(node, neighbor)
+                        # No need adjust G_embedding_view as
+                        # this must be preserved by this method
+
+    def remove_redundant_supernode_nodes(self):
+        for supernode in self.H.get_nodes():
+            self.remove_redundant_nodes_in_supernode(supernode)
+
+    def remove_redundant_nodes_in_supernode(self, supernode) -> None:
+        supernode_nodes = self.get_nodes_in_supernode(supernode)
+
+        if len(supernode_nodes) == 1:
+            return
+
+        removed_nodes = set()
+
+        while True:
+            removed_in_this_iteration = False
+
+            # Calculate articulation points
+            # We need to recalculate them every time a node was removed
+            # since the articulation points might change in this case
+            articulation_points = ArticulationPointCalculator(self.G_embedding)\
+                .calc_articulation_points(supernode_nodes - removed_nodes)
+            logger.info(f'supernode {supernode} (nodes: {supernode_nodes}) '
+                        + f'has articulation points: {articulation_points}')
+
+            # Try to remove ONE node in the supernode
+            for node_to_remove in supernode_nodes:
+                if node_to_remove in removed_nodes:
+                    continue
+
+                # Don't remove articulation points (aka "cut nodes")
+                if node_to_remove in articulation_points:
+                    continue
+
+                # Can we reach all previous neighbors of supernode?
+                node_to_remove_neighbors = self.get_embedded_neighbors(node_to_remove)
+                if node_to_remove_neighbors:
+                    rest_nodes_reachable = [self.get_embedded_neighbors(node)
+                                            for node in supernode_nodes
+                                            if node != node_to_remove]
+                    rest_nodes_reachable = itertools.chain(*rest_nodes_reachable)
+
+                    if not all([neighbor in rest_nodes_reachable
+                                for neighbor in node_to_remove_neighbors
+                                # chain connectivity already ensured
+                                if neighbor not in supernode_nodes]):
+                        continue
+
+                # We can now safely remove the node
+                self.remove_node(node_to_remove)
+                removed_in_this_iteration = True
+                removed_nodes.add(node_to_remove)
+                logger.info(f'✂ Removed node: {node_to_remove}')
+
+                # Leave at least one node left of every supernode
+                if len(removed_nodes) == (len(supernode_nodes) - 1):
+                    return
+
+                break
+
+            if not removed_in_this_iteration:
+                return
+
+    def remove_node(self, node: int) -> None:
+        # Embedding
+        self.G_embedding.remove_node(node)
+
+        # Mapping
+        supernode = self.get_supernode(node)
+        self.mapping.remove_mapping(supernode, node)
+
+    def check_supernode_connectiveness(self, supernode: int) -> bool:
+        """Checks that no supernodes are split up into multiple groups
+        by the mutation. All nodes in a supernode must have an edge to at least
+        one other supernode.
+        """
+        supernode_nodes = self.get_nodes_in_supernode(supernode)
+        for node in supernode_nodes:
+            embedded_neighbors = self.get_embedded_neighbors(node)
+
+            reached = False
+            for neighbor in embedded_neighbors:
+                neighbor_supernode = self.get_supernode(neighbor)
+                if neighbor_supernode == supernode:
+                    reached = True
+
+            if not reached:
+                return False
+
+        return True
 
 
 ############################### Exceptions #####################################
 class NoFreeNeighborNodes(Exception):
-    def __init__(self, from_node):
-        self.from_node = from_node
+    def __init__(self, source):
+        self.source = source
 
     def __str__(self):
-        return f'NoFreeNeighborNodes from node: {self.from_node}'
+        return f'Node {self.source} has no free neighbors'
+
+
+class NoViableEdge(Exception):
+    def __init__(self, node1, node2):
+        self.edge = (node1, node2)
+
+    def __str__(self):
+        return f'Not a valid edge: {self.edge[0]}-{self.edge[1]}'
