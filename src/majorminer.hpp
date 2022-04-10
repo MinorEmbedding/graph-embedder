@@ -18,6 +18,9 @@ namespace majorminer
       bool connectsNodes() const;
 
     private:
+      void finishVisualization();
+
+    private:
       EmbeddingState m_state;
       EmbeddingVisualizer* m_visualizer;
       EmbeddingManager m_embeddingManager;

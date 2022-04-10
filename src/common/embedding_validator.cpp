@@ -24,23 +24,10 @@ bool EmbeddingValidator::isDisjoint() const
 
 void EmbeddingValidator::printOverlappings() const
 {
-  fuint32_t distinct = 0;
-  fuint32_t total = 0;
-  nodeset_t targetVertices = getVertices(*m_state.getTargetGraph());
-  const auto& reverse = m_state.getReverseMapping();
-
-  for (auto target : targetVertices)
-  {
-    fuint32_t nbMapped = reverse.count(target);
-    if (nbMapped >= 2)
-    {
-      distinct++;
-      total += nbMapped;
-    }
-  }
-  std::cout << "Overlapping statistics:"          << std::endl
-            << "Distinct overlaps: " << distinct  << std::endl
-            << "Total overlapping: " << total     << std::endl;
+  fuint32_pair_t stats = calculateOverlappingStats(m_state);
+  std::cout << "Overlapping statistics:"              << std::endl
+            << "Distinct overlaps: " << stats.first   << std::endl
+            << "Total overlapping: " << stats.second  << std::endl;
 }
 
 bool EmbeddingValidator::nodesConnected() const

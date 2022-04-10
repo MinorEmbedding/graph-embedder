@@ -33,3 +33,23 @@ nodeset_t majorminer::getVertices(const graph_t& graph)
   }
   return vertices;
 }
+
+
+fuint32_pair_t majorminer::calculateOverlappingStats(const EmbeddingBase& base)
+{
+  fuint32_t distinct = 0;
+  fuint32_t total = 0;
+  nodeset_t targetVertices = getVertices(*base.getTargetGraph());
+  const auto& reverse = base.getReverseMapping();
+
+  for (auto target : targetVertices)
+  {
+    fuint32_t nbMapped = reverse.count(target);
+    if (nbMapped >= 2)
+    {
+      distinct++;
+      total += nbMapped;
+    }
+  }
+  return std::make_pair(distinct, total);
+}

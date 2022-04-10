@@ -1,13 +1,13 @@
 #include "majorminer.hpp"
 
-#include "common/graph_gen.hpp"
-#include "common/utils.hpp"
-#include "common/embedding_validator.hpp"
-#include "common/embedding_visualizer.hpp"
-#include "common/cut_vertex.hpp"
+#include <common/graph_gen.hpp>
+#include <common/utils.hpp>
+#include <common/embedding_validator.hpp>
+#include <common/embedding_visualizer.hpp>
+#include <common/cut_vertex.hpp>
 
-#include "evolutionary/mutation_extend.hpp"
-#include "evolutionary/mutation_frontier_shifting.hpp"
+#include <evolutionary/mutation_extend.hpp>
+#include <evolutionary/mutation_frontier_shifting.hpp>
 
 using namespace majorminer;
 
@@ -27,6 +27,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   }
   m_mutationManager(true);
   m_placer.replaceOverlapping();
+  if (m_visualizer != nullptr) finishVisualization();
   return m_state.getMapping();
 }
 
@@ -42,4 +43,13 @@ bool EmbeddingSuite::connectsNodes() const
 {
   EmbeddingValidator validator{m_state};
   return validator.nodesConnected();
+}
+
+void EmbeddingSuite::finishVisualization()
+{
+  fuint32_pair_t stats = calculateOverlappingStats(m_state);
+  std::stringstream ss;
+  ss  << "Final iteration. Distinct overlaps: " << stats.first
+      << "; Total overlaps: " << stats.second << std::endl;
+  m_visualizer->draw(m_state.getMapping(), ss.str().c_str());
 }

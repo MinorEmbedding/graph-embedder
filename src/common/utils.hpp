@@ -85,6 +85,8 @@ namespace majorminer
   }
 
   nodeset_t getVertices(const graph_t& graph);
+
+  fuint32_pair_t calculateOverlappingStats(const EmbeddingBase& base);
 }
 
 
