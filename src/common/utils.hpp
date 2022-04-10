@@ -84,6 +84,7 @@ namespace majorminer
     while(!s.empty()) s.pop();
   }
 
+  nodeset_t getVertices(const graph_t& graph);
 }
 
 

@@ -34,8 +34,19 @@ namespace majorminer
       std::default_random_engine m_shuffleGenerator;
   };
 
+  template<typename T, typename = std::enable_if_t<std::is_floating_point<T>::value>>
+  struct ProbabilisticDecision
+  {
+    public:
+      ProbabilisticDecision() : m_gen(m_rd()), m_dist(static_cast<T>(0.0), static_cast<T>(1.0)) {}
+      T operator()() { return m_dist(m_gen); }
+      bool operator()(T value) { return m_dist(m_gen) < value; }
 
-
+    private:
+      std::random_device m_rd;
+      std::mt19937 m_gen;
+      std::uniform_real_distribution<T> m_dist;
+  };
 }
 
 

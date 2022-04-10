@@ -24,14 +24,14 @@ namespace
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
   vertex_t sourceVertex)
-  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true)
+  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true), m_improved(false)
 {
   initialize();
 }
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
   const nodeset_t& initial, vertex_t sourceVertex)
-    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false)
+    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false), m_improved(false)
 {
   initialize(initial);
 }
@@ -159,6 +159,7 @@ void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopu
     m_bestSuperVertex.clear();
     const auto& newSuperVertex = parentPopulation[0].getSuperVertex();
     m_bestSuperVertex.insert(newSuperVertex.begin(), newSuperVertex.end());
+    m_improved = true;
   }
 }
 
@@ -193,9 +194,9 @@ void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
     [&](vertex_t adjacentSource){
       if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
   });
-  m_state.iterateReverseMapping(target, [&](vertex_t source){
+  /*m_state.iterateReverseMapping(target, [&](vertex_t source){
       if (m_adjacentSourceVertices.contains(source)) m_temporary.insert(source);
-  });
+  });*/
   for (vertex_t source : m_temporary)
   {
     m_adjacentSources.insert(std::make_pair(target, source));

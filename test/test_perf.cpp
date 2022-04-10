@@ -16,3 +16,5 @@ TEST(PerfTest, CompleteLarge_21)
   auto embedding = suite.find_embedding();
   ASSERT_TRUE(suite.connectsNodes());
 }
+
+

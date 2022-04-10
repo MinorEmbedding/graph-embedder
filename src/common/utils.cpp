@@ -22,3 +22,14 @@ void majorminer::insertMappedTargetNodes(const EmbeddingBase& base, nodeset_t& n
   auto equalRange = mapping.equal_range(sourceNode);
   for (auto it = equalRange.first; it != equalRange.second; ++it) nodes.insert(it->second);
 }
+
+nodeset_t majorminer::getVertices(const graph_t& graph)
+{
+  nodeset_t vertices{};
+  for (const auto& edge : graph)
+  {
+    vertices.insert(edge.first);
+    vertices.insert(edge.second);
+  }
+  return vertices;
+}

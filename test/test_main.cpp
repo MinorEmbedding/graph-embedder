@@ -47,7 +47,7 @@ TEST(EmbeddingTest, Cycle_5_Extra_Edges)
   auto visualizer = std::make_unique<ChimeraVisualizer>(cycle, chimera, "imgs/Cycle_5_Extra_Edges/chimera_cycle_5_ExtraEdges", 1, 1);
   EmbeddingSuite suite{cycle, chimera, visualizer.get()};
   auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.isValid());
+  ASSERT_TRUE(suite.connectsNodes());
 }
 
 TEST(EmbeddingTest, Cycle_5_Extra_Edges_On_2_2_Chimera)
@@ -114,6 +114,16 @@ TEST(EmbeddingTest, Complete_Graph_21_On_11_11_Chimera)
   ASSERT_TRUE(suite.connectsNodes());
 }
 
+TEST(EmbeddingTest, Complete_Graph_25_On_16_16_Chimera)
+{
+  graph_t clique = generate_completegraph(25);
+  graph_t chimera = generate_chimera(16, 16);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_25_On_16_16_Chimera/chimera_clique_25", 16, 16);
+  EmbeddingSuite suite{clique, chimera, visualizer.get()};
+  auto embedding = suite.find_embedding();
+  ASSERT_TRUE(suite.connectsNodes());
+}
+
 TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
 {
   graph_t cycle = generate_cyclegraph(8);
@@ -172,5 +182,16 @@ TEST(EmbeddingTest, K33_On_Petersen_Kuratowski)
   auto visualizer = std::make_unique<GenericVisualizer>(k33, petersen, "imgs/PetersenNotPlanar/petersen_kuratowski", coords, 14, 14);
   EmbeddingSuite suite{k33, petersen, visualizer.get()};
   auto embedding = suite.find_embedding();
+  ASSERT_TRUE(suite.connectsNodes());
 }
 
+
+TEST(EmbeddingTest, ErdosRenyi_Chimera_7_7)
+{
+  graph_t erdos = generate_erdosrenyi(35, 0.1);
+  graph_t chimera = generate_chimera(7, 7);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(erdos, chimera, "imgs/ErdosRenyi_Chimera_7_7/ErdosRenyi_Chimera_7_7", 7, 7);
+  EmbeddingSuite suite { erdos, chimera, visualizer.get() };
+  suite.find_embedding();
+  ASSERT_TRUE(suite.connectsNodes());
+}

@@ -31,6 +31,10 @@ namespace majorminer
   /// Import an edge list from a character array.
   graph_t import_graph(const char* edgeList, size_t length);
 
+  // Generate an erdös-renyi graph on n vertices. For each pair of vertices
+  // create an edge between the pair with "probability"
+  graph_t generate_erdosrenyi(fuint32_t n, float probability);
+
 }
 
 

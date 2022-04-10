@@ -61,6 +61,7 @@ namespace majorminer
 
       void optimize();
       const nodeset_t& getPlacement() const { return m_bestSuperVertex; }
+      bool foundBetter() const { return m_improved; }
 
     private:
       void initialize();
@@ -86,6 +87,7 @@ namespace majorminer
       vertex_t m_sourceVertex;
       bool m_wasPlaced;
       bool m_expansionPossible;
+      bool m_improved;
 
       Vector<CSCIndividual> m_populationA;
       Vector<CSCIndividual> m_populationB;
