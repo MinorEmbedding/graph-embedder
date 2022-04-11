@@ -3,6 +3,7 @@
 #include <common/utils.hpp>
 #include <common/cut_vertex.hpp>
 #include <common/embedding_state.hpp>
+#include <common/embedding_visualizer.hpp>
 
 #define POPULATION_SIZE 5
 #define ITERATION_LIMIT 10
@@ -24,14 +25,16 @@ namespace
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
   vertex_t sourceVertex)
-  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true), m_improved(false)
+  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true),
+    m_improved(false), m_visualizer(nullptr)
 {
   initialize();
 }
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
   const nodeset_t& initial, vertex_t sourceVertex)
-    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false), m_improved(false)
+    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false),
+      m_improved(false), m_visualizer(nullptr)
 {
   initialize(initial);
 }
@@ -44,7 +47,8 @@ void EvolutionaryCSCReducer::optimize()
 
   for (fuint32_t iteration = 0; iteration < ITERATION_LIMIT; ++iteration)
   {
-    //std::cout << "Iteration " << iteration << std::endl;
+    std::cout << "Iteration " << iteration << std::endl;
+    if (m_visualizer != nullptr) visualize(iteration + 1, current);
     optimizeIteration(*current);
     //std::cout << "Done optimizing iteration" << std::endl;
 
@@ -56,6 +60,38 @@ void EvolutionaryCSCReducer::optimize()
     }
     // std::cout << "================= " << std::endl;
   }
+  if (m_visualizer != nullptr) visualize(FUINT32_UNDEF, nullptr);
+}
+
+#define CREATE_STRING(vertices) \
+  ss << "Final solution with fitness " << getFitness(vertices) << " and size " << vertices.size() << ".";
+
+#define CREATE_IT_STRING(vertices) \
+  ss << "Iteration " << iteration << " individual " << (idx+1) << " has fitness "  << getFitness(vertices) << " and size " << vertices.size() << ".";
+
+
+void EvolutionaryCSCReducer::visualize(fuint32_t iteration, Vector<CSCIndividual>* population)
+{
+  if (!isDefined(iteration))
+  {
+    std::stringstream ss;
+    CREATE_STRING(m_bestSuperVertex);
+    embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), m_bestSuperVertex, m_sourceVertex);
+    m_visualizer->draw(adjusted, ss.str().c_str());
+  }
+  else
+  {
+    std::stringstream ss;
+    for (fuint32_t idx = 0; idx < population->size(); ++idx)
+    {
+      const auto& placement = population->at(idx).getSuperVertex();
+      CREATE_IT_STRING(placement)
+      embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), m_bestSuperVertex, m_sourceVertex);
+      m_visualizer->draw(adjusted, ss.str().c_str());
+      ss.str(std::string());
+    }
+  }
+
 }
 
 
@@ -173,6 +209,7 @@ bool EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentP
     const CSCIndividual* parentB = tournamentSelection(parentPopulation);
     bool success = childPopulation[idx].fromCrossover(*parentA, *parentB);
     if (success) idx++;
+    else std::cout << "Dead crossover!" << std::endl;
   }
   return remainingAttemps > 0;
 }
@@ -308,7 +345,7 @@ void CSCIndividual::optimize()
   if (m_done) return;
   mutate();
 
-  reduce();
+  //reduce();
   m_fitness = m_reducer->getFitness(m_superVertex);
   m_done = true;
   // printVertexNumberMap(m_connectivity);

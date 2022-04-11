@@ -87,6 +87,10 @@ namespace majorminer
   nodeset_t getVertices(const graph_t& graph);
 
   fuint32_pair_t calculateOverlappingStats(const EmbeddingBase& base);
+
+  // inefficient - just for visualization
+  embedding_mapping_t replaceMapping(const embedding_mapping_t& mapping, 
+    const nodeset_t& targets, vertex_t source);
 }
 
 

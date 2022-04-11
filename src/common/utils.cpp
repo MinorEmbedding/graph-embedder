@@ -53,3 +53,16 @@ fuint32_pair_t majorminer::calculateOverlappingStats(const EmbeddingBase& base)
   }
   return std::make_pair(distinct, total);
 }
+
+embedding_mapping_t majorminer::replaceMapping(const embedding_mapping_t& mapping, 
+    const nodeset_t& targets, vertex_t source)
+{
+  embedding_mapping_t adjusted{};
+  adjusted.insert(mapping.begin(), mapping.end());
+  adjusted.unsafe_erase(source);
+  for (auto target : targets)
+  {
+    adjusted.insert(std::make_pair(source, target));
+  }
+  return adjusted;
+}

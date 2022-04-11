@@ -59,6 +59,7 @@ namespace majorminer
       EvolutionaryCSCReducer(const EmbeddingState& state, vertex_t sourceVertex);
       EvolutionaryCSCReducer(const EmbeddingState& state, const nodeset_t& initial, vertex_t sourceVertex);
 
+      void setVisualizer(EmbeddingVisualizer* vis) { m_visualizer = vis; }
       void optimize();
       const nodeset_t& getPlacement() const { return m_bestSuperVertex; }
       bool foundBetter() const { return m_improved; }
@@ -73,6 +74,7 @@ namespace majorminer
       bool createNextGeneration(Vector<CSCIndividual>& parentPopulation, Vector<CSCIndividual>& childPopulation);
       void prepareVertex(vertex_t target);
       const CSCIndividual* tournamentSelection(const Vector<CSCIndividual>& parentPopulation);
+      void visualize(fuint32_t iteration, Vector<CSCIndividual>* population);
 
     private: // called mainly by CSCIndividual
       void addConnectivity(VertexNumberMap& connectivity, vertex_t target);
@@ -88,6 +90,8 @@ namespace majorminer
       bool m_wasPlaced;
       bool m_expansionPossible;
       bool m_improved;
+
+      EmbeddingVisualizer* m_visualizer;
 
       Vector<CSCIndividual> m_populationA;
       Vector<CSCIndividual> m_populationB;
