@@ -86,7 +86,7 @@ void EvolutionaryCSCReducer::visualize(fuint32_t iteration, Vector<CSCIndividual
     {
       const auto& placement = population->at(idx).getSuperVertex();
       CREATE_IT_STRING(placement)
-      embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), m_bestSuperVertex, m_sourceVertex);
+      embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), placement, m_sourceVertex);
       m_visualizer->draw(adjusted, ss.str().c_str());
       ss.str(std::string());
     }
@@ -345,7 +345,7 @@ void CSCIndividual::optimize()
   if (m_done) return;
   mutate();
 
-  //reduce();
+  reduce();
   m_fitness = m_reducer->getFitness(m_superVertex);
   m_done = true;
   // printVertexNumberMap(m_connectivity);
@@ -386,7 +386,7 @@ void CSCIndividual::mutate()
   fuint32_t numberAdded = 1;
   addVertex(m_sourceVertex);
   m_iteratorStack.push(targetGraph.equal_range(startVertex));
-  while(!m_iteratorStack.empty() && numberAdded < MAX_NEW_VERTICES)
+  while(!m_iteratorStack.empty() && numberAdded <= MAX_NEW_VERTICES)
   {
     auto& top = m_iteratorStack.top();
     if (top.first == top.second)
