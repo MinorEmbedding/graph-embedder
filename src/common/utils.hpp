@@ -89,7 +89,7 @@ namespace majorminer
   fuint32_pair_t calculateOverlappingStats(const EmbeddingBase& base);
 
   // inefficient - just for visualization
-  embedding_mapping_t replaceMapping(const embedding_mapping_t& mapping, 
+  embedding_mapping_t replaceMapping(const embedding_mapping_t& mapping,
     const nodeset_t& targets, vertex_t source);
 }
 

@@ -23,6 +23,11 @@ void StateGen::addMapping(const embedding_mapping_t& mapping)
   }
 }
 
+void StateGen::addMapping(vertex_t source, const nodeset_t& mapping)
+{
+  for (auto target : mapping) m_mapping.insert(std::make_pair(source, target));
+}
+
 std::unique_ptr<EmbeddingState> StateGen::get()
 {
   auto state = std::make_unique<EmbeddingState>(m_source, m_target, nullptr);
@@ -35,4 +40,14 @@ std::unique_ptr<EmbeddingState> StateGen::get()
     occupied.insert(edge.first);
   }
   return state;
+}
+
+void StateGen::removeSuperVertex(vertex_t sourceVertex)
+{
+  graph_t remove{};
+  for (const auto& mapped : m_mapping)
+  {
+    if (mapped.first == sourceVertex) remove.insert(mapped);
+  }
+  for (const auto& mapped : remove) m_mapping.unsafe_erase(mapped);
 }

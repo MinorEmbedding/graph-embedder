@@ -19,6 +19,8 @@ namespace majorminer
       bool fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB);
       void optimize();
       const nodeset_t& getSuperVertex() const { return m_superVertex; }
+      bool isConnected() const;
+      void printConnectivity() const;
 
     private:
       void addVertex(vertex_t target);
@@ -72,7 +74,7 @@ namespace majorminer
       void initializePopulations();
       void optimizeIteration(Vector<CSCIndividual>& parentPopulation);
       bool createNextGeneration(Vector<CSCIndividual>& parentPopulation, Vector<CSCIndividual>& childPopulation);
-      void prepareVertex(vertex_t target);
+      void prepareVertex(vertex_t target, bool count = true);
       const CSCIndividual* tournamentSelection(const Vector<CSCIndividual>& parentPopulation);
       void visualize(fuint32_t iteration, Vector<CSCIndividual>* population);
 

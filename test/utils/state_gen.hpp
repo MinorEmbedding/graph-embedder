@@ -15,8 +15,12 @@ namespace majorminer
 
       void addMapping(const embedding_mapping_t& mapping);
       void addMapping(std::initializer_list<edge_t> mapping);
+      void addMapping(vertex_t source, const nodeset_t& mapping);
       void addMapping(vertex_t source, std::initializer_list<vertex_t> targetVertices);
       std::unique_ptr<EmbeddingState> get();
+      std::unique_ptr<EmbeddingState> operator()() { return get(); }
+
+      void removeSuperVertex(vertex_t sourceVertex);
 
     private:
       const graph_t& m_source;
