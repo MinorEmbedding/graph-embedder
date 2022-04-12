@@ -25,9 +25,6 @@ class SupernodeExtension():
         self._embedding = embedding
         self._non_viable_extensions = []
 
-    def reset(self) -> None:
-        self._non_viable_extensions = []
-
     def extend_random_supernode_to_free_neighbors(self) -> Optional[Embedding]:
         """Chooses a random supernode an extends it to a free neighbor."""
         logger.info('Trying to extend random supernode to free neighbors')

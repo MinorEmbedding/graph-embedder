@@ -19,12 +19,12 @@ logger = logging.getLogger('evolution')
 params = EvolutionParams(
     population_size=7,
     max_mutation_trials=30,
-    mutation_extend_to_free_neighbors_probability=0.3 # should be less than 0.5
+    mutation_extend_to_free_neighbors_probability=0.3  # should be less than 0.5
 )
 
 max_total = 1
 max_generations = 300
-remove_redundant_nodes_probability = 0.1
+remove_redundant_nodes_probability = 0.02
 
 
 ############################### Evolution ######################################
@@ -81,6 +81,7 @@ def main(d: DrawEmbedding) -> bool:
         solver.commit(child)
         save_embedding(*solver.get_embedding(), d, i,
                        title=f'Generation {i}')
+
         # Check if done
         if child.is_valid_embedding():
             logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')

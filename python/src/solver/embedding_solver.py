@@ -26,7 +26,6 @@ class EmbeddingSolver():
             raise NameError('The minor to embed must have at least two nodes')
 
         self._embedding = Embedding(H)
-        self.non_viable_mutations = []
         self.initialization = Initialization(self._embedding)
         self._supernode_extension = SupernodeExtension(self._embedding)
 
@@ -39,10 +38,7 @@ class EmbeddingSolver():
 
     def commit(self, playground: Embedding):
         self._embedding = playground
-        self.reset()
-
-    def reset(self):
-        self.non_viable_mutations = []
+        self._supernode_extension = SupernodeExtension(self._embedding)
 
     def generate_population_and_select(self, params: EvolutionParams) -> Optional[Embedding]:
         """Generates a new population & selects and returns the best individual
@@ -89,7 +85,7 @@ class EmbeddingSolver():
             if random.random() < params.mutation_extend_to_free_neighbors_probability:
                 mutation = self._supernode_extension.extend_random_supernode_to_free_neighbors()
             else:
-            mutation = self._supernode_extension.extend_random_supernode()
+                mutation = self._supernode_extension.extend_random_supernode()
 
             if mutation:
                 logger.info(f'💚 Valid mutation for child {child_number}')
@@ -100,6 +96,9 @@ class EmbeddingSolver():
         return None
 
     def _select_best_child(self, population: list[Embedding]):
+        logger.info('')
+        logger.info('Select best child')
+
         # Try to optimize to local maximum first
         improvements = []
         for i, child in enumerate(population):
