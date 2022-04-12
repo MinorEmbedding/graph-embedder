@@ -7,8 +7,8 @@
 
 #define POPULATION_SIZE 5
 #define ITERATION_LIMIT 10
-#define MAX_NEW_VERTICES 5
-#define REDUCE_ITERATION_COEFFICIENT 2
+#define MAX_NEW_VERTICES 15
+#define REDUCE_ITERATION_COEFFICIENT 1
 
 static double TIME_MUTATION, TIME_REDUCE;
 static double GENERATE_POP, OPTIMIZE;
@@ -476,14 +476,17 @@ void CSCIndividual::reduce()
   {
     fuint32_t randomIdx = m_random->getRandomUint(vectorSize - 1);
     vertex_t* current = &m_vertexVector[randomIdx];
-    if (tryRemove(*current))
+    if (!m_superVertex.contains(*current) || tryDfsRemove(*current, iteration))
     {
       *current = m_vertexVector.back();
       m_vertexVector.resize(--vectorSize);
     }
   }
 
-  for (idx = 0; idx < vectorSize; ++idx) tryRemove(m_vertexVector[idx]);
+  for (idx = 0; idx < vectorSize; ++idx)
+  {
+    if (m_superVertex.contains(m_vertexVector[idx])) tryRemove(m_vertexVector[idx]);
+  }
 }
 
 void CSCIndividual::addVertex(vertex_t target)
@@ -508,5 +511,29 @@ bool CSCIndividual::tryRemove(vertex_t target)
   }
   m_temporarySet.clear();
   return false;
+}
+
+bool CSCIndividual::tryDfsRemove(vertex_t target, fuint32_t& iteration)
+{
+  if (!tryRemove(target)) return false;
+
+  const auto& targetGraph = m_state->getTargetAdjGraph();
+  clearStack(m_iteratorStack);
+  m_iteratorStack.push(targetGraph.equal_range(target));
+  while(!m_iteratorStack.empty())
+  {
+    auto& top = m_iteratorStack.top();
+    if (top.first == top.second) m_iteratorStack.pop();
+    else if (m_superVertex.contains(top.first->second))
+    {
+      vertex_t adjacent = top.first->second;
+      top.first++;
+      iteration++;
+      bool success = tryRemove(adjacent);
+      if (success) m_iteratorStack.push(targetGraph.equal_range(adjacent));
+    }
+    else top.first++;
+  }
+  return true;
 }
 

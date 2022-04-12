@@ -25,6 +25,7 @@ namespace majorminer
     private:
       void addVertex(vertex_t target);
       bool tryRemove(vertex_t target);
+      bool tryDfsRemove(vertex_t target, fuint32_t& iteration);
       void mutate();
       void reduce();
       void setupConnectivity();

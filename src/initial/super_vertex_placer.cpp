@@ -30,22 +30,21 @@ void SuperVertexPlacer::operator()()
 
 void SuperVertexPlacer::replaceOverlapping()
 {
-  return;
   nodeset_t overlapping{};
   fuint32_t maxIterations = 5;
   identifyOverlapping(overlapping);
   // std::cout << "In replaceOverlapping. Overlapping size is " << overlapping.size() << std::endl;
-  const auto& sourceGraph = m_state.getSourceAdjGraph();
+  // const auto& sourceGraph = m_state.getSourceAdjGraph();
 
   for (fuint32_t idx = 0; idx < maxIterations && !overlapping.empty(); ++idx)
   {
     // std::cout << "Replace overlapping; iteration " << (idx + 1) << std::endl;
     for (vertex_t vertex : overlapping)
     {
-      //improveMapping(vertex);
-      m_embeddingManager.unmapNode(vertex);
-      embeddNodeNetworkSimplex(vertex);
-      visualize(vertex, PlacedNodeType::COMPLEX, sourceGraph.count(vertex));
+      improveMapping(vertex);
+      //m_embeddingManager.unmapNode(vertex);
+      //embeddNodeNetworkSimplex(vertex);
+      //visualize(vertex, PlacedNodeType::COMPLEX, sourceGraph.count(vertex));
     }
 
     if (idx + 1 != maxIterations) identifyOverlapping(overlapping);
@@ -79,8 +78,10 @@ void SuperVertexPlacer::improveMapping(vertex_t source)
     m_embeddingManager.unmapNode(source);
     const auto& superVertex = reducer.getPlacement();
     m_embeddingManager.mapNode(source, superVertex);
-    std::cout << "Improved mapping!" << std::endl;
-    visualize(source, PlacedNodeType::COMPLEX, sourceGraph.count(source));
+    if (m_state.hasVisualizer())
+    {
+      visualize(source, PlacedNodeType::COMPLEX, sourceGraph.count(source));
+    }
   }
 }
 
