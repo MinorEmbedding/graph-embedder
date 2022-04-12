@@ -10,6 +10,19 @@
 #define MAX_NEW_VERTICES 5
 #define REDUCE_ITERATION_COEFFICIENT 2
 
+static double TIME_MUTATION, TIME_REDUCE;
+static double GENERATE_POP, OPTIMIZE;
+
+#include <chrono>
+#define CHRONO_STUFF(t1, t2, diff, var, ...)  \
+  auto t1 = std::chrono::high_resolution_clock::now();    \
+  { __VA_ARGS__ }                                         \
+  auto t2 = std::chrono::high_resolution_clock::now();    \
+  std::chrono::duration<double> diff = t2 - t1;           \
+  var+=diff.count();
+
+#define PRINT_TIME(name) std::cout << "Time: " << #name << ": " << name << std::endl;
+
 using namespace majorminer;
 
 namespace
@@ -47,24 +60,30 @@ void EvolutionaryCSCReducer::optimize()
 
   for (fuint32_t iteration = 0; iteration < ITERATION_LIMIT; ++iteration)
   {
-    optimizeIteration(*current);
+    CHRONO_STUFF(t1,t2,diff1,OPTIMIZE, optimizeIteration(*current);)
     if (m_visualizer != nullptr) visualize(iteration + 1, current);
 
     if (iteration + 1 != ITERATION_LIMIT)
     {
+      CHRONO_STUFF(t3,t4,diff2,GENERATE_POP,
       bool success = createNextGeneration(*current, *next);
-      if (!success) break;
+      if (!success) break;)
       swapPointers(current, next);
     }
   }
   if (m_visualizer != nullptr) visualize(FUINT32_UNDEF, nullptr);
+  PRINT_TIME(TIME_MUTATION)
+  PRINT_TIME(TIME_REDUCE)
+  PRINT_TIME(OPTIMIZE)
+  PRINT_TIME(GENERATE_POP)
+
 }
 
 #define CREATE_STRING(vertices) \
   ss << "Final solution with fitness " << getFitness(vertices) << " and size " << vertices.size() << ".";
 
 #define CREATE_IT_STRING(vertices) \
-  ss << "Iteration " << iteration << " individual " << (idx+1) << " has fitness "  << getFitness(vertices) << " and size " << vertices.size() << " conn: " << population->at(idx).isConnected() << ".";
+  ss << "Iteration " << iteration << " individual " << (idx+1) << " has fitness "  << getFitness(vertices) << " and size " << vertices.size() << ".";
 
 
 void EvolutionaryCSCReducer::visualize(fuint32_t iteration, Vector<CSCIndividual>* population)
@@ -124,6 +143,10 @@ void EvolutionaryCSCReducer::initialize(const nodeset_t& initial)
 void EvolutionaryCSCReducer::setup()
 {
   if (!canExpand()) return;
+  TIME_MUTATION = 0;
+  TIME_REDUCE = 0;
+  OPTIMIZE = 0;
+  GENERATE_POP = 0;
 
   const auto& mapping = m_state.getMapping();
 
@@ -178,18 +201,6 @@ bool EvolutionaryCSCReducer::canExpand()
 
 void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopulation)
 {
-  /*if (m_visualizer != nullptr)
-  {
-    fuint32_t idx = 1;
-    for (auto& parent : parentPopulation)
-    {
-      const auto& placement = parent.getSuperVertex();
-      embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), placement, m_sourceVertex);
-      std::stringstream ss;
-      ss << "Parent " << idx++ << " before optimization." << std::endl;
-      m_visualizer->draw(adjusted, ss.str().c_str());
-    }
-  }*/
   // optimize all in parent population
   for (auto& parent : parentPopulation) parent.optimize();
 
@@ -370,9 +381,9 @@ void CSCIndividual::setupConnectivity()
 void CSCIndividual::optimize()
 {
   if (m_done) return;
-  mutate();
+  CHRONO_STUFF(t1,t2,diff1,TIME_MUTATION, mutate();)
 
-  reduce();
+  CHRONO_STUFF(t3,t4,diff2, TIME_REDUCE, reduce();)
   m_fitness = m_reducer->getFitness(m_superVertex);
   m_done = true;
 }

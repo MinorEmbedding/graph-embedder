@@ -37,8 +37,8 @@ namespace
 
 TEST(ReducerTest, SimpleEvoReducer)
 {
-  graph_t clique = majorminer::generate_completegraph(12);
-  graph_t chimera = majorminer::generate_chimera(4,4);
-  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/SimpleEvoReducer/SimpleEvoReducer", 4, 4);
-  runTest(clique, chimera, visualizer.get(), 3);
+  graph_t clique = majorminer::generate_completegraph(18);
+  graph_t chimera = majorminer::generate_chimera(8,8);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/SimpleEvoReducer/SimpleEvoReducer", 8,8);
+  runTest(clique, chimera, visualizer.get(), 17);
 }
