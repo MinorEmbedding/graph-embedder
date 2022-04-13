@@ -156,6 +156,20 @@ class Embedding():
     def get_nodes_G(self, node_H: int) -> set[int]:
         return self.mapping.get_nodes_G(node_H)
 
+    def get_nodes_H(self) -> set[int]:
+        return self.H.get_nodes()
+
+    def get_supernode_degree_percentages(self) -> dict[int, float]:
+        """Returns a dictionary of percentages for each supernode indicating
+        how many edges between supernodes are currently embedded in G compared
+        to how many should be as specified in the input graph H."""
+        degree_percentages = {}
+        for source_H in self.H.get_nodes():
+            expected_degree = len(self.H.get_neighbor_nodes(source_H))
+            actual_degree = len(self.G_embedding_view.get_neighbor_nodes(source_H))
+            degree_percentages[source_H] = actual_degree / expected_degree
+        return degree_percentages
+
     def try_embed_missing_edges(self) -> int:
         """Tries to embed missing edges if possible.
 
@@ -224,6 +238,7 @@ class Embedding():
                         # this must be preserved by this method
 
     def remove_redundant_supernode_nodes(self):
+        logging.info('Removing redundant supernode nodes')
         for supernode in self.H.get_nodes():
             self.remove_redundant_nodes_in_supernode(supernode)
 
@@ -234,7 +249,6 @@ class Embedding():
             return
 
         removed_nodes = set()
-
         while True:
             removed_in_this_iteration = False
 

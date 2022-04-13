@@ -4,6 +4,7 @@ from collections import namedtuple
 from dataclasses import dataclass
 from typing import Optional
 
+import numpy as np
 from src.embedding.embedding import Embedding, NoFreeNeighborNodes
 from src.util.util import any_of_one_in_other, get_first_from
 
@@ -26,15 +27,17 @@ class SupernodeExtension():
         self._non_viable_extensions = []
 
     def extend_random_supernode_to_free_neighbors(self) -> Optional[Embedding]:
-        """Chooses a random supernode an extends it to a free neighbor."""
+        """Chooses a random supernode and extends it to a free neighbor."""
         logger.info('Trying to extend random supernode to free neighbors')
         playground = self._embedding.get_playground()
-        embedded_nodes = playground.get_embedded_nodes()
+
+        supernode = self._choose_random_supernode_with_bias()
+        supernode_nodes = self._embedding.get_nodes_in_supernode(supernode)
 
         max_trials = 10
         tried_nodes = set()
-        for _ in range(min(len(embedded_nodes), max_trials)):
-            source = random.choice(list(embedded_nodes - tried_nodes))
+        for _ in range(min(len(supernode_nodes), max_trials)):
+            source = random.choice(list(supernode_nodes - tried_nodes))
 
             try:
                 free_neighbors = playground.get_free_neighbors(source)
@@ -44,11 +47,23 @@ class SupernodeExtension():
 
             target = random.choice(list(free_neighbors))
             playground.construct_supernode(source, target)
-            logger.info(f'-> Extended node {source} to {target}')
+            logger.info(f'-> Extended node {source} (supernode: {supernode}) to {target}')
             return playground
 
-        logger.info('-> ❌ failed')
+        logger.info(f'-> ❌ failed (for supernode {supernode})')
         return None
+
+    def _choose_random_supernode_with_bias(self) -> int:
+        """Randomly chooses a supernode from H such that supernodes, which have
+        the least number of edges to other supernodes embedded in G, are favored.
+        Thus, we won't pick an element according to a uniform distribution, but to
+        a custom one (using numpy)."""
+        degree_percentages = self._embedding.get_supernode_degree_percentages()
+        sum_p = np.sum([(1-p) for p in degree_percentages.values()])
+        degree_percentages = [(1-p)/sum_p for p in degree_percentages.values()]
+        supernodes = list(self._embedding.get_nodes_H())
+        supernode = np.random.choice(supernodes, p=degree_percentages)
+        return supernode
 
     def extend_random_supernode(self) -> Optional[Embedding]:
         """Chooses a random supernode and extends it to an already embedded
@@ -234,22 +249,41 @@ class SupernodeExtension():
         return reachable_neighbor
 
     def _choose_source_and_target(self) -> Optional[SourceTargetPair]:
-        for _ in range(5):
-            pair = self._choose_source_and_target_not_in_same_supernode()
-            if pair:
-                return pair
-        logger.info(f'Could not find valid source/target pair')
+        supernode = self._choose_random_supernode_with_bias()
+        supernode_nodes = self._embedding.get_nodes_in_supernode(supernode)
+
+        max_trials = 5
+        for _ in range(max_trials):
+            source = random.choice(list(supernode_nodes))
+            target = self._choose_neighbor_not_in_same_supernode(source, supernode)
+            if target:
+                return SourceTargetPair(source, target)
+
+        logger.info(f'❌ Could not find a valid source/target pair')
         return None
 
-    def _choose_source_and_target_not_in_same_supernode(self) -> Optional[SourceTargetPair]:
-        source = self._choose_random_embedded_node()
-        source_supernode = self._embedding.get_supernode(source)
-
+    def _choose_neighbor_not_in_same_supernode(self, source: int,
+                                               source_supernode: int) -> Optional[int]:
+        """Tries to randomly choose a neighbor of the given source node
+        that is not in the same supernode as the source node.
+        Returns nothing if this condition cannot be met for the given node."""
         targets = self._embedding.get_embedded_neighbors(source)
         targets = [t for t in targets
                    if self._embedding.get_supernode(t) != source_supernode]
         if not targets:
             return None
-
         target = random.choice(list(targets))
-        return SourceTargetPair(source, target)
+        return target
+
+    # def _choose_source_and_target_not_in_same_supernode(self) -> Optional[SourceTargetPair]:
+    #     source = self._choose_random_embedded_node()
+    #     source_supernode = self._embedding.get_supernode(source)
+
+    #     targets = self._embedding.get_embedded_neighbors(source)
+    #     targets = [t for t in targets
+    #                if self._embedding.get_supernode(t) != source_supernode]
+    #     if not targets:
+    #         return None
+
+    #     target = random.choice(list(targets))
+    #     return SourceTargetPair(source, target)
