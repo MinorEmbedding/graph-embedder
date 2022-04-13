@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 import numpy as np
+from src.embedding.articulation_point import ArticulationPointCalculator
 from src.embedding.embedding import Embedding, NoFreeNeighborNodes
 from src.util.util import any_of_one_in_other, get_first_from
 
@@ -264,26 +265,29 @@ class SupernodeExtension():
 
     def _choose_neighbor_not_in_same_supernode(self, source: int,
                                                source_supernode: int) -> Optional[int]:
-        """Tries to randomly choose a neighbor of the given source node
-        that is not in the same supernode as the source node.
-        Returns nothing if this condition cannot be met for the given node."""
-        targets = self._embedding.get_embedded_neighbors(source)
-        targets = [t for t in targets
-                   if self._embedding.get_supernode(t) != source_supernode]
+        """Tries to randomly choose a neighbor (target) for the given source node
+        that is not in the same supernode as the source node AND that is not
+        an articulation point in its own supernode.
+        Returns nothing if this condition cannot be met for the given source node
+        and its neighbors."""
+        targets_orig = self._embedding.get_embedded_neighbors(source)
+        targets = []
+        for target in targets_orig:
+            # Is target in the same supernode as source?
+            if self._embedding.get_supernode(target) == source_supernode:
+                continue
+
+            # Is target an articulation point?
+            target_supernode_nodes = self._embedding.get_nodes_in_supernode_of(target)
+            articulation_points = ArticulationPointCalculator(self._embedding.G_embedding)\
+                .calc_articulation_points(target_supernode_nodes)
+            if target in articulation_points:
+                continue
+
+            targets.append(target)
+
         if not targets:
             return None
+
         target = random.choice(list(targets))
         return target
-
-    # def _choose_source_and_target_not_in_same_supernode(self) -> Optional[SourceTargetPair]:
-    #     source = self._choose_random_embedded_node()
-    #     source_supernode = self._embedding.get_supernode(source)
-
-    #     targets = self._embedding.get_embedded_neighbors(source)
-    #     targets = [t for t in targets
-    #                if self._embedding.get_supernode(t) != source_supernode]
-    #     if not targets:
-    #         return None
-
-    #     target = random.choice(list(targets))
-    #     return SourceTargetPair(source, target)
