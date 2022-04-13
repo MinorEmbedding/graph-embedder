@@ -17,14 +17,14 @@ logger = logging.getLogger('evolution')
 ################################# Params #######################################
 
 params = EvolutionParams(
-    population_size=7,
+    population_size=12,
     max_mutation_trials=30,
     mutation_extend_to_free_neighbors_probability=0.3  # should be less than 0.5
 )
 
 max_total = 1
 max_generations = 300
-remove_redundant_nodes_probability = 0.02
+remove_redundant_nodes_probability = 0.01
 
 
 ############################### Evolution ######################################
@@ -71,6 +71,7 @@ def main(d: DrawEmbedding) -> bool:
         return True
 
     # --- Start solver
+
     for i in range(max_generations):
         child = do_one_generation(i, solver)
 
@@ -79,12 +80,19 @@ def main(d: DrawEmbedding) -> bool:
             return False
 
         solver.commit(child)
-        save_embedding(*solver.get_embedding(), d, i,
-                       title=f'Generation {i}')
+
+        # Save embedding every x steps
+        if i % 30 == 0 or i == max_generations - 1:
+            save_embedding(*solver.get_embedding(), d, i,
+                           title=f'Generation {i}')
 
         # Check if done
         if child.is_valid_embedding():
+            child.remove_redundant_supernode_nodes()
+            save_embedding(*solver.get_embedding(), d, i,
+                           title=f'Generation {i} (final with redundancy removed)')
             logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
+            print('🎉🎉🎉🎉🎉🎉 Found embedding')
             return True
         else:
             logger.info('✅ Generation passed')

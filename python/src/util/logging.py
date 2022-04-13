@@ -3,6 +3,10 @@ import logging.handlers
 import os
 
 
+def disable_logger():
+    logging.disable(logging.CRITICAL)
+
+
 def init_logger():
     logger = logging.getLogger('evolution')
     logger.setLevel(logging.DEBUG)
@@ -23,11 +27,4 @@ def init_logger():
     console_handler.setLevel(logging.WARNING)
     logging.getLogger().addHandler(console_handler)
 
-    # logging.disable()
-
-# logging.basicConfig(filename="evolution.log",
-#                     # filemode='a',
-#                     format='%(asctime)s,%(msecs)d %(name)s %(levelname)s %(message)s',
-#                     datefmt='%H:%M:%S',
-#                     level=logging.DEBUG)
-# logger = logging.getLogger('evolution')
+# disable_logger()
