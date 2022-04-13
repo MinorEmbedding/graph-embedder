@@ -45,9 +45,12 @@ class EmbeddingSolver():
         from it."""
         population = self._generate_children(params)
         if not population:
-            logger.info(f'🔳 Population generation failed')
-            return None
-        elif len(population) < params.population_size:
+            population = self.last_trial(params)
+            if not population:
+                logger.info(f'🔳 Population generation failed')
+                return None
+
+        if len(population) < params.population_size:
             logger.info(f'🔳 {params.max_mutation_trials} mutations to construct '
                         ' a new child failed, will return a smaller population: '
                         f'{len(population)}/{params.population_size}')
@@ -55,11 +58,11 @@ class EmbeddingSolver():
         selected_population = self._select_best_child(population)
         return selected_population
 
-        # TODO: "before all fails" strategy
-        # Before all fails: try to remove unnecessary supernode nodes
-        # and try once more
-        # self._embedding.remove_redundant_supernode_nodes()
-        # logger.info(f'🔳 Last trial, remove redundant nodes')
+    def last_trial(self, params: EvolutionParams) -> Optional[list[Embedding]]:
+        """Try to remove unnecessary supernode nodes and generate a new population"""
+        logger.info(f'🔳 Last trial, remove redundant nodes')
+        self._embedding.remove_redundant_supernode_nodes()
+        return self._generate_children(params)
 
     def _generate_children(self, params: EvolutionParams) -> list[Embedding]:
         """Generates children (Embeddings) for one population."""
