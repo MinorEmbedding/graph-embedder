@@ -19,10 +19,13 @@ namespace majorminer
       bool fromCrossover(const CSCIndividual& individualA, const CSCIndividual& individualB);
       void optimize();
       const nodeset_t& getSuperVertex() const { return m_superVertex; }
+      bool isConnected() const;
+      void printConnectivity() const;
 
     private:
       void addVertex(vertex_t target);
       bool tryRemove(vertex_t target);
+      bool tryDfsRemove(vertex_t target, fuint32_t& iteration);
       void mutate();
       void reduce();
       void setupConnectivity();
@@ -59,8 +62,10 @@ namespace majorminer
       EvolutionaryCSCReducer(const EmbeddingState& state, vertex_t sourceVertex);
       EvolutionaryCSCReducer(const EmbeddingState& state, const nodeset_t& initial, vertex_t sourceVertex);
 
+      void setVisualizer(EmbeddingVisualizer* vis) { m_visualizer = vis; }
       void optimize();
       const nodeset_t& getPlacement() const { return m_bestSuperVertex; }
+      bool foundBetter() const { return m_improved; }
 
     private:
       void initialize();
@@ -70,8 +75,9 @@ namespace majorminer
       void initializePopulations();
       void optimizeIteration(Vector<CSCIndividual>& parentPopulation);
       bool createNextGeneration(Vector<CSCIndividual>& parentPopulation, Vector<CSCIndividual>& childPopulation);
-      void prepareVertex(vertex_t target);
+      void prepareVertex(vertex_t target, bool count = true);
       const CSCIndividual* tournamentSelection(const Vector<CSCIndividual>& parentPopulation);
+      void visualize(fuint32_t iteration, Vector<CSCIndividual>* population);
 
     private: // called mainly by CSCIndividual
       void addConnectivity(VertexNumberMap& connectivity, vertex_t target);
@@ -86,6 +92,9 @@ namespace majorminer
       vertex_t m_sourceVertex;
       bool m_wasPlaced;
       bool m_expansionPossible;
+      bool m_improved;
+
+      EmbeddingVisualizer* m_visualizer;
 
       Vector<CSCIndividual> m_populationA;
       Vector<CSCIndividual> m_populationB;

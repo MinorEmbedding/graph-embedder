@@ -52,7 +52,6 @@ void MutationManager::operator()(bool finalIteration)
   incorporate();
   prep.join();
   m_embeddingManager.synchronize();
-  // std::cout << "Ending mutations with " << m_prepQueue.unsafe_size() << " in prep queue and " << m_incorporationQueue.size() << " in incorporation queue." << std::endl;
 }
 
 void MutationManager::prepare()

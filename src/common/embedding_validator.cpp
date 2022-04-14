@@ -1,7 +1,7 @@
 #include "embedding_validator.hpp"
 
-#include "common/utils.hpp"
-#include "common/embedding_state.hpp"
+#include <common/utils.hpp>
+#include <common/embedding_state.hpp>
 
 using namespace majorminer;
 
@@ -14,6 +14,7 @@ bool EmbeddingValidator::isDisjoint() const
     if (nodesOccupied.contains(mapped.second))
     {
       DEBUG(OUT_S << "Not an injective mapping." << std::endl;)
+      DEBUG(printOverlappings();)
       return false;
     }
     nodesOccupied.insert(mapped.second);
@@ -21,6 +22,13 @@ bool EmbeddingValidator::isDisjoint() const
   return true;
 }
 
+void EmbeddingValidator::printOverlappings() const
+{
+  fuint32_pair_t stats = calculateOverlappingStats(m_state);
+  std::cout << "Overlapping statistics:"              << std::endl
+            << "Distinct overlaps: " << stats.first   << std::endl
+            << "Total overlapping: " << stats.second  << std::endl;
+}
 
 bool EmbeddingValidator::nodesConnected() const
 {

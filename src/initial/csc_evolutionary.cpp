@@ -3,11 +3,25 @@
 #include <common/utils.hpp>
 #include <common/cut_vertex.hpp>
 #include <common/embedding_state.hpp>
+#include <common/embedding_visualizer.hpp>
 
 #define POPULATION_SIZE 5
 #define ITERATION_LIMIT 10
-#define MAX_NEW_VERTICES 5
-#define REDUCE_ITERATION_COEFFICIENT 2
+#define MAX_NEW_VERTICES 15
+#define REDUCE_ITERATION_COEFFICIENT 1
+
+static double TIME_MUTATION, TIME_REDUCE;
+static double GENERATE_POP, OPTIMIZE;
+
+#include <chrono>
+#define CHRONO_STUFF(t1, t2, diff, var, ...)  \
+  auto t1 = std::chrono::high_resolution_clock::now();    \
+  { __VA_ARGS__ }                                         \
+  auto t2 = std::chrono::high_resolution_clock::now();    \
+  std::chrono::duration<double> diff = t2 - t1;           \
+  var+=diff.count();
+
+#define PRINT_TIME(name) std::cout << "Time: " << #name << ": " << name << std::endl;
 
 using namespace majorminer;
 
@@ -24,14 +38,16 @@ namespace
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
   vertex_t sourceVertex)
-  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true)
+  : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true),
+    m_improved(false), m_visualizer(nullptr)
 {
   initialize();
 }
 
 EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
   const nodeset_t& initial, vertex_t sourceVertex)
-    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false)
+    : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false),
+      m_improved(false), m_visualizer(nullptr)
 {
   initialize(initial);
 }
@@ -44,18 +60,54 @@ void EvolutionaryCSCReducer::optimize()
 
   for (fuint32_t iteration = 0; iteration < ITERATION_LIMIT; ++iteration)
   {
-    //std::cout << "Iteration " << iteration << std::endl;
-    optimizeIteration(*current);
-    //std::cout << "Done optimizing iteration" << std::endl;
+    CHRONO_STUFF(t1,t2,diff1,OPTIMIZE, optimizeIteration(*current);)
+    if (m_visualizer != nullptr) visualize(iteration + 1, current);
 
     if (iteration + 1 != ITERATION_LIMIT)
     {
+      CHRONO_STUFF(t3,t4,diff2,GENERATE_POP,
       bool success = createNextGeneration(*current, *next);
-      if (!success) break;
+      if (!success) break;)
       swapPointers(current, next);
     }
-    // std::cout << "================= " << std::endl;
   }
+  if (m_visualizer != nullptr) visualize(FUINT32_UNDEF, nullptr);
+  PRINT_TIME(TIME_MUTATION)
+  PRINT_TIME(TIME_REDUCE)
+  PRINT_TIME(OPTIMIZE)
+  PRINT_TIME(GENERATE_POP)
+
+}
+
+#define CREATE_STRING(vertices) \
+  ss << "Final solution with fitness " << getFitness(vertices) << " and size " << vertices.size() << ".";
+
+#define CREATE_IT_STRING(vertices) \
+  ss << "Iteration " << iteration << " individual " << (idx+1) << " has fitness "  << getFitness(vertices) << " and size " << vertices.size() << ".";
+
+
+void EvolutionaryCSCReducer::visualize(fuint32_t iteration, Vector<CSCIndividual>* population)
+{
+  if (!isDefined(iteration))
+  {
+    std::stringstream ss;
+    CREATE_STRING(m_bestSuperVertex);
+    embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), m_bestSuperVertex, m_sourceVertex);
+    m_visualizer->draw(adjusted, ss.str().c_str());
+  }
+  else
+  {
+    std::stringstream ss;
+    for (fuint32_t idx = 0; idx < population->size(); ++idx)
+    {
+      const auto& placement = population->at(idx).getSuperVertex();
+      CREATE_IT_STRING(placement)
+      embedding_mapping_t adjusted = replaceMapping(m_state.getMapping(), placement, m_sourceVertex);
+      m_visualizer->draw(adjusted, ss.str().c_str());
+      ss.str(std::string());
+    }
+  }
+
 }
 
 
@@ -67,8 +119,9 @@ void EvolutionaryCSCReducer::initialize()
   for (auto mappedIt = range.first; mappedIt != range.second; ++mappedIt)
   {
     m_bestSuperVertex.insert(mappedIt->second);
+    fuint32_t nbMapped = reverse.count(mappedIt->second);
     m_vertexFitness.insert(std::make_pair(mappedIt->second,
-      reverse.count(mappedIt->second) - 1));
+      nbMapped >= 1 ? nbMapped - 1 : 0));
   }
 
   setup();
@@ -90,6 +143,10 @@ void EvolutionaryCSCReducer::initialize(const nodeset_t& initial)
 void EvolutionaryCSCReducer::setup()
 {
   if (!canExpand()) return;
+  TIME_MUTATION = 0;
+  TIME_REDUCE = 0;
+  OPTIMIZE = 0;
+  GENERATE_POP = 0;
 
   const auto& mapping = m_state.getMapping();
 
@@ -99,7 +156,7 @@ void EvolutionaryCSCReducer::setup()
   });
 
   // Prepare intial "m_adjacentSources" adjacency list
-  for (vertex_t target : m_bestSuperVertex) prepareVertex(target);
+  for (vertex_t target : m_bestSuperVertex) prepareVertex(target, false);
 
   m_bestFitness = getFitness(m_bestSuperVertex);
   initializePopulations();
@@ -159,6 +216,7 @@ void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopu
     m_bestSuperVertex.clear();
     const auto& newSuperVertex = parentPopulation[0].getSuperVertex();
     m_bestSuperVertex.insert(newSuperVertex.begin(), newSuperVertex.end());
+    m_improved = true;
   }
 }
 
@@ -172,6 +230,7 @@ bool EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentP
     const CSCIndividual* parentB = tournamentSelection(parentPopulation);
     bool success = childPopulation[idx].fromCrossover(*parentA, *parentB);
     if (success) idx++;
+    else std::cout << "Dead crossover!" << std::endl;
   }
   return remainingAttemps > 0;
 }
@@ -186,7 +245,7 @@ const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CS
 }
 
 
-void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
+void EvolutionaryCSCReducer::prepareVertex(vertex_t target, bool count)
 {
   m_temporary.clear();
   m_state.iterateTargetAdjacentReverseMapping(target,
@@ -200,6 +259,8 @@ void EvolutionaryCSCReducer::prepareVertex(vertex_t target)
   {
     m_adjacentSources.insert(std::make_pair(target, source));
   }
+  const auto& reverse = m_state.getReverseMapping();
+  if (count) m_vertexFitness.insert(std::make_pair(target, reverse.count(target)));
   m_preparedVertices.insert(target);
 }
 
@@ -247,8 +308,18 @@ void EvolutionaryCSCReducer::removeVertex(VertexNumberMap& connectivity, vertex_
   auto range = m_adjacentSources.equal_range(target);
   for (auto it = range.first; it != range.second; ++it)
   {
-    connectivity[it->second]--;
+    auto findIt = connectivity.find(it->second);
+    if (findIt != connectivity.end()) findIt->second--;
   }
+}
+
+bool CSCIndividual::isConnected() const
+{
+  for (const auto& connect : m_connectivity)
+  {
+    if (connect.second == 0) return false;
+  }
+  return true;
 }
 
 void CSCIndividual::initialize(EvolutionaryCSCReducer& reducer, vertex_t sourceVertex)
@@ -288,6 +359,11 @@ bool CSCIndividual::fromCrossover(const CSCIndividual& individualA, const CSCInd
   return true;
 }
 
+void CSCIndividual::printConnectivity() const
+{
+  printVertexNumberMap(m_connectivity);
+}
+
 void CSCIndividual::setupConnectivity()
 {
   const auto& adjacentSourceVertices = m_reducer->getAdjacentSourceVertices();
@@ -305,12 +381,11 @@ void CSCIndividual::setupConnectivity()
 void CSCIndividual::optimize()
 {
   if (m_done) return;
-  mutate();
+  CHRONO_STUFF(t1,t2,diff1,TIME_MUTATION, mutate();)
 
-  reduce();
+  CHRONO_STUFF(t3,t4,diff2, TIME_REDUCE, reduce();)
   m_fitness = m_reducer->getFitness(m_superVertex);
   m_done = true;
-  // printVertexNumberMap(m_connectivity);
 }
 
 
@@ -331,7 +406,10 @@ void CSCIndividual::mutate()
   {
     m_state->iterateFreeTargetAdjacent(vertex,
       [&](vertex_t adjacentTarget){
-        m_temporarySet.insert(adjacentTarget);
+        if(!m_superVertex.contains(adjacentTarget))
+        {
+          m_temporarySet.insert(adjacentTarget);
+        }
     });
   }
   if (m_temporarySet.empty()) return;
@@ -346,9 +424,9 @@ void CSCIndividual::mutate()
   const auto& remaining = m_state->getRemainingTargetNodes();
 
   fuint32_t numberAdded = 1;
-  addVertex(m_sourceVertex);
+  addVertex(startVertex);
   m_iteratorStack.push(targetGraph.equal_range(startVertex));
-  while(!m_iteratorStack.empty() && numberAdded < MAX_NEW_VERTICES)
+  while(!m_iteratorStack.empty() && numberAdded <= MAX_NEW_VERTICES)
   {
     auto& top = m_iteratorStack.top();
     if (top.first == top.second)
@@ -398,18 +476,22 @@ void CSCIndividual::reduce()
   {
     fuint32_t randomIdx = m_random->getRandomUint(vectorSize - 1);
     vertex_t* current = &m_vertexVector[randomIdx];
-    if (tryRemove(*current))
+    if (!m_superVertex.contains(*current) || tryDfsRemove(*current, iteration))
     {
       *current = m_vertexVector.back();
       m_vertexVector.resize(--vectorSize);
     }
   }
 
-  for (idx = 0; idx < vectorSize; ++idx) tryRemove(m_vertexVector[idx]);
+  for (idx = 0; idx < vectorSize; ++idx)
+  {
+    if (m_superVertex.contains(m_vertexVector[idx])) tryRemove(m_vertexVector[idx]);
+  }
 }
 
 void CSCIndividual::addVertex(vertex_t target)
 {
+  if (m_superVertex.contains(target)) return;
   m_reducer->addConnectivity(m_connectivity, target);
   m_superVertex.insert(target);
 }
@@ -419,6 +501,7 @@ bool CSCIndividual::tryRemove(vertex_t target)
   // Remove if not a cut vertex
   if (!m_reducer->isRemoveable(m_connectivity, target)) return false;
 
+  m_temporarySet.clear();
   m_temporarySet.insert(m_superVertex.begin(), m_superVertex.end());
   if (!isCutVertex(*m_state, m_temporarySet, target))
   {
@@ -426,6 +509,31 @@ bool CSCIndividual::tryRemove(vertex_t target)
     m_superVertex.unsafe_erase(target);
     return true;
   }
+  m_temporarySet.clear();
   return false;
+}
+
+bool CSCIndividual::tryDfsRemove(vertex_t target, fuint32_t& iteration)
+{
+  if (!tryRemove(target)) return false;
+
+  const auto& targetGraph = m_state->getTargetAdjGraph();
+  clearStack(m_iteratorStack);
+  m_iteratorStack.push(targetGraph.equal_range(target));
+  while(!m_iteratorStack.empty())
+  {
+    auto& top = m_iteratorStack.top();
+    if (top.first == top.second) m_iteratorStack.pop();
+    else if (m_superVertex.contains(top.first->second))
+    {
+      vertex_t adjacent = top.first->second;
+      top.first++;
+      iteration++;
+      bool success = tryRemove(adjacent);
+      if (success) m_iteratorStack.push(targetGraph.equal_range(adjacent));
+    }
+    else top.first++;
+  }
+  return true;
 }
 

@@ -27,6 +27,17 @@ namespace
     };
     return coords;
   }
+
+  void clique_test(fuint32_t n, fuint32_t x, fuint32_t y, std::string filename, bool fullValidation)
+  {
+    graph_t clique = generate_completegraph(n);
+    graph_t chimera = generate_chimera(x, y);
+    auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, filename, x, y);
+    EmbeddingSuite suite{clique, chimera, visualizer.get()};
+    auto embedding = suite.find_embedding();
+    if (fullValidation) ASSERT_TRUE(suite.isValid());
+    else ASSERT_TRUE(suite.connectsNodes());
+  }
 }
 
 TEST(EmbeddingTest, Basic_Cycle_4)
@@ -47,7 +58,7 @@ TEST(EmbeddingTest, Cycle_5_Extra_Edges)
   auto visualizer = std::make_unique<ChimeraVisualizer>(cycle, chimera, "imgs/Cycle_5_Extra_Edges/chimera_cycle_5_ExtraEdges", 1, 1);
   EmbeddingSuite suite{cycle, chimera, visualizer.get()};
   auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.isValid());
+  ASSERT_TRUE(suite.connectsNodes());
 }
 
 TEST(EmbeddingTest, Cycle_5_Extra_Edges_On_2_2_Chimera)
@@ -63,55 +74,47 @@ TEST(EmbeddingTest, Cycle_5_Extra_Edges_On_2_2_Chimera)
 
 TEST(EmbeddingTest, Complete_Graph_8_On_3_3_Chimera)
 {
-  graph_t clique = generate_completegraph(8);
-  graph_t chimera = generate_chimera(3, 3);
-  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_8_On_3_3_Chimera/chimera_clique_8", 3, 3);
-  EmbeddingSuite suite{clique, chimera, visualizer.get()};
-  auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  clique_test(8, 3, 3, "imgs/Complete_Graph_8_On_3_3_Chimera/chimera_clique_8", false);
 }
 
 
 TEST(EmbeddingTest, Complete_Graph_12_On_5_5_Chimera)
 {
-  graph_t clique = generate_completegraph(12);
-  graph_t chimera = generate_chimera(5, 5);
-  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_12_On_5_5_Chimera/chimera_clique_12", 5, 5);
-  EmbeddingSuite suite{clique, chimera, visualizer.get()};
-  auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  clique_test(12, 5, 5, "imgs/Complete_Graph_12_On_5_5_Chimera/chimera_clique_12", false);
 }
 
 
 TEST(EmbeddingTest, Complete_Graph_15_On_7_7_Chimera)
 {
-  graph_t clique = generate_completegraph(15);
-  graph_t chimera = generate_chimera(7,7);
-  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_15_On_7_7_Chimera/chimera_clique_15", 7, 7);
-  EmbeddingSuite suite{clique, chimera, visualizer.get()};
-  auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  clique_test(15, 7, 7, "imgs/Complete_Graph_15_On_7_7_Chimera/chimera_clique_15", false);
 }
 
 
 TEST(EmbeddingTest, Complete_Graph_18_On_9_9_Chimera)
 {
-  graph_t clique = generate_completegraph(18);
-  graph_t chimera = generate_chimera(9,9);
-  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_18_On_9_9_Chimera/chimera_clique_18", 9, 9);
-  EmbeddingSuite suite{clique, chimera, visualizer.get()};
-  auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  clique_test(18, 9, 9, "imgs/Complete_Graph_18_On_9_9_Chimera/chimera_clique_18", false);
 }
 
 TEST(EmbeddingTest, Complete_Graph_21_On_11_11_Chimera)
 {
-  graph_t clique = generate_completegraph(21);
-  graph_t chimera = generate_chimera(11, 11);
-  auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, "imgs/Complete_Graph_21_On_11_11_Chimera/chimera_clique_21", 11, 11);
-  EmbeddingSuite suite{clique, chimera, visualizer.get()};
-  auto embedding = suite.find_embedding();
-  ASSERT_TRUE(suite.connectsNodes());
+  clique_test(21, 11, 11, "imgs/Complete_Graph_21_On_11_11_Chimera/chimera_clique_21", false);
+}
+
+TEST(EmbeddingTest, Complete_Graph_25_On_16_16_Chimera)
+{
+  clique_test(25, 16, 16, "imgs/Complete_Graph_25_On_16_16_Chimera/chimera_clique_25", false);
+}
+
+
+TEST(EmbeddingTest, Complete_Graph_28_On_16_16_Chimera)
+{
+  clique_test(28, 16, 16, "imgs/Complete_Graph_28_On_16_16_Chimera/chimera_clique_28", false);
+}
+
+
+TEST(EmbeddingTest, Complete_Graph_31_On_16_16_Chimera)
+{
+  clique_test(31, 16, 16, "imgs/Complete_Graph_31_On_16_16_Chimera/chimera_clique_31", false);
 }
 
 TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
@@ -172,5 +175,16 @@ TEST(EmbeddingTest, K33_On_Petersen_Kuratowski)
   auto visualizer = std::make_unique<GenericVisualizer>(k33, petersen, "imgs/PetersenNotPlanar/petersen_kuratowski", coords, 14, 14);
   EmbeddingSuite suite{k33, petersen, visualizer.get()};
   auto embedding = suite.find_embedding();
+  ASSERT_TRUE(suite.connectsNodes());
 }
 
+
+TEST(EmbeddingTest, ErdosRenyi_Chimera_7_7)
+{
+  graph_t erdos = generate_erdosrenyi(35, 0.1);
+  graph_t chimera = generate_chimera(7, 7);
+  auto visualizer = std::make_unique<ChimeraVisualizer>(erdos, chimera, "imgs/ErdosRenyi_Chimera_7_7/ErdosRenyi_Chimera_7_7", 7, 7);
+  EmbeddingSuite suite { erdos, chimera, visualizer.get() };
+  suite.find_embedding();
+  ASSERT_TRUE(suite.connectsNodes());
+}

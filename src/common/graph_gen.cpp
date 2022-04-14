@@ -5,6 +5,8 @@
 #include <memory>
 #include <iostream>
 
+#include <common/random_gen.hpp>
+
 using namespace majorminer;
 
 graph_t majorminer::generate_chimera(fuint32_t rows, fuint32_t cols)
@@ -202,3 +204,19 @@ graph_t majorminer::generate_petersen()
   };
   return petersen;
 }
+
+
+graph_t majorminer::generate_erdosrenyi(fuint32_t n, float probability)
+{
+  ProbabilisticDecision<float> rand{};
+  graph_t erdos{};
+  for (fuint32_t i = 0; i < n; ++i)
+  {
+    for (fuint32_t j = i + 1; j < n; ++j)
+    {
+      if (rand(probability)) erdos.insert(std::make_pair(i,j));
+    }
+  }
+  return erdos;
+}
+

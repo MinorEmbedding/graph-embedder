@@ -17,7 +17,8 @@ namespace majorminer
       bool isValid() const { return isDisjoint() && nodesConnected(); }
 
     private:
-      void printMissingEdges(fuint32_t node) const;
+      void printMissingEdges(vertex_t node) const;
+      void printOverlappings() const;
 
     private:
       const EmbeddingState& m_state;

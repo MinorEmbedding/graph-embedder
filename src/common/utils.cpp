@@ -22,3 +22,47 @@ void majorminer::insertMappedTargetNodes(const EmbeddingBase& base, nodeset_t& n
   auto equalRange = mapping.equal_range(sourceNode);
   for (auto it = equalRange.first; it != equalRange.second; ++it) nodes.insert(it->second);
 }
+
+nodeset_t majorminer::getVertices(const graph_t& graph)
+{
+  nodeset_t vertices{};
+  for (const auto& edge : graph)
+  {
+    vertices.insert(edge.first);
+    vertices.insert(edge.second);
+  }
+  return vertices;
+}
+
+
+fuint32_pair_t majorminer::calculateOverlappingStats(const EmbeddingBase& base)
+{
+  fuint32_t distinct = 0;
+  fuint32_t total = 0;
+  nodeset_t targetVertices = getVertices(*base.getTargetGraph());
+  const auto& reverse = base.getReverseMapping();
+
+  for (auto target : targetVertices)
+  {
+    fuint32_t nbMapped = reverse.count(target);
+    if (nbMapped >= 2)
+    {
+      distinct++;
+      total += nbMapped;
+    }
+  }
+  return std::make_pair(distinct, total);
+}
+
+embedding_mapping_t majorminer::replaceMapping(const embedding_mapping_t& mapping, 
+    const nodeset_t& targets, vertex_t source)
+{
+  embedding_mapping_t adjusted{};
+  adjusted.insert(mapping.begin(), mapping.end());
+  adjusted.unsafe_erase(source);
+  for (auto target : targets)
+  {
+    adjusted.insert(std::make_pair(source, target));
+  }
+  return adjusted;
+}

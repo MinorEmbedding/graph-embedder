@@ -2,6 +2,7 @@
 
 #include <common/embedding_state.hpp>
 #include <common/embedding_manager.hpp>
+#include <common/utils.hpp>
 
 
 using namespace majorminer;
@@ -19,7 +20,7 @@ NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(
   {
     if (mapping.contains(adjacentNode->second)) n++;
   }
-  if (n < 2) throw std::runtime_error("Invalid number of embedded adjacent nodes! < 2...");
+  // if (n < 2) throw std::runtime_error("Invalid number of embedded adjacent nodes! < 2...");
   return n;
 }
 
@@ -34,59 +35,88 @@ void NetworkSimplexWrapper::constructLemonGraph(LemonArcMap<cost_t>& costs, Lemo
     LemonArc uv = m_graph.addArc(uNode, vNode);
     LemonArc vu = m_graph.addArc(vNode, uNode);
     m_edgeMap.insert(std::make_pair(arc, std::make_pair(uv, vu)));
-    caps[uv] = m_numberAdjacentLowered;
-    caps[vu] = m_numberAdjacentLowered;
+    caps[uv] = m_numberAdjacent;
+    caps[vu] = m_numberAdjacent;
     costs[uv] = determineCost(arc.first);
     costs[vu] = determineCost(arc.second);
   }
 }
 
+vertex_t NetworkSimplexWrapper::chooseSource(vertex_t source) const
+{
+  vertex_t bestFound = FUINT32_UNDEF;
+  m_state.iterateSourceMappingAdjacent<true>(source,
+    [&](vertex_t adjacent, vertex_t){
+      bestFound = adjacent;
+      return true;
+  });
+  if (isDefined(bestFound)) return bestFound;
 
-void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, const adjacency_list_range_iterator_t& adjacentIt)
+  const auto& reverse = m_state.getReverseMapping();
+  const auto& remaining = m_state.getRemainingTargetNodes();
+  fuint32_t numberMapped = FUINT32_UNDEF;
+
+  m_state.iterateSourceMappingAdjacent<false>(source,
+    [&](vertex_t adjacent, vertex_t){
+      if (remaining.contains(adjacent)) return false;
+      fuint32_t nb = reverse.count(adjacent);
+      if (nb < numberMapped)
+      {
+        numberMapped = nb;
+        bestFound = adjacent;
+      }
+      return numberMapped == 1; // we can skip if we find a vertex
+  });
+  if (!isDefined(bestFound)) throw std::runtime_error("Isolated vertex in network simplex!");
+  return bestFound;
+}
+
+void NetworkSimplexWrapper::createCheapArc(LemonNode& from, LemonNode& to,
+    LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, capacity_t capacity)
+{
+  auto temp = m_graph.addArc(from, to);
+  costs[temp] = 0;
+  caps[temp] = capacity;
+}
+
+void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps,
+    const adjacency_list_range_iterator_t& adjacentIt)
 {
   // define nodes for construction
-  bool first = true;
   const auto& mapping = m_state.getMapping();
 
+  vertex_t adjacentCandidate = FUINT32_UNDEF;
+
+  // sink vertices
   for (auto adjacentNode = adjacentIt.first; adjacentNode != adjacentIt.second; ++adjacentNode)
   {
     auto embeddingPath = mapping.equal_range(adjacentNode->second);
     if (embeddingPath.first == embeddingPath.second) continue;
-    if (first)
-    { // define s node connection
-      auto toNode = m_nodeMap[embeddingPath.first->second];
-      m_sConnected = embeddingPath.first->second;
-      auto arc = m_graph.addArc(*m_s, toNode);
-      costs[arc] = 0;
-      caps[arc] = m_numberAdjacentLowered;
-      first = false;
-      adjustCosts(embeddingPath.first->second, costs);
-      continue;
-    }
+    adjacentCandidate = adjacentNode->second;
 
-
-    // DEBUG(OUT_S << "Adding construction for node " << adjacentNode->second << std::endl;)
     LemonNode constructionNode = m_graph.addNode();
-    auto out = m_graph.addArc(constructionNode, *m_t);
-    costs[out] = 0;
-    caps[out] = 1;
+    createCheapArc(constructionNode, *m_t, costs, caps);
 
     for (auto targetNode = embeddingPath.first; targetNode != embeddingPath.second; ++targetNode)
     {
       LemonNode& fromNode = m_nodeMap[targetNode->second];
-      auto temp = m_graph.addArc(fromNode, constructionNode);
-      costs[temp] = 0;
-      caps[temp] = 1;
+      createCheapArc(fromNode, constructionNode, costs, caps);
     }
   }
+
+  // source vertex
+  vertex_t sVertex = chooseSource(adjacentCandidate);
+  LemonNode& toNode = m_nodeMap[sVertex];
+  m_sConnected = sVertex;
+  createCheapArc(*m_s, toNode, costs, caps, m_numberAdjacent);
+  //adjustCosts(sVertex, costs);
 }
 
-void NetworkSimplexWrapper::embeddNode(fuint32_t node)
+void NetworkSimplexWrapper::embeddNode(vertex_t node)
 {
   clear();
   auto adjacentIt = m_state.getSourceAdjGraph().equal_range(node);
-  m_numberAdjacentLowered = getNumberAdjacentNodes(adjacentIt) - 1;
-  // DEBUG(OUT_S << "Flow of " << lowered << " needed." << std::endl;)
+  m_numberAdjacent = getNumberAdjacentNodes(adjacentIt);
 
   LemonArcMap<cost_t> costs(m_graph);
   LemonArcMap<capacity_t> caps(m_graph);
@@ -99,32 +129,24 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
   constructHelperNodes(costs, caps, adjacentIt);
 
   NetworkSimplex ns(m_graph);
-  ns.costMap(costs).upperMap(caps).stSupply(*m_s, *m_t, m_numberAdjacentLowered);
+  ns.costMap(costs).upperMap(caps).stSupply(*m_s, *m_t, m_numberAdjacent);
   LemonArcMap<capacity_t> flows(m_graph);
   NetworkSimplex::ProblemType status = ns.run();
   if (status == NetworkSimplex::OPTIMAL)
   {
     LemonArcMap<capacity_t> flows{m_graph};
     ns.flowMap(flows);
-    fuint32_t nbOutFlows = 0;
     for (const auto& arc : m_edgeMap)
     {
-      // DEBUG(OUT_S << "(" << arc.first.first << "," << arc.first.second << "): " << flows[arc.second.first] << std::endl;)
-      // DEBUG(OUT_S << "(" << arc.first.second << "," << arc.first.first << "): " << flows[arc.second.second] << std::endl;)
       if (flows[arc.second.first] > 0)
       {
         m_mapped.insert(arc.first.first);
-        if (arc.first.first == m_sConnected) nbOutFlows++;
       }
       if (flows[arc.second.second] > 0)
       {
-        if (arc.first.second == m_sConnected) nbOutFlows++;
         m_mapped.insert(arc.first.second);
       }
     }
-    // OUT_S << "Number outflows " << nbOutFlows << std::endl;
-    //if (nbOutFlows < 2 && m_mapped.size() > 1) m_mapped.unsafe_erase(m_sConnected);
-    // m_embeddingManager.mapNode(node, m_mapped);
   }
   else if(status == NetworkSimplex::INFEASIBLE)
   {
@@ -137,7 +159,7 @@ void NetworkSimplexWrapper::embeddNode(fuint32_t node)
 }
 
 
-void NetworkSimplexWrapper::adjustCosts(fuint32_t node, LemonArcMap<cost_t>& costs)
+void NetworkSimplexWrapper::adjustCosts(vertex_t node, LemonArcMap<cost_t>& costs)
 {
   auto adjacentIt = m_state.getTargetAdjGraph().equal_range(node);
   const auto& targetNodesRemaining = m_state.getRemainingTargetNodes();
@@ -156,7 +178,7 @@ void NetworkSimplexWrapper::adjustCosts(fuint32_t node, LemonArcMap<cost_t>& cos
     }
   }
 }
-const NetworkSimplexWrapper::LemonArcPair& NetworkSimplexWrapper::getArcPair(fuint32_t n1, fuint32_t n2)
+const NetworkSimplexWrapper::LemonArcPair& NetworkSimplexWrapper::getArcPair(vertex_t n1, vertex_t n2)
 {
   auto findIt = m_edgeMap.find(edge_t{n1, n2});
   if (findIt != m_edgeMap.end())
@@ -166,7 +188,7 @@ const NetworkSimplexWrapper::LemonArcPair& NetworkSimplexWrapper::getArcPair(fui
   return m_edgeMap[edge_t{n2, n1}];
 }
 
-NetworkSimplexWrapper::LemonNode NetworkSimplexWrapper::createNode(fuint32_t node)
+NetworkSimplexWrapper::LemonNode NetworkSimplexWrapper::createNode(vertex_t node)
 {
   auto findIt = m_nodeMap.find(node);
   if (findIt == m_nodeMap.end())
@@ -177,7 +199,7 @@ NetworkSimplexWrapper::LemonNode NetworkSimplexWrapper::createNode(fuint32_t nod
   return findIt->second;
 }
 
-NetworkSimplexWrapper::cost_t NetworkSimplexWrapper::determineCost(fuint32_t node)
+NetworkSimplexWrapper::cost_t NetworkSimplexWrapper::determineCost(vertex_t node)
 {
   return m_state.isNodeOccupied(node) ? OCCUPIED : FREE;
 }
@@ -191,6 +213,6 @@ void NetworkSimplexWrapper::clear()
 
   m_s = nullptr;
   m_t = nullptr;
-  m_numberAdjacentLowered = 0;
+  m_numberAdjacent = 0;
   m_sConnected = -1;
 }

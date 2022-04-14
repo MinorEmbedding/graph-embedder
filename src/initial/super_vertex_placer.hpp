@@ -20,6 +20,7 @@ namespace majorminer
 
     private:
       void identifyOverlapping(nodeset_t& overlapping);
+      void improveMapping(vertex_t source);
       void trivialNode();
       bool connectedNode();
 
