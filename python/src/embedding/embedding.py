@@ -170,6 +170,22 @@ class Embedding():
             degree_percentages[source_H] = actual_degree / expected_degree
         return degree_percentages
 
+    def _get_supernode_sizes(self) -> dict[int, int]:
+        supernode_sizes = {}
+        for source_H in self.H.get_nodes():
+            supernode_nodes = self.get_nodes_in_supernode(source_H)
+            supernode_sizes[source_H] = len(supernode_nodes)
+        return supernode_sizes
+
+    def get_sorted_supernodes_by_size(self) -> list[int]:
+        """Returns a list of sorted supernode keys according to their size
+        (how many nodes in the hardware graph they map onto).
+        """
+        supernode_sizes = self._get_supernode_sizes()
+        # sort according to value (supernode size)
+        sorted_entries = sorted(supernode_sizes.items(), key=lambda item: item[1])
+        return [entry[0] for entry in sorted_entries]
+
     def try_embed_missing_edges(self) -> int:
         """Tries to embed missing edges if possible.
 

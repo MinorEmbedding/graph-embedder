@@ -2,6 +2,7 @@ import logging
 import random
 from collections import namedtuple
 from dataclasses import dataclass
+from math import ceil
 from typing import Optional
 
 import numpy as np
@@ -26,6 +27,7 @@ class SupernodeExtension():
     def __init__(self, embedding: Embedding) -> None:
         self._embedding = embedding
         self._non_viable_extensions = []
+        self.selection_chances = []
 
     def extend_random_supernode_to_free_neighbors(self) -> Optional[Embedding]:
         """Chooses a random supernode and extends it to a free neighbor."""
@@ -57,13 +59,40 @@ class SupernodeExtension():
     def _choose_random_supernode_with_bias(self) -> int:
         """Randomly chooses a supernode from H such that supernodes, which have
         the least number of edges to other supernodes embedded in G, are favored.
+        We also favor supernodes that have the smallest number of nodes.
         Thus, we won't pick an element according to a uniform distribution, but to
-        a custom one (using numpy)."""
-        degree_percentages = self._embedding.get_supernode_degree_percentages()
-        sum_p = np.sum([(1-p) for p in degree_percentages.values()])
-        degree_percentages = [(1-p)/sum_p for p in degree_percentages.values()]
+        a custom one (using numpy).
+        """
         supernodes = list(self._embedding.get_nodes_H())
-        supernode = np.random.choice(supernodes, p=degree_percentages)
+
+        if not len(self.selection_chances):
+            degree_percentages = self._embedding.get_supernode_degree_percentages()
+
+            # Favor smaller supernodes
+            # Those get assigned an increased chance of being selected
+            max_favor_small_supernodes = 0.7 * max(degree_percentages.values())
+            lin_increases = np.linspace(
+                max_favor_small_supernodes, 0, num=len(supernodes))
+            supernodes_sorted = self._embedding.get_sorted_supernodes_by_size()
+            # we use the supernodes as indices for the linspace of increases here
+            increases = [lin_increases[node] for node in supernodes_sorted]
+
+            # Calculate selection chances
+            selection_chances_without_increase = np.array(
+                [(1-p) for p in degree_percentages.values()])
+            selection_chances = np.array([(1-p) + increases[i]
+                                          for i, p in enumerate(degree_percentages.values())])
+            selection_chances_without_increase *= 1 / \
+                np.sum(selection_chances_without_increase)
+            selection_chances *= 1 / np.sum(selection_chances)
+            np.set_printoptions(precision=2)
+            logger.info(
+                f'Selection chances (without increases) are: {selection_chances_without_increase}')
+            logger.info(f'Selection chances are: {selection_chances}')
+            self.selection_chances = selection_chances
+
+        # Choose according to calculated chances
+        supernode = np.random.choice(supernodes, p=self.selection_chances)
         return supernode
 
     def extend_random_supernode(self) -> Optional[Embedding]:
@@ -129,8 +158,7 @@ class SupernodeExtension():
         """
         # Get reachable neighbors
         # has to be calculated prior to supernode handover (!)
-        shifted_target_reachable = \
-            playground.get_reachable_neighbors(p.shifted_target)
+        shifted_target_reachable = playground.get_reachable_neighbors(p.shifted_target)
         shifted_target_reachable.discard(source)
         shifted_target_reachable.discard(p.target)
 
@@ -207,8 +235,8 @@ class SupernodeExtension():
         # Do not try to compute shifted_target reachable again here (!)
         # as these are different now since shifted_target has the previous
         # supernode of target
-        shifted_target_partner_reachable = \
-            playground.get_reachable_neighbors(shifted_target_partner)
+        shifted_target_partner_reachable = playground.get_reachable_neighbors(
+            shifted_target_partner)
         shifted_target_partner_reachable.discard(source)
         shifted_target_partner_reachable.discard(p.target)
 
