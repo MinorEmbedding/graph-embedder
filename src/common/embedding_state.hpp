@@ -3,6 +3,7 @@
 
 #include <majorminer_types.hpp>
 #include <common/embedding_base.hpp>
+#include <common/thread_manager.hpp>
 
 namespace majorminer
 {
@@ -28,6 +29,8 @@ namespace majorminer
       fuint32_t getSuperVertexSize(fuint32_t sourceNode) const { return m_mapping.count(sourceNode); }
 
       int getSourceNbFreeNeighbors(fuint32_t sourceNode) const;
+
+      ThreadManager& getThreadManager() { return m_threadManager; }
 
     public: // getter
       const graph_t* getSourceGraph() const override { return m_sourceGraph; }
@@ -77,6 +80,8 @@ namespace majorminer
       fuint32_t m_numberSourceVertices;
 
       EmbeddingVisualizer* m_visualizer;
+
+      ThreadManager m_threadManager;
   };
 
 }

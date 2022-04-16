@@ -35,4 +35,5 @@ make
 #### [GoogleTest](https://github.com/google/googletest) (License: [BSD 3-Clause "New" or "Revised"](https://choosealicense.com/licenses/bsd-3-clause/))
 #### [LEMON](https://lemon.cs.elte.hu/trac/lemon) (License: [Boost Software License 1.0](https://choosealicense.com/licenses/bsl-1.0/))
 #### [Eigen](https://eigen.tuxfamily.org/index.php?title=Main_Page) (License: [MPL2](https://choosealicense.com/licenses/mpl-2.0/), disabled LGPL features.)
+#### [thread-pool](https://github.com/bshoshany/thread-pool) (License: [MIT](https://choosealicense.com/licenses/mit/))
 

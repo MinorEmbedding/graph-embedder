@@ -59,8 +59,8 @@ namespace majorminer
   {
     friend CSCIndividual;
     public:
-      EvolutionaryCSCReducer(const EmbeddingState& state, vertex_t sourceVertex);
-      EvolutionaryCSCReducer(const EmbeddingState& state, const nodeset_t& initial, vertex_t sourceVertex);
+      EvolutionaryCSCReducer(EmbeddingState& state, vertex_t sourceVertex);
+      EvolutionaryCSCReducer(EmbeddingState& state, const nodeset_t& initial, vertex_t sourceVertex);
 
       void setVisualizer(EmbeddingVisualizer* vis) { m_visualizer = vis; }
       void optimize();
@@ -95,6 +95,7 @@ namespace majorminer
       bool m_improved;
 
       EmbeddingVisualizer* m_visualizer;
+      ThreadManager& m_threadManager;
 
       Vector<CSCIndividual> m_populationA;
       Vector<CSCIndividual> m_populationB;
@@ -108,6 +109,8 @@ namespace majorminer
 
       nodeset_t m_temporary;
       RandomGen m_random;
+
+      std::mutex m_prepareLock;
   };
 
 }

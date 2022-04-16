@@ -24,18 +24,18 @@ namespace
   }
 }
 
-EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
+EvolutionaryCSCReducer::EvolutionaryCSCReducer(EmbeddingState& state,
   vertex_t sourceVertex)
   : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(true),
-    m_improved(false), m_visualizer(nullptr)
+    m_improved(false), m_visualizer(nullptr), m_threadManager(state.getThreadManager())
 {
   initialize();
 }
 
-EvolutionaryCSCReducer::EvolutionaryCSCReducer(const EmbeddingState& state,
+EvolutionaryCSCReducer::EvolutionaryCSCReducer(EmbeddingState& state,
   const nodeset_t& initial, vertex_t sourceVertex)
     : m_state(state), m_sourceVertex(sourceVertex), m_wasPlaced(false),
-      m_improved(false), m_visualizer(nullptr)
+      m_improved(false), m_visualizer(nullptr), m_threadManager(state.getThreadManager())
 {
   initialize(initial);
 }
@@ -190,6 +190,11 @@ bool EvolutionaryCSCReducer::canExpand()
 void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopulation)
 {
   // optimize all in parent population
+  /*for (auto& parent : parentPopulation)
+  {
+    m_threadManager.run( [&]() { parent.optimize(); });
+  }
+  m_threadManager.wait();*/
   for (auto& parent : parentPopulation) parent.optimize();
 
   // sort parent population
@@ -234,21 +239,26 @@ const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CS
 
 void EvolutionaryCSCReducer::prepareVertex(vertex_t target, bool count)
 {
-  m_temporary.clear();
-  m_state.iterateTargetAdjacentReverseMapping(target,
-    [&](vertex_t adjacentSource){
-      if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
-  });
-  m_state.iterateReverseMapping(target, [&](vertex_t source){
-      if (m_adjacentSourceVertices.contains(source)) m_temporary.insert(source);
-  });
-  for (vertex_t source : m_temporary)
+  m_prepareLock.lock();
+  if (!m_preparedVertices.contains(target))
   {
-    m_adjacentSources.insert(std::make_pair(target, source));
+    m_temporary.clear();
+    m_state.iterateTargetAdjacentReverseMapping(target,
+      [&](vertex_t adjacentSource){
+        if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
+    });
+    m_state.iterateReverseMapping(target, [&](vertex_t source){
+        if (m_adjacentSourceVertices.contains(source)) m_temporary.insert(source);
+    });
+    for (vertex_t source : m_temporary)
+    {
+      m_adjacentSources.insert(std::make_pair(target, source));
+    }
+    const auto& reverse = m_state.getReverseMapping();
+    if (count) m_vertexFitness.insert(std::make_pair(target, reverse.count(target)));
+    m_preparedVertices.insert(target);
   }
-  const auto& reverse = m_state.getReverseMapping();
-  if (count) m_vertexFitness.insert(std::make_pair(target, reverse.count(target)));
-  m_preparedVertices.insert(target);
+  m_prepareLock.unlock();
 }
 
 void EvolutionaryCSCReducer::addConnectivity(VertexNumberMap& connectivity, vertex_t target)

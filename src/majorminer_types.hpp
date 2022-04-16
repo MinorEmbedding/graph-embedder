@@ -125,7 +125,7 @@ namespace majorminer
   class MutationManager;
   class NetworkSimplexWrapper;
   class RandomGen;
-
+  class ThreadManager;
 }
 
 
