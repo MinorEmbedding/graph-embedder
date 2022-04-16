@@ -5,7 +5,6 @@
 #include <common/utils.hpp>
 #include <common/time_measurement.hpp>
 
-
 using namespace majorminer;
 
 #define PREVENT_TAKING 100
@@ -167,7 +166,6 @@ void NetworkSimplexWrapper::embeddNode(vertex_t node)
         m_mapped.insert(arc.first.second);
       }
     }
-    std::cout << "Network simplex mapped size " << m_mapped.size() << std::endl;
   }
   else if(status == NetworkSimplex::INFEASIBLE)
   {

@@ -223,6 +223,7 @@ bool EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentP
     const CSCIndividual* parentB = tournamentSelection(parentPopulation);
     bool success = childPopulation[idx].fromCrossover(*parentA, *parentB);
     if (success) idx++;
+    else std::cout << "Dead crossover!" << std::endl;
   }
   return remainingAttemps > 0;
 }

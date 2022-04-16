@@ -32,10 +32,12 @@ namespace majorminer
       cost_t determineCost(vertex_t node);
       void adjustCosts(vertex_t node, LemonArcMap<cost_t>& costs);
       void setupCostsAndCaps();
+
       const LemonArcPair& getArcPair(vertex_t n1, vertex_t n2);
       vertex_t chooseSource(vertex_t source) const;
 
       void createCheapArc(LemonNode& from, LemonNode& to, LemonArcMap<cost_t>& costs,
+
           LemonArcMap<capacity_t>& caps, bool constructionArc = false, capacity_t capacity = 1);
 
       capacity_t getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const;
@@ -63,6 +65,7 @@ namespace majorminer
 
       LemonNode m_s;
       LemonNode m_t;
+
       capacity_t m_numberAdjacent;
       fuint32_t m_sConnected;
       fuint32_t m_rootCounter;
