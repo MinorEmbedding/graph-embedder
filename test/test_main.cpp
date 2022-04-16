@@ -32,6 +32,7 @@ namespace
   {
     graph_t clique = generate_completegraph(n);
     graph_t chimera = generate_chimera(x, y);
+    std::cout << filename << std::endl;
     auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, filename, x, y);
     EmbeddingSuite suite{clique, chimera, visualizer.get()};
     auto embedding = suite.find_embedding();

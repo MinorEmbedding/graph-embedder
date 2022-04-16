@@ -6,7 +6,7 @@ option(MAJORMINER_BUILD_TESTS "Build majorminer test executable" ON)
 enable_language(C CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CXX_STANDARD_REQUIRED ON)
-set(CMAKE_BUILD_TYPE Debug)
+set(CMAKE_BUILD_TYPE Release)
 set(MM_INCLUDE_LIBS external/oneTBB/include external/eigen build/external/lemon/ external/lemon/ src/)
 set(MM_LINK_LIBS TBB::tbb lemon)
 

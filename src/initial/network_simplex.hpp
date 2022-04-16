@@ -4,7 +4,7 @@
 #include <lemon/smart_graph.h>
 #include <lemon/network_simplex.h>
 
-#include "majorminer_types.hpp"
+#include <majorminer_types.hpp>
 
 namespace majorminer
 {
@@ -28,10 +28,11 @@ namespace majorminer
       const nodeset_t& getMapped() const { return m_mapped; }
 
     private:
+      void initialCreation();
       LemonNode createNode(vertex_t node);
       cost_t determineCost(vertex_t node);
       void adjustCosts(vertex_t node, LemonArcMap<cost_t>& costs);
-      void clear();
+      void setupCostsAndCaps();
       const LemonArcPair& getArcPair(vertex_t n1, vertex_t n2);
       vertex_t chooseSource(vertex_t source) const;
 
@@ -39,7 +40,7 @@ namespace majorminer
           LemonArcMap<capacity_t>& caps, capacity_t capacity = 1);
 
       capacity_t getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const;
-      void constructLemonGraph(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps);
+      void constructLemonGraph();
       void constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps,
           const adjacency_list_range_iterator_t& adjacentIt);
 
@@ -51,10 +52,17 @@ namespace majorminer
       UnorderedMap<edge_t, LemonArcPair, PairHashFunc<vertex_t>> m_edgeMap;
       UnorderedSet<vertex_t> m_mapped;
 
+      std::unique_ptr<LemonArcMap<cost_t>> m_costMap;
+      std::unique_ptr<LemonArcMap<capacity_t>> m_capMap;
+
+      
+
       LemonNode* m_s;
       LemonNode* m_t;
       capacity_t m_numberAdjacent;
       fuint32_t m_sConnected;
+
+      bool m_initialized;
   };
 
 }

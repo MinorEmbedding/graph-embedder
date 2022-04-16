@@ -21,6 +21,7 @@
 #include <thread>
 #include <mutex>
 #include <random>
+#include <shared_mutex>
 
 
 namespace majorminer

@@ -4,24 +4,12 @@
 #include <common/cut_vertex.hpp>
 #include <common/embedding_state.hpp>
 #include <common/embedding_visualizer.hpp>
+#include <common/time_measurement.hpp>
 
 #define POPULATION_SIZE 5
 #define ITERATION_LIMIT 10
 #define MAX_NEW_VERTICES 15
 #define REDUCE_ITERATION_COEFFICIENT 1
-
-static double TIME_MUTATION, TIME_REDUCE;
-static double GENERATE_POP, OPTIMIZE;
-
-#include <chrono>
-#define CHRONO_STUFF(t1, t2, diff, var, ...)  \
-  auto t1 = std::chrono::high_resolution_clock::now();    \
-  { __VA_ARGS__ }                                         \
-  auto t2 = std::chrono::high_resolution_clock::now();    \
-  std::chrono::duration<double> diff = t2 - t1;           \
-  var+=diff.count();
-
-#define PRINT_TIME(name) std::cout << "Time: " << #name << ": " << name << std::endl;
 
 using namespace majorminer;
 

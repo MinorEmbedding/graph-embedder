@@ -5,6 +5,7 @@
 #include <common/embedding_validator.hpp>
 #include <common/embedding_visualizer.hpp>
 #include <common/cut_vertex.hpp>
+#include <common/time_measurement.hpp>
 
 #include <evolutionary/mutation_extend.hpp>
 #include <evolutionary/mutation_frontier_shifting.hpp>
@@ -28,6 +29,8 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   m_mutationManager(true);
   m_placer.replaceOverlapping();
   if (m_visualizer != nullptr) finishVisualization();
+  PRINT_TIME(NETWORK_SIMPLEX_BUILDTIME)
+  PRINT_TIME(NETWORK_SIMPLEX_SOLVETIME)
   return m_state.getMapping();
 }
 

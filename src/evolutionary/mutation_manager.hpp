@@ -34,7 +34,7 @@ namespace majorminer
       std::atomic<bool> m_wait;
 
       std::atomic<int> m_numberRemaining;
-      std::mutex m_free;
+      std::shared_mutex m_free;
   };
 
 }

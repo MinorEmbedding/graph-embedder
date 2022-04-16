@@ -36,9 +36,9 @@ void MutationManager::operator()(bool finalIteration)
       if (!success) continue;
       else
       {
-        free.lock();
+        free.lock_shared();
         runningPreps++;
-        free.unlock();
+        free.unlock_shared();
 
         // TEST_OUTPUT(Preparing mutation)
         bool valid = mutation->prepare();
