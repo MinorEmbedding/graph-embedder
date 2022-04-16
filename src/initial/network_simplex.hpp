@@ -21,8 +21,7 @@ namespace majorminer
     typedef std::pair<LemonArc, LemonArc> LemonArcPair;
 
     public:
-      NetworkSimplexWrapper(EmbeddingState& state, EmbeddingManager& embeddingManager)
-        : m_state(state), m_embeddingManager(embeddingManager) { }
+      NetworkSimplexWrapper(EmbeddingState& state, EmbeddingManager& embeddingManager);
 
       void embeddNode(vertex_t node);
       const nodeset_t& getMapped() const { return m_mapped; }
@@ -37,12 +36,15 @@ namespace majorminer
       vertex_t chooseSource(vertex_t source) const;
 
       void createCheapArc(LemonNode& from, LemonNode& to, LemonArcMap<cost_t>& costs,
-          LemonArcMap<capacity_t>& caps, capacity_t capacity = 1);
+          LemonArcMap<capacity_t>& caps, bool constructionArc = false, capacity_t capacity = 1);
 
       capacity_t getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const;
       void constructLemonGraph();
       void constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps,
           const adjacency_list_range_iterator_t& adjacentIt);
+
+      LemonNode& getNextRootNode();
+      void clear();
 
     private:
       LemonGraph m_graph;
@@ -54,13 +56,16 @@ namespace majorminer
 
       std::unique_ptr<LemonArcMap<cost_t>> m_costMap;
       std::unique_ptr<LemonArcMap<capacity_t>> m_capMap;
+      std::unique_ptr<LemonArcMap<capacity_t>> m_flowMap;
 
-      
+      Vector<LemonNode> m_rootVertices;
+      Vector<LemonArc> m_treeConstructionArcs;
 
-      LemonNode* m_s;
-      LemonNode* m_t;
+      LemonNode m_s;
+      LemonNode m_t;
       capacity_t m_numberAdjacent;
       fuint32_t m_sConnected;
+      fuint32_t m_rootCounter;
 
       bool m_initialized;
   };

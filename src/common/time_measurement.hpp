@@ -17,8 +17,6 @@ namespace majorminer
 {
   extern double TIME_MUTATION, TIME_REDUCE;
   extern double GENERATE_POP, OPTIMIZE;
-
-  extern double NETWORK_SIMPLEX_BUILDTIME, NETWORK_SIMPLEX_SOLVETIME;
 }
 
 

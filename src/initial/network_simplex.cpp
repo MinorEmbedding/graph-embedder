@@ -13,6 +13,10 @@ using namespace majorminer;
 #define FREE 1
 
 
+NetworkSimplexWrapper::NetworkSimplexWrapper(EmbeddingState& state, EmbeddingManager& embeddingManager)
+  : m_state(state), m_embeddingManager(embeddingManager), m_initialized(false)
+{ }
+
 NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const
 {
   const auto& mapping = m_state.getMapping();
@@ -68,12 +72,26 @@ vertex_t NetworkSimplexWrapper::chooseSource(vertex_t source) const
   return bestFound;
 }
 
+NetworkSimplexWrapper::LemonNode& NetworkSimplexWrapper::getNextRootNode()
+{
+  if (m_rootCounter < m_rootVertices.size()) return m_rootVertices[m_rootCounter++];
+  else
+  {
+    m_rootVertices.push_back(m_graph.addNode());
+    LemonNode& root = m_rootVertices.back();
+    createCheapArc(root, m_t, *m_costMap, *m_capMap, false);
+    m_rootCounter++;
+    return root;
+  }
+}
+
 void NetworkSimplexWrapper::createCheapArc(LemonNode& from, LemonNode& to,
-    LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, capacity_t capacity)
+    LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, bool constructionArc, capacity_t capacity)
 {
   auto temp = m_graph.addArc(from, to);
   costs[temp] = 0;
   caps[temp] = capacity;
+  if (constructionArc) m_treeConstructionArcs.push_back(temp);
 }
 
 void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps,
@@ -91,13 +109,12 @@ void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, Lem
     if (embeddingPath.first == embeddingPath.second) continue;
     adjacentCandidate = adjacentNode->second;
 
-    LemonNode constructionNode = m_graph.addNode();
-    createCheapArc(constructionNode, *m_t, costs, caps);
+    LemonNode& constructionNode = getNextRootNode();
 
     for (auto targetNode = embeddingPath.first; targetNode != embeddingPath.second; ++targetNode)
     {
       LemonNode& fromNode = m_nodeMap[targetNode->second];
-      createCheapArc(fromNode, constructionNode, costs, caps);
+      createCheapArc(fromNode, constructionNode, costs, caps, true);
     }
   }
 
@@ -105,7 +122,7 @@ void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, Lem
   vertex_t sVertex = chooseSource(adjacentCandidate);
   LemonNode& toNode = m_nodeMap[sVertex];
   m_sConnected = sVertex;
-  createCheapArc(*m_s, toNode, costs, caps, m_numberAdjacent);
+  createCheapArc(m_s, toNode, costs, caps, true, m_numberAdjacent);
   //adjustCosts(sVertex, costs);
 }
 
@@ -113,30 +130,31 @@ void NetworkSimplexWrapper::initialCreation()
 {
   m_costMap = std::make_unique<LemonArcMap<cost_t>>(m_graph);
   m_capMap = std::make_unique<LemonArcMap<capacity_t>>(m_graph);
+  m_flowMap = std::make_unique<LemonArcMap<capacity_t>>(m_graph);
   constructLemonGraph();
+  m_s = m_graph.addNode();
+  m_t = m_graph.addNode();
+
+  m_initialized = true;
 }
 
 void NetworkSimplexWrapper::embeddNode(vertex_t node)
 {
   if (!m_initialized) initialCreation();
+  clear();
   auto adjacentIt = m_state.getSourceAdjGraph().equal_range(node);
   m_numberAdjacent = getNumberAdjacentNodes(adjacentIt);
 
   setupCostsAndCaps();
 
-  LemonNode s = m_graph.addNode();
-  LemonNode t = m_graph.addNode();
-  m_s = &s;
-  m_t = &t;
-  //constructHelperNodes(costs, caps, adjacentIt);
+  constructHelperNodes(*m_costMap, *m_capMap, adjacentIt);
 
   NetworkSimplex ns(m_graph);
-  //ns.costMap(costs).upperMap(caps).stSupply(*m_s, *m_t, m_numberAdjacent);
-  LemonArcMap<capacity_t> flows(m_graph);
+  ns.costMap(*m_costMap).upperMap(*m_capMap).stSupply(m_s, m_t, m_numberAdjacent);
   NetworkSimplex::ProblemType status = ns.run();
   if (status == NetworkSimplex::OPTIMAL)
   {
-    LemonArcMap<capacity_t> flows{m_graph};
+    LemonArcMap<capacity_t>& flows = *m_flowMap;
     ns.flowMap(flows);
     for (const auto& arc : m_edgeMap)
     {
@@ -149,6 +167,7 @@ void NetworkSimplexWrapper::embeddNode(vertex_t node)
         m_mapped.insert(arc.first.second);
       }
     }
+    std::cout << "Network simplex mapped size " << m_mapped.size() << std::endl;
   }
   else if(status == NetworkSimplex::INFEASIBLE)
   {
@@ -208,7 +227,6 @@ NetworkSimplexWrapper::cost_t NetworkSimplexWrapper::determineCost(vertex_t node
 
 void NetworkSimplexWrapper::setupCostsAndCaps()
 {
-  //m_graph.erase()
   // set all costs of nonartificial arcs
   for (const auto& edgePair : m_edgeMap)
   {
@@ -219,16 +237,17 @@ void NetworkSimplexWrapper::setupCostsAndCaps()
     (*m_costMap)[uv] = determineCost(edgePair.first.first);
     (*m_costMap)[vu] = determineCost(edgePair.first.second);
   }
+}
 
-  // reset all artificial arcs to zero
-
-  m_graph.clear();
-  m_nodeMap.clear();
+void NetworkSimplexWrapper::clear()
+{
+  for (auto& lemonArc : m_treeConstructionArcs)
+  {
+    (*m_capMap)[lemonArc] = 0;
+  }
   m_mapped.clear();
-  m_edgeMap.clear();
-
-  m_s = nullptr;
-  m_t = nullptr;
   m_numberAdjacent = 0;
   m_sConnected = -1;
+
+  m_rootCounter = 0;
 }
