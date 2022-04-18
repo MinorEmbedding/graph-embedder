@@ -91,6 +91,22 @@ namespace majorminer
   // inefficient - just for visualization
   embedding_mapping_t replaceMapping(const embedding_mapping_t& mapping,
     const nodeset_t& targets, vertex_t source);
+
+  template<typename K, typename V>
+  inline std::pair<V, K> reversePair(const std::pair<K,V>& p)
+  {
+    return std::make_pair(p.second, p.first);
+  }
+
+  template<typename K, typename V, bool reverse = false>
+  struct PairFirstKeySorter
+  {
+    bool operator()(const std::pair<K,V>& p1, const std::pair<K,V>& p2)
+    {
+      if(reverse) return p1.first < p2.first;
+      else return p1.first > p2.first;
+    }
+  };
 }
 
 

@@ -3,6 +3,7 @@
 #include <common/embedding_visualizer.hpp>
 #include <common/embedding_analyzer.hpp>
 #include <common/graph_gen.hpp>
+#include <common/debug_utils.hpp>
 
 #include "utils/test_common.hpp"
 #include "utils/qubo_problems.hpp"
@@ -28,7 +29,8 @@ namespace
     return coords;
   }
 
-  void clique_test(fuint32_t n, fuint32_t x, fuint32_t y, std::string filename, bool fullValidation = false, bool visualize = true)
+  void clique_test(fuint32_t n, fuint32_t x, fuint32_t y, std::string filename,
+    bool fullValidation = false, bool visualize = true, bool printStats = false)
   {
     graph_t clique = generate_completegraph(n);
     graph_t chimera = generate_chimera(x, y);
@@ -37,6 +39,9 @@ namespace
     if (visualize) visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, filename, x, y);
     EmbeddingSuite suite{clique, chimera, visualize ? visualizer.get() : nullptr};
     auto embedding = suite.find_embedding();
+
+    if (printStats) printEmbeddingOverlapStats(embedding);
+
     if (fullValidation) ASSERT_TRUE(suite.isValid());
     else ASSERT_TRUE(suite.connectsNodes());
   }
@@ -121,7 +126,7 @@ TEST(EmbeddingTest, Complete_Graph_31_On_16_16_Chimera)
 
 TEST(EmbeddingTest, Complete_Graph_33_On_16_16_Chimera)
 {
-  clique_test(33, 16, 16, "imgs/Complete_Graph_33_On_16_16_Chimera/chimera_clique_33", false, false);
+  clique_test(33, 16, 16, "imgs/Complete_Graph_33_On_16_16_Chimera/chimera_clique_33", false, false, false);
 }
 
 TEST(EmbeddingTest, Complete_Graph_34_On_16_16_Chimera)

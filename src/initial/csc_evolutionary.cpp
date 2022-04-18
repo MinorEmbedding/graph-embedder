@@ -64,7 +64,7 @@ void EvolutionaryCSCReducer::optimize()
   PRINT_TIME(TIME_REDUCE)
   PRINT_TIME(OPTIMIZE)
   PRINT_TIME(GENERATE_POP)
-
+  std::cout << "Threads " << m_threadManager.getAvailableThreads() << std::endl;
 }
 
 #define CREATE_STRING(vertices) \
@@ -131,10 +131,6 @@ void EvolutionaryCSCReducer::initialize(const nodeset_t& initial)
 void EvolutionaryCSCReducer::setup()
 {
   if (!canExpand()) return;
-  TIME_MUTATION = 0;
-  TIME_REDUCE = 0;
-  OPTIMIZE = 0;
-  GENERATE_POP = 0;
 
   const auto& mapping = m_state.getMapping();
 
@@ -190,13 +186,16 @@ bool EvolutionaryCSCReducer::canExpand()
 void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopulation)
 {
   // optimize all in parent population
+  #define MULTITHREADED 1
+  #if MULTITHREADED == 1
   /*for (auto& parent : parentPopulation)
   {
     m_threadManager.run( [&]() { parent.optimize(); });
   }
   m_threadManager.wait();*/
+  #else
   for (auto& parent : parentPopulation) parent.optimize();
-
+  #endif
   // sort parent population
   std::sort(parentPopulation.begin(), parentPopulation.end(), std::less<CSCIndividual>());
 
