@@ -75,12 +75,12 @@ namespace majorminer
       void initializePopulations();
       void optimizeIteration(Vector<CSCIndividual>& parentPopulation);
       bool createNextGeneration(Vector<CSCIndividual>& parentPopulation, Vector<CSCIndividual>& childPopulation);
-      void prepareVertex(vertex_t target, bool count = true);
+      void prepareVertex(vertex_t target, nodeset_t& temp, bool count = true);
       const CSCIndividual* tournamentSelection(const Vector<CSCIndividual>& parentPopulation);
       void visualize(fuint32_t iteration, Vector<CSCIndividual>* population);
 
     private: // called mainly by CSCIndividual
-      void addConnectivity(VertexNumberMap& connectivity, vertex_t target);
+      void addConnectivity(VertexNumberMap& connectivity, nodeset_t& temp, vertex_t target);
       bool isRemoveable(VertexNumberMap& connectivity, vertex_t target) const;
       void removeVertex(VertexNumberMap& connectivity, vertex_t target) const;
       size_t getFitness(vertex_t target) const;

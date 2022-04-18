@@ -43,6 +43,7 @@ EvolutionaryCSCReducer::EvolutionaryCSCReducer(EmbeddingState& state,
 void EvolutionaryCSCReducer::optimize()
 {
   if (!m_expansionPossible) return;
+  double initialFitness = m_bestFitness;
   Vector<CSCIndividual>* current = &m_populationA;
   Vector<CSCIndividual>* next = &m_populationB;
 
@@ -60,11 +61,11 @@ void EvolutionaryCSCReducer::optimize()
     }
   }
   if (m_visualizer != nullptr) visualize(FUINT32_UNDEF, nullptr);
-  PRINT_TIME(TIME_MUTATION)
-  PRINT_TIME(TIME_REDUCE)
-  PRINT_TIME(OPTIMIZE)
-  PRINT_TIME(GENERATE_POP)
-  std::cout << "Threads " << m_threadManager.getAvailableThreads() << std::endl;
+  // PRINT_TIME(TIME_MUTATION)
+  // PRINT_TIME(TIME_REDUCE)
+  // PRINT_TIME(OPTIMIZE)
+  // PRINT_TIME(GENERATE_POP)
+  std::cout << initialFitness << " to " << m_bestFitness << " (" << m_bestSuperVertex.size() << ")" << std::endl;
 }
 
 #define CREATE_STRING(vertices) \
@@ -140,7 +141,7 @@ void EvolutionaryCSCReducer::setup()
   });
 
   // Prepare intial "m_adjacentSources" adjacency list
-  for (vertex_t target : m_bestSuperVertex) prepareVertex(target, false);
+  for (vertex_t target : m_bestSuperVertex) prepareVertex(target, m_temporary, false);
 
   m_bestFitness = getFitness(m_bestSuperVertex);
   initializePopulations();
@@ -188,11 +189,11 @@ void EvolutionaryCSCReducer::optimizeIteration(Vector<CSCIndividual>& parentPopu
   // optimize all in parent population
   #define MULTITHREADED 1
   #if MULTITHREADED == 1
-  /*for (auto& parent : parentPopulation)
+  for (auto& parent : parentPopulation)
   {
     m_threadManager.run( [&]() { parent.optimize(); });
   }
-  m_threadManager.wait();*/
+  m_threadManager.wait();
   #else
   for (auto& parent : parentPopulation) parent.optimize();
   #endif
@@ -222,7 +223,7 @@ bool EvolutionaryCSCReducer::createNextGeneration(Vector<CSCIndividual>& parentP
     const CSCIndividual* parentB = tournamentSelection(parentPopulation);
     bool success = childPopulation[idx].fromCrossover(*parentA, *parentB);
     if (success) idx++;
-    else std::cout << "Dead crossover!" << std::endl;
+    // else std::cout << "Dead crossover!" << std::endl;
   }
   return remainingAttemps > 0;
 }
@@ -237,20 +238,24 @@ const CSCIndividual* EvolutionaryCSCReducer::tournamentSelection(const Vector<CS
 }
 
 
-void EvolutionaryCSCReducer::prepareVertex(vertex_t target, bool count)
+void EvolutionaryCSCReducer::prepareVertex(vertex_t target, nodeset_t& temp, bool count)
 {
+  if (!m_preparedVertices.contains(target))
+  {
+    temp.clear();
+    m_state.iterateTargetAdjacentReverseMapping(target,
+      [&](vertex_t adjacentSource){
+        if (m_adjacentSourceVertices.contains(adjacentSource)) temp.insert(adjacentSource);
+    });
+    m_state.iterateReverseMapping(target, [&](vertex_t source){
+        if (m_adjacentSourceVertices.contains(source)) temp.insert(source);
+    });
+  }
+
   m_prepareLock.lock();
   if (!m_preparedVertices.contains(target))
   {
-    m_temporary.clear();
-    m_state.iterateTargetAdjacentReverseMapping(target,
-      [&](vertex_t adjacentSource){
-        if (m_adjacentSourceVertices.contains(adjacentSource)) m_temporary.insert(adjacentSource);
-    });
-    m_state.iterateReverseMapping(target, [&](vertex_t source){
-        if (m_adjacentSourceVertices.contains(source)) m_temporary.insert(source);
-    });
-    for (vertex_t source : m_temporary)
+    for (vertex_t source : temp)
     {
       m_adjacentSources.insert(std::make_pair(target, source));
     }
@@ -259,11 +264,12 @@ void EvolutionaryCSCReducer::prepareVertex(vertex_t target, bool count)
     m_preparedVertices.insert(target);
   }
   m_prepareLock.unlock();
+  temp.clear();
 }
 
-void EvolutionaryCSCReducer::addConnectivity(VertexNumberMap& connectivity, vertex_t target)
+void EvolutionaryCSCReducer::addConnectivity(VertexNumberMap& connectivity, nodeset_t& temp, vertex_t target)
 {
-  if (!m_preparedVertices.contains(target)) prepareVertex(target);
+  if (!m_preparedVertices.contains(target)) prepareVertex(target, temp);
 
   auto range = m_adjacentSources.equal_range(target);
   for (auto it = range.first; it != range.second; ++it)
@@ -344,6 +350,8 @@ bool CSCIndividual::fromCrossover(const CSCIndividual& individualA, const CSCInd
   m_superVertex.clear();
   const auto& superVertexA = individualA.getSuperVertex();
   const auto& superVertexB = individualB.getSuperVertex();
+  // std::cout << "Crossover: overlapping - " << overlappingSets(superVertexA, superVertexB) << "; connected - "
+  //   << areSetsConnected(*m_state, superVertexA, superVertexB) << std::endl;
   if (!overlappingSets(superVertexA, superVertexB)
     && !areSetsConnected(*m_state, superVertexA, superVertexB))
   {
@@ -371,7 +379,7 @@ void CSCIndividual::setupConnectivity()
 
   for (auto target : m_superVertex)
   {
-    m_reducer->addConnectivity(m_connectivity, target);
+    m_reducer->addConnectivity(m_connectivity, m_temporarySet, target);
   }
 }
 
@@ -489,7 +497,7 @@ void CSCIndividual::reduce()
 void CSCIndividual::addVertex(vertex_t target)
 {
   if (m_superVertex.contains(target)) return;
-  m_reducer->addConnectivity(m_connectivity, target);
+  m_reducer->addConnectivity(m_connectivity, m_temporarySet, target);
   m_superVertex.insert(target);
 }
 

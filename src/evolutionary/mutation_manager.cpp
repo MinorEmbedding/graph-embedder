@@ -27,7 +27,8 @@ void MutationManager::operator()(bool finalIteration)
   auto& runningPreps = m_runningPreps;
   auto& remaining = m_numberRemaining;
   auto& free = m_free;
-  std::thread prep{ [&](){
+
+  auto prepareLambda = [&](){
     MutationPtr mutation;
     while(!done)
     {
@@ -44,9 +45,14 @@ void MutationManager::operator()(bool finalIteration)
         runningPreps--;
       }
     }
-  }};
+  };
+
+  auto& threadManager = m_state.getThreadManager();
+  fuint32_t threadCount = std::min(threadManager.getAvailableThreads() - 1, prepQueue.unsafe_size());
+  threadManager.runMultiple(prepareLambda, threadCount);
   incorporate();
-  prep.join();
+
+  threadManager.wait();
   m_embeddingManager.synchronize();
 }
 
