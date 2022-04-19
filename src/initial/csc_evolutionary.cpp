@@ -43,7 +43,7 @@ EvolutionaryCSCReducer::EvolutionaryCSCReducer(EmbeddingState& state,
 void EvolutionaryCSCReducer::optimize()
 {
   if (!m_expansionPossible) return;
-  double initialFitness = m_bestFitness;
+  // double initialFitness = m_bestFitness;
   Vector<CSCIndividual>* current = &m_populationA;
   Vector<CSCIndividual>* next = &m_populationB;
 
@@ -65,7 +65,7 @@ void EvolutionaryCSCReducer::optimize()
   // PRINT_TIME(TIME_REDUCE)
   // PRINT_TIME(OPTIMIZE)
   // PRINT_TIME(GENERATE_POP)
-  std::cout << initialFitness << " to " << m_bestFitness << " (" << m_bestSuperVertex.size() << ")" << std::endl;
+  // std::cout << initialFitness << " to " << m_bestFitness << " (" << m_bestSuperVertex.size() << ")" << std::endl;
 }
 
 #define CREATE_STRING(vertices) \

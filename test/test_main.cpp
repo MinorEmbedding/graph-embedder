@@ -211,3 +211,11 @@ TEST(EmbeddingTest, ErdosRenyi_Chimera_7_7)
   suite.find_embedding();
   ASSERT_TRUE(suite.connectsNodes());
 }
+
+TEST(EmbeddingTest, DISABLED_RunMultipleTimes)
+{
+  for (int i = 0; i < 100; ++i)
+  {
+    clique_test(33, 16, 16, "imgs/Complete_Graph_33_On_16_16_Chimera/chimera_clique_33", false, false, false);
+  }
+}

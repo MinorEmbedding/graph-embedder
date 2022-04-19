@@ -131,14 +131,14 @@ void MutationManager::incorporate()
     if (!valid && mutation->requeue())
     {
       m_prepQueue.push(std::move(mutation));
-      continue;
+      m_wait = true;
     }
     else if (valid)
     {
       mutation->execute();
-      m_wait = true;
+      m_numberRemaining--;
     }
-    m_numberRemaining--;
+    else m_numberRemaining--;
     if (m_wait)
     {
       m_free.lock();
