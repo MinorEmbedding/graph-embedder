@@ -32,7 +32,6 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   return m_state.getMapping();
 }
 
-
 bool EmbeddingSuite::isValid() const
 {
   EmbeddingValidator validator{m_state};

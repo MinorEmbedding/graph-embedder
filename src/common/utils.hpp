@@ -107,6 +107,9 @@ namespace majorminer
       else return p1.first > p2.first;
     }
   };
+
+  // Calculate the fitness of an *unmapped* super vertex! Calculate number of overlappings
+  fuint32_t calculateFitness(const EmbeddingBase& state, const nodeset_t& superVertex);
 }
 
 

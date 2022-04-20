@@ -54,7 +54,7 @@ fuint32_pair_t majorminer::calculateOverlappingStats(const EmbeddingBase& base)
   return std::make_pair(distinct, total);
 }
 
-embedding_mapping_t majorminer::replaceMapping(const embedding_mapping_t& mapping, 
+embedding_mapping_t majorminer::replaceMapping(const embedding_mapping_t& mapping,
     const nodeset_t& targets, vertex_t source)
 {
   embedding_mapping_t adjusted{};
@@ -65,4 +65,15 @@ embedding_mapping_t majorminer::replaceMapping(const embedding_mapping_t& mappin
     adjusted.insert(std::make_pair(source, target));
   }
   return adjusted;
+}
+
+fuint32_t majorminer::calculateFitness(const EmbeddingBase& state, const nodeset_t& superVertex)
+{
+  const auto& reverse = state.getReverseMapping();
+  fuint32_t fitness = 0;
+  for (vertex_t target : superVertex)
+  {
+    fitness += reverse.count(target);
+  }
+  return fitness;
 }
