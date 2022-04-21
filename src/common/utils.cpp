@@ -77,3 +77,9 @@ fuint32_t majorminer::calculateFitness(const EmbeddingBase& state, const nodeset
   }
   return fitness;
 }
+
+bool majorminer::containsEdge(const graph_t& graph, edge_t edge)
+{
+  return graph.contains(orderedPair(edge));
+}
+

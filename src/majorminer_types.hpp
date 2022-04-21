@@ -126,6 +126,7 @@ namespace majorminer
   class NetworkSimplexWrapper;
   class RandomGen;
   class ThreadManager;
+  class LMRPSubgraph;
 }
 
 

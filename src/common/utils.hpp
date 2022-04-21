@@ -110,6 +110,14 @@ namespace majorminer
 
   // Calculate the fitness of an *unmapped* super vertex! Calculate number of overlappings
   fuint32_t calculateFitness(const EmbeddingBase& state, const nodeset_t& superVertex);
+
+  bool containsEdge(const graph_t& graph, edge_t edge);
+
+  template<typename A, typename B>
+  inline bool empty_range(const std::pair<A,B>& range)
+  {
+    return range.first == range.second;
+  }
 }
 
 
