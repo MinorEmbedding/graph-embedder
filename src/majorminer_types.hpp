@@ -14,6 +14,7 @@
 
 #include <stack>
 #include <vector>
+#include <queue>
 
 #include <cinttypes>
 #include <atomic>
@@ -82,7 +83,11 @@ namespace majorminer
   using UnorderedMultiMap = tbb::concurrent_unordered_multimap<K, V, HashFunc, std::equal_to<K>, Allocator>;
 
   template<typename T, typename Comparator = std::less<T>>
-  using PriorityQueue = tbb::concurrent_priority_queue<T, Comparator>;
+  using PriorityQueue = std::priority_queue<T, Vector<T>, Comparator>;
+
+  template<typename T, typename Comparator = std::less<T>>
+  using ConcurrentPriorityQueue = tbb::concurrent_priority_queue<T, Comparator>;
+
 
   template<typename T>
   using Queue = tbb::concurrent_queue<T>;

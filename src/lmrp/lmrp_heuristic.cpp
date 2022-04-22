@@ -29,7 +29,7 @@ void LMRPHeuristic::optimize()
   identifyComponents();
   identifyDestroyed();
 
-  findSol();
+  solve();
 }
 
 void LMRPHeuristic::buildBorder()
@@ -79,7 +79,6 @@ void LMRPHeuristic::identifyEdges()
 void LMRPHeuristic::identifyComponents()
 {
   const auto& targetGraph = m_state.getTargetAdjGraph();
-  const auto& reverse = m_state.getReverseMapping();
 
   graph_t borderMapped{};
   graph_t subgraph{};
@@ -174,9 +173,142 @@ void LMRPHeuristic::identifyDestroyed()
   }
 }
 
-void LMRPHeuristic::findSol()
+void LMRPHeuristic::solve()
 {
   std::sort(m_componentsList.begin(), m_componentsList.end());
 
+  for (auto& component : m_componentsList)
+  {
+    if (component.m_nbMapped > 1)
+    {
+      connectComponent(component);
+    }
+  }
+
+  for (auto& component : m_componentsList)
+  {
+    if (!component.wasSatisfied()) connectComponent(component);
+  }
+
+  for (vertex_t source : m_completelyDestroyed) embeddDestroyed(source);
+}
+
+void LMRPHeuristic::initializeDijkstraData()
+{
+  for (vertex_t target : m_crater)
+  {
+    m_bestPaths[target] = DijkstraVertex{target};
+  }
+}
+
+void LMRPHeuristic::resetDijkstra()
+{
+  for (auto& vertex : m_bestPaths) vertex.second.reset();
+  while(!m_dijkstraQueue.empty()) m_dijkstraQueue.pop();
+}
+
+void LMRPHeuristic::connectComponent(ConnectedList& component)
+{
+  if (component.m_nbMapped == 0) return;
+  vertex_t root = m_componentVertices[component.m_idx];
+  m_currentSource = component.m_source;
+
+  nodeset_t toConnect{};
+  if (component.m_nbMapped > 1)
+  { // connect the component itself
+    for (fuint32_t offset = 1; offset < component.m_nbMapped; ++offset)
+    {
+      toConnect.insert(m_componentVertices[component.m_idx + offset]);
+    }
+    while(!toConnect.empty())
+    {
+      runDijkstraToTarget(toConnect, root);
+    }
+  }
+
+  // embedd all edges
   
+}
+
+void LMRPHeuristic::embeddDestroyed(vertex_t /* destroyed */)
+{
+
+}
+
+void LMRPHeuristic::addSingleVertexNeighbors(fuint32_t target,
+  fuint32_t overlaps, fuint32_t length)
+{
+  const auto& targetGraph = m_state.getTargetAdjGraph();
+  auto range = targetGraph.equal_range(target);
+  for (auto it = range.first; it != range.second; ++it)
+  {
+    if (m_bestPaths[it->second].wasVisited()) continue;
+    auto& neighbor = m_bestPaths[it->second];
+    bool contained = m_superVertices.contains(edge_t{m_currentSource, neighbor.m_target});
+    bool count = m_reverse.count(neighbor.m_target);
+    bool overlap = !contained && count > 0;
+    bool lowered = neighbor.lowerTo(target,
+      overlaps + (overlap ? 1 : 0),
+      length + (contained ? 0 : 1));
+    if (lowered) m_dijkstraQueue.push(neighbor);
+  }
+}
+
+void LMRPHeuristic::runDijkstraToTarget(nodeset_t& targets, vertex_t root)
+{
+  resetDijkstra();
+  vertex_t connectedTo = checkConnectedTo(targets, root);
+  if (!isDefined(connectedTo))
+  {
+    vertex_t best = FUINT32_UNDEF;
+    addSingleVertexNeighbors(root, 0, 0);
+    DijkstraVertex next{};
+    while(!m_dijkstraQueue.empty())
+    {
+      next = m_dijkstraQueue.top();
+      m_dijkstraQueue.pop();
+      if (m_bestPaths[next.m_target].visited()) continue;
+      connectedTo = checkConnectedTo(targets, next.m_target);
+      if (isDefined(connectedTo))
+      {
+        best = next.m_target;
+        break;
+      }
+      addSingleVertexNeighbors(next.m_target,
+        next.m_overlapCnt, next.m_nonOverlapCnt);
+    }
+    if (isDefined(best)) addEmbeddedPath(best);
+  }
+  if (isDefined(connectedTo)) targets.unsafe_erase(connectedTo);
+  else throw std::runtime_error("No connection found!");
+}
+
+void LMRPHeuristic::addEmbeddedPath(vertex_t leaf)
+{
+  auto* vertex = &m_bestPaths[leaf];
+  while(vertex != nullptr)
+  {
+    edge_t mapped{m_currentSource, vertex->m_target};
+    if (!m_superVertices.contains(mapped))
+    {
+      m_superVertices.insert(mapped);
+      m_mapping.insert(mapped);
+      m_reverse.insert(reversePair(mapped));
+    }
+    if (isDefined(vertex->m_parent)) vertex = &m_bestPaths[vertex->m_parent];
+    else vertex = nullptr;
+  }
+}
+
+vertex_t LMRPHeuristic::checkConnectedTo(const nodeset_t& wantedTargets,
+  vertex_t target)
+{
+  const auto& targetGraph = m_state.getTargetAdjGraph();
+  auto adjRange = targetGraph.equal_range(target);
+  for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
+  {
+    if (wantedTargets.contains(adjIt->second)) return adjIt->second;
+  }
+
+  return FUINT32_UNDEF;
 }

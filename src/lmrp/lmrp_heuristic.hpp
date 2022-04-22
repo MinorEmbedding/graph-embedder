@@ -2,28 +2,10 @@
 #define __MAJORMINER_LMRP_HEURISTIC_HPP_
 
 #include <majorminer_types.hpp>
+#include <lmrp/lmrp_types.hpp>
 
 namespace majorminer
 {
-  struct ConnectedList
-  {
-    ConnectedList(vertex_t source, fuint32_t idx, fuint32_t nbMapped)
-      : m_source(source), m_idx(idx),
-        m_nbMapped(nbMapped), m_satisfied(false) {}
-
-    bool wasSatisfied() const { return m_satisfied; }
-    void satisfied() { m_satisfied = true; }
-
-    vertex_t m_source;
-    fuint32_t m_idx;
-    fuint32_t m_nbMapped;
-    bool m_satisfied;
-
-    friend bool operator<(const ConnectedList& c1, const ConnectedList& c2)
-    {
-      return c1.m_source < c2.m_source;
-    }
-  };
 
   class LMRPHeuristic
   {
@@ -38,8 +20,18 @@ namespace majorminer
       void buildSubgraphs(graph_t& borderMapped, graph_t& subgraph);
       void calculatePreviousFitness();
       void identifyDestroyed();
-      void findSol();
+      void solve();
 
+      void connectComponent(ConnectedList& component);
+      void embeddDestroyed(vertex_t destroyed);
+
+      void addReachableComponent(vertex_t target, vertex_t source);
+      void initializeDijkstraData();
+      void resetDijkstra();
+      void addSingleVertexNeighbors(vertex_t target, fuint32_t overlaps, fuint32_t length);
+      void runDijkstraToTarget(nodeset_t& targets, vertex_t root);
+      vertex_t checkConnectedTo(const nodeset_t& wantedTargets, vertex_t target);
+      void addEmbeddedPath(vertex_t leaf);
 
     private:
       const EmbeddingState& m_state;
@@ -56,6 +48,15 @@ namespace majorminer
       Vector<ConnectedList> m_componentsList;
       Vector<vertex_t> m_componentVertices;
 
+      nodeset_t m_embeddedVertices;
+
+      embedding_mapping_t m_mapping;
+      embedding_mapping_t m_reverse;
+      graph_t m_superVertices;
+
+      PriorityQueue<DijkstraVertex> m_dijkstraQueue;
+      UnorderedMap<vertex_t, DijkstraVertex> m_bestPaths;
+      fuint32_t m_currentSource;
   };
 
 

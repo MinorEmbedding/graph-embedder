@@ -100,24 +100,19 @@ void SuperVertexPlacer::trivialNode()
 
 bool SuperVertexPlacer::connectedNode()
 {
-  PrioNode node{};
-  bool found = m_nodesToProcess.try_pop(node);
-  if (!found) return false;
+  PrioNode node = m_nodesToProcess.top();
+  m_nodesToProcess.pop();
 
   if (!m_state.removeRemainingNode(node.m_id)) return false;
 
 
   if (node.m_nbConnections > 1)
   {
-    // DEBUG(OUT_S << "Complex node to embedd: " << node.m_id << " (" << node.m_nbConnections << ")" << std::endl;)
-
     embeddNode(node.m_id);
     if (m_state.hasVisualizer()) visualize(node.m_id, COMPLEX, node.m_nbConnections);
   }
   else
   { // nbConnections = 1
-    // DEBUG(OUT_S << "Simple adjacent node to embedd: " << node.m_id << std::endl;)
-
     embeddSimpleNode(node.m_id);
     m_state.updateConnections(node.m_id, m_nodesToProcess);
 
