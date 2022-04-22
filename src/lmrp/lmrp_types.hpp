@@ -13,7 +13,8 @@ namespace majorminer
     void satisfied() { m_satisfied = true; }
 
     friend bool operator<(const ConnectedList& c1, const ConnectedList& c2)
-    { return c1.m_source < c2.m_source; }
+    { return c1.m_source < c2.m_source || (c1.m_source == c2.m_source
+      && c1.m_nbMapped < c2.m_nbMapped); }
 
     vertex_t m_source;
     fuint32_t m_idx;

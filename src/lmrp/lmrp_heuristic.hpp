@@ -22,7 +22,7 @@ namespace majorminer
       void identifyDestroyed();
       void solve();
 
-      void connectComponent(ConnectedList& component);
+      void connectComponent(ConnectedList& component, fuint32_t componentIdx);
       void embeddDestroyed(vertex_t destroyed);
 
       void addReachableComponent(vertex_t target, vertex_t source);
@@ -32,6 +32,11 @@ namespace majorminer
       void runDijkstraToTarget(nodeset_t& targets, vertex_t root);
       vertex_t checkConnectedTo(const nodeset_t& wantedTargets, vertex_t target);
       void addEmbeddedPath(vertex_t leaf);
+      void connectAdjacentComponents(nodeset_t& adjacent);
+      bool checkConnectedToSource(nodeset_t& wantedSources, vertex_t target);
+      void addAllMapped();
+
+      void mapVertex(vertex_t source, vertex_t target);
 
     private:
       const EmbeddingState& m_state;
@@ -47,8 +52,6 @@ namespace majorminer
 
       Vector<ConnectedList> m_componentsList;
       Vector<vertex_t> m_componentVertices;
-
-      nodeset_t m_embeddedVertices;
 
       embedding_mapping_t m_mapping;
       embedding_mapping_t m_reverse;
