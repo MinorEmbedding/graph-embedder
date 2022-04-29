@@ -43,6 +43,7 @@ void LMRPHeuristic::buildBorder()
   }
 }
 
+// TODO: edges from border to crater!
 // identify all edges of the source graph embedded in m_crater
 void LMRPHeuristic::identifyEdges()
 {
@@ -193,7 +194,7 @@ void LMRPHeuristic::solve()
     idx++;
   }
 
-  for (vertex_t source : m_completelyDestroyed) embeddDestroyed(source);
+  embeddDestroyed();
 }
 
 void LMRPHeuristic::initializeDijkstraData()
@@ -252,12 +253,22 @@ void LMRPHeuristic::connectComponent(ConnectedList& component, fuint32_t compone
   }
 }
 
-void LMRPHeuristic::embeddDestroyed(vertex_t /* destroyed */)
+void LMRPHeuristic::embeddDestroyed()
+{
+  
+
+  for (vertex_t destroyed : m_completelyDestroyed)
+  {
+    embeddSingleDestroyed(destroyed);
+  }
+}
+
+void LMRPHeuristic::embeddSingleDestroyed(vertex_t source)
 {
 
 }
 
-void LMRPHeuristic::addSingleVertexNeighbors(fuint32_t target,
+void LMRPHeuristic::addSingleVertexNeighbors(vertex_t target,
   fuint32_t overlaps, fuint32_t length)
 {
   const auto& targetGraph = m_state.getTargetAdjGraph();

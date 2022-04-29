@@ -23,7 +23,8 @@ namespace majorminer
       void solve();
 
       void connectComponent(ConnectedList& component, fuint32_t componentIdx);
-      void embeddDestroyed(vertex_t destroyed);
+      void embeddDestroyed();
+      void embeddSingleDestroyed(vertex_t source);
 
       void addReachableComponent(vertex_t target, vertex_t source);
       void initializeDijkstraData();
