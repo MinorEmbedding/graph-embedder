@@ -8,7 +8,7 @@ bool ChimeraLMRPSubgraph::getSubgraph(vertex_t contained, nodeset_t& subgraph)
   fuint32_t x = m_graph.getXCoord(contained);
   fuint32_t y = m_graph.getYCoord(contained);
   m_updateLock.lock();
-  bool success = checkOccupation(x, y, contained);
+  bool success = !checkOccupation(x, y, contained);
   if (success)
   {
     neighborhood(x,y,contained,

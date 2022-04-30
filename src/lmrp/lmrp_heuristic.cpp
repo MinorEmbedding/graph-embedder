@@ -2,6 +2,7 @@
 
 #include <common/embedding_state.hpp>
 #include <common/utils.hpp>
+#include <common/debug_utils.hpp>
 
 using namespace majorminer;
 
@@ -13,10 +14,11 @@ LMRPHeuristic::LMRPHeuristic(EmbeddingState& state, vertex_t target)
   if (gen != nullptr)
   {
     bool success = gen->getSubgraph(target, m_crater);
+    std::cout << "Success in subgraph " << success << std::endl;
+    // TODO: commit once done!
     if (!success) m_done = true;
   }
   else m_done = true;
-  optimize();
 }
 
 
@@ -28,6 +30,7 @@ void LMRPHeuristic::optimize()
   identifyEdges();
   identifyComponents();
   identifyDestroyed();
+  printAdjacencyList(m_sourceAdjacencies);
 
   solve();
 }

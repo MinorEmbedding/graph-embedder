@@ -12,6 +12,7 @@ namespace majorminer
     public:
       LMRPHeuristic(EmbeddingState& state, vertex_t target);
       void optimize();
+      const embedding_mapping_t getMapping() const { return m_mapping; }
 
     private:
       void buildBorder();
