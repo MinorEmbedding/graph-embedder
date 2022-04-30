@@ -16,6 +16,7 @@ namespace majorminer
       embedding_mapping_t find_embedding();
       bool isValid() const;
       bool connectsNodes() const;
+      void setSubgraphGen(LMRPSubgraph* generator);
 
     private:
       void finishVisualization();
@@ -28,6 +29,8 @@ namespace majorminer
       SuperVertexPlacer m_placer;
 
       Queue<std::unique_ptr<GenericMutation>> m_taskQueue;
+
+      bool m_finished;
   };
 
 }

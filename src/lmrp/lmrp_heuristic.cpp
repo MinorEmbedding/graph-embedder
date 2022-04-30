@@ -43,14 +43,21 @@ void LMRPHeuristic::buildBorder()
   }
 }
 
-// TODO: edges from border to crater!
 // identify all edges of the source graph embedded in m_crater
 void LMRPHeuristic::identifyEdges()
+{
+  identifyEdgesFrom(m_crater);
+  identifyEdgesFrom(m_border);
+
+  convertToAdjacencyList(m_sourceAdjacencies, m_edges);
+}
+
+void LMRPHeuristic::identifyEdgesFrom(const nodeset_t& from)
 {
   const auto& sourceGraph = *m_state.getSourceGraph();
   const auto& targetGraph = *m_state.getTargetGraph();
   const auto& reverse = m_state.getReverseMapping();
-  for (auto itA = m_crater.begin(); itA != m_crater.end(); ++itA)
+  for (auto itA = from.begin(); itA != from.end(); ++itA)
   {
     for (auto itB = itA; itB != m_crater.end(); ++itB)
     {
@@ -73,8 +80,6 @@ void LMRPHeuristic::identifyEdges()
       }
     }
   }
-
-  convertToAdjacencyList(m_sourceAdjacencies, m_edges);
 }
 
 void LMRPHeuristic::identifyComponents()
@@ -253,9 +258,43 @@ void LMRPHeuristic::connectComponent(ConnectedList& component, fuint32_t compone
   }
 }
 
+void LMRPHeuristic::addBorderToMapping()
+{
+  const auto& reverse = m_state.getReverseMapping();
+  for (auto borderVertex : m_border)
+  {
+    auto mappedRange = reverse.equal_range(borderVertex);
+    for (auto revIt = mappedRange.first; revIt != mappedRange.second; ++revIt)
+    {
+      m_mapping.insert(reversePair(*revIt));
+    }
+    m_reverse.insert(mappedRange.first, mappedRange.second);
+  }
+}
+
+fuint32_pair_t LMRPHeuristic::getLeastMappedNeighbor(vertex_t source)
+{
+  vertex_t neighbor = FUINT32_UNDEF;
+  fuint32_t connectivity = FUINT32_UNDEF;
+  fuint32_t numberMappedNeighbors = 0;
+
+  auto range = m_sourceAdjacencies.equal_range(source);
+  for (auto mappedIt = range.first; mappedIt != range.second; ++mappedIt)
+  {
+    fuint32_t count = m_mapping.count(mappedIt->second);
+    if (count > 0 && count < connectivity)
+    {
+      numberMappedNeighbors++;
+      connectivity = count;
+      neighbor = mappedIt->second;
+    }
+  }
+  return std::make_pair(neighbor, numberMappedNeighbors);
+}
+
 void LMRPHeuristic::embeddDestroyed()
 {
-  
+  addBorderToMapping();
 
   for (vertex_t destroyed : m_completelyDestroyed)
   {
@@ -263,9 +302,109 @@ void LMRPHeuristic::embeddDestroyed()
   }
 }
 
+void LMRPHeuristic::mapToFreeVertex()
+{
+  vertex_t bestFound = FUINT32_UNDEF;
+  fuint32_t count = FUINT32_UNDEF;
+
+  for (auto target : m_crater)
+  {
+    fuint32_t c = m_reverse.count(target);
+    if (c < count)
+    {
+      count = c;
+      bestFound = target;
+      if (c == 0) break;
+    }
+  }
+  if (isDefined(count)) mapVertex(m_currentSource, bestFound);
+  else throw std::runtime_error("Error in LMRP heuristic!");
+}
+
+void LMRPHeuristic::mapToSingleAdjacent(vertex_t neighbor)
+{
+  vertex_t bestFound = FUINT32_UNDEF;
+  fuint32_t count = FUINT32_UNDEF;
+
+  auto mappedRange = m_mapping.equal_range(neighbor);
+  for (auto mappedIt = mappedRange.first; mappedIt != mappedRange.second; ++mappedIt)
+  {
+    m_state.iterateTargetGraphAdjacent(mappedIt->second,
+      [&](fuint32_t adjTarget){
+        if (m_crater.contains(adjTarget))
+        {
+          fuint32_t c = m_reverse.count(adjTarget);
+          if (c < count)
+          {
+            count = c;
+            bestFound = adjTarget;
+          }
+        }
+    });
+    if (count == 0) break;
+  }
+  if (isDefined(count)) mapVertex(m_currentSource, bestFound);
+  else throw std::runtime_error("Error in LMRP heuristic!");
+}
+
 void LMRPHeuristic::embeddSingleDestroyed(vertex_t source)
 {
+  m_currentSource = source;
+  auto neighbor = getLeastMappedNeighbor(source);
+  if (neighbor.second == 0) mapToFreeVertex();
+  else if (neighbor.second == 1)
+  {
+    mapToSingleAdjacent(neighbor.first);
+    m_edges.unsafe_erase(orderedPair(source, neighbor.first));
+  }
+  else dijkstraDestroyed(source, neighbor.first);
+}
 
+void LMRPHeuristic::addAdjacentVertices(vertex_t source, nodeset_t& adjacent)
+{
+  auto range = m_sourceAdjacencies.equal_range(source);
+  for (auto mappedIt = range.first; mappedIt != range.second; ++mappedIt)
+  {
+    if (m_mapping.contains(mappedIt->second))
+    {
+      adjacent.insert(mappedIt->second);
+    }
+  }
+}
+
+void LMRPHeuristic::dijkstraDestroyed(vertex_t source, vertex_t neighbor)
+{
+  resetDijkstra();
+  addAllMapped(neighbor);
+  nodeset_t adjacentMapped{};
+  addAdjacentVertices(source, adjacentMapped);
+  for (auto adj : adjacentMapped)
+  { m_edges.unsafe_erase(orderedPair(edge_t{source, adj})); }
+
+  adjacentMapped.unsafe_erase(neighbor);
+  while(!adjacentMapped.empty())
+  {
+    DijkstraVertex next{};
+    while(!m_dijkstraQueue.empty())
+    {
+      next = m_dijkstraQueue.top();
+      m_dijkstraQueue.pop();
+      if (m_bestPaths[next.m_target].visited()) continue;
+      bool connected = checkConnectedToSource(adjacentMapped, next.m_target);
+      if (connected)
+      {
+        addEmbeddedPath(next.m_target);
+        break;
+      }
+      addSingleVertexNeighbors(next.m_target,
+        next.m_overlapCnt, next.m_nonOverlapCnt);
+    }
+    if (!adjacentMapped.empty())
+    {
+      resetDijkstra();
+      addAllMapped(m_currentSource);
+    }
+  }
 }
 
 void LMRPHeuristic::addSingleVertexNeighbors(vertex_t target,
@@ -343,11 +482,11 @@ vertex_t LMRPHeuristic::checkConnectedTo(const nodeset_t& wantedTargets,
 }
 
 
-void LMRPHeuristic::addAllMapped()
+void LMRPHeuristic::addAllMapped(vertex_t source)
 {
   const auto& targetGraph = m_state.getTargetAdjGraph();
   nodeset_t closure{};
-  auto range = m_mapping.equal_range(m_currentSource);
+  auto range = m_mapping.equal_range(source);
   for (auto it = range.first; it != range.second; ++it)
   {
     auto adjRange = targetGraph.equal_range(it->second);
@@ -357,7 +496,7 @@ void LMRPHeuristic::addAllMapped()
     }
   }
   const auto& originalMapping = m_state.getMapping();
-  auto originalMapped = originalMapping.equal_range(m_currentSource);
+  auto originalMapped = originalMapping.equal_range(source);
   for (auto it = originalMapped.first; it != originalMapped.second; ++it)
   {
     if (m_border.contains(it->second)) closure.insert(it->second);
@@ -377,7 +516,7 @@ void LMRPHeuristic::addAllMapped()
 void LMRPHeuristic::connectAdjacentComponents(nodeset_t& adjacent)
 {
   resetDijkstra();
-  addAllMapped();
+  addAllMapped(m_currentSource);
   DijkstraVertex next{};
   while(!m_dijkstraQueue.empty())
   {

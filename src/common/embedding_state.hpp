@@ -32,6 +32,7 @@ namespace majorminer
       int getSourceNbFreeNeighbors(fuint32_t sourceNode) const;
 
       ThreadManager& getThreadManager() { return m_threadManager; }
+      void setLMRPSubgraphGenerator(LMRPSubgraph* gen) { m_lmrpGen = gen; }
 
     public: // getter
       const graph_t* getSourceGraph() const override { return m_sourceGraph; }
@@ -59,7 +60,7 @@ namespace majorminer
 
       fuint32_t getNumberSourceVertices() const { return m_numberSourceVertices; }
 
-      LMRPSubgraph* getSubgraphGen() { return m_lmrpGen.get(); }
+      LMRPSubgraph* getSubgraphGen() { return m_lmrpGen; }
 
     private:
       void initialize();
@@ -84,7 +85,7 @@ namespace majorminer
 
       EmbeddingVisualizer* m_visualizer;
 
-      std::unique_ptr<LMRPSubgraph> m_lmrpGen;
+      LMRPSubgraph* m_lmrpGen;
 
       ThreadManager m_threadManager;
   };

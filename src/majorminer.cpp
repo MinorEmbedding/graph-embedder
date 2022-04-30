@@ -15,11 +15,17 @@ using namespace majorminer;
 EmbeddingSuite::EmbeddingSuite(const graph_t& source, const graph_t& target, EmbeddingVisualizer* visualizer)
   : m_state(source, target, visualizer), m_visualizer(visualizer),
     m_embeddingManager(*this, m_state), m_mutationManager(m_state, m_embeddingManager),
-    m_placer(m_state, m_embeddingManager)
+    m_placer(m_state, m_embeddingManager), m_finished(false)
 { }
+
+void EmbeddingSuite::setSubgraphGen(LMRPSubgraph* generator)
+{
+  m_state.setLMRPSubgraphGenerator(generator);
+}
 
 embedding_mapping_t EmbeddingSuite::find_embedding()
 {
+  if (m_finished) return m_state.getMapping();
   const auto& nodesRemaining = m_state.getRemainingNodes();
   while(!nodesRemaining.empty())
   {
@@ -29,6 +35,7 @@ embedding_mapping_t EmbeddingSuite::find_embedding()
   m_mutationManager(true);
   m_placer.replaceOverlapping();
   if (m_visualizer != nullptr) finishVisualization();
+  m_finished = true;
   return m_state.getMapping();
 }
 

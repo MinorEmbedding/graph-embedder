@@ -3,6 +3,7 @@
 
 #include <majorminer_types.hpp>
 
+
 namespace majorminer
 {
   class LMRPSubgraph
@@ -14,7 +15,7 @@ namespace majorminer
 
       virtual bool isBeingDestroyed(vertex_t contained) = 0;
 
-      // If a LMRP instance was solved, free 
+      // If a LMRP instance was solved, free the mapped vertices
       virtual void commit(vertex_t contained) = 0;
   };
 }

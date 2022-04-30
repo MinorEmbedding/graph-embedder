@@ -109,12 +109,14 @@ namespace majorminer
   typedef adjacency_list_t embedding_mapping_t;
   typedef UnorderedSet<vertex_t> nodeset_t;
   typedef UnorderedSet<fuint32_pair_t, PairHashFunc<vertex_t, vertex_t>> nodepairset_t;
+  typedef nodepairset_t coordinateset_t;
   typedef PriorityQueue<PrioNode, std::less<PrioNode>> PrioNodeQueue;
   typedef std::pair<adjacency_list_t::const_iterator, adjacency_list_t::const_iterator> adjacency_list_range_iterator_t;
 
   typedef std::pair<vertex_t, std::shared_ptr<fuint32_pair_t[]>> ShiftingCandidates;
   typedef Cache<vertex_t, ShiftingCandidates> CandidateCache;
 
+  struct ChimeraGraphInfo;
   class EmbeddingVisualizer;
   class EmbeddingSuite;
   class EmbeddingBase;

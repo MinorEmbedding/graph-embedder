@@ -16,6 +16,7 @@ namespace majorminer
     private:
       void buildBorder();
       void identifyEdges();
+      void identifyEdgesFrom(const nodeset_t& from);
       void identifyComponents();
       void buildSubgraphs(graph_t& borderMapped, graph_t& subgraph);
       void calculatePreviousFitness();
@@ -35,9 +36,15 @@ namespace majorminer
       void addEmbeddedPath(vertex_t leaf);
       void connectAdjacentComponents(nodeset_t& adjacent);
       bool checkConnectedToSource(nodeset_t& wantedSources, vertex_t target);
-      void addAllMapped();
+      void addAllMapped(vertex_t source);
 
       void mapVertex(vertex_t source, vertex_t target);
+      void addBorderToMapping();
+      fuint32_pair_t getLeastMappedNeighbor(vertex_t source);
+      void dijkstraDestroyed(vertex_t source, vertex_t neighbor);
+      void mapToFreeVertex();
+      void mapToSingleAdjacent(vertex_t neighbor);
+      void addAdjacentVertices(vertex_t source, nodeset_t& adjacent);
 
     private:
       const EmbeddingState& m_state;
