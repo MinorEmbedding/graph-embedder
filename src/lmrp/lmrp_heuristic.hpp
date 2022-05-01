@@ -53,8 +53,9 @@ namespace majorminer
       bool destroyedConnected() const;
       bool allEdgesEmbedded() const;
       bool allDestroyedEmbedded() const;
-      void removeEdges(const nodeset_t& fromSet, graph_t remaining) const;
-
+      void removeEdges(const nodeset_t& fromSet, graph_t& remaining) const;
+      void connectivityDFS(nodeset_t& connected, nodeset_t& mapped,
+        Stack<adjacency_list_range_iterator_t>& stack) const;
 
     private:
       const EmbeddingState& m_state;

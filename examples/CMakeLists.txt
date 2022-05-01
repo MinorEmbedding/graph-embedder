@@ -8,7 +8,7 @@ set(CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BUILD_TYPE Release)
 set(MM_INCLUDES ../include/ ../src/ ../src/common/ ../src/lmrp/ ../src/evolutionary/ ../src/initial ../)
 set(INCLUDE_LIBS ../external/oneTBB/include ../build/external/lemon/ ../external/lemon/ ../external/ ${MM_INCLUDES})
-set(LINK_LIBS TBB::tbb lemon majorminer)
+set(LINK_LIBS TBB::tbb lemon majorminer pthread)
 
 # neither build tests nor tbbmalloc in oneTBB
 set(TBB_TEST CACHE BOOL OFF)

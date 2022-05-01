@@ -22,6 +22,15 @@ namespace
     ASSERT_TRUE(lmrp.allEdgesEmbedded());
     ASSERT_TRUE(lmrp.allDestroyedEmbedded());
   }
+
+  void visualizeKing(const KingGraphInfo& info, const embedding_mapping_t& original,
+    const embedding_mapping_t& after, const graph_t& king,
+    const graph_t& source, const std::string& filename)
+  {
+    KingsVisualizer vis{source, king, filename, info.getHeight(), info.getWidth()};
+    vis.draw(original, "Before LMRP heuristic");
+    vis.draw(after, "After LMRP heuristic");
+  }
 }
 
 
@@ -49,11 +58,11 @@ TEST(LMRPTest, SimpleChimera)
 
 TEST(LMRPTest, SimpleKings)
 {
-  auto chimera = majorminer::generate_king(7, 7);
+  auto king = majorminer::generate_king(7, 7);
   KingGraphInfo info{7,7};
   KingLMRPSubgraph subgraph{info};
   graph_t trivial{{ 0, 1 }, {0, 2}, {1, 2}};
-  StateGen gen{trivial, chimera};
+  StateGen gen{trivial, king};
   gen.addMapping(0, { 21,22,23,31,25,26,27});
   gen.addMapping(1, { 3, 10, 17, 24, 30, 38, 45});
   gen.addMapping(2, {0, 8, 16});
@@ -66,6 +75,7 @@ TEST(LMRPTest, SimpleKings)
   {
     std::cout << mapped.first << " --> " << mapped.second << std::endl;
   }
+  visualizeKing(info, state->getMapping(), repaired, king, trivial, "imgs/LMRP_SimpleKings/SimpleKings");
   validateLMRPResults(lmrp);
 }
 
@@ -82,9 +92,10 @@ TEST(LMRPTest, TrivialKings_SingleConnection)
   LMRPHeuristic lmrp{*state, 24};
   lmrp.optimize();
   auto repaired = lmrp.getMapping();
+  visualizeKing(info, state->getMapping(), repaired, king, trivial, "imgs/LMRP_TrivialKings_SingleConnection/TrivialKings_SingleConnection");
 }
 
-TEST(LMRPTest, TrivialKings_MultipleErdosRenyi)
+TEST(LMRPTest, DISABLED_TrivialKings_MultipleErdosRenyi)
 {
   auto king = majorminer::generate_king(7, 7);
   KingGraphInfo info{7,7};
