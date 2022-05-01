@@ -8,13 +8,14 @@ using namespace majorminer;
 
 
 LMRPHeuristic::LMRPHeuristic(EmbeddingState& state, vertex_t target)
-  : m_state(state), m_done(false), m_numberOverlaps(0), m_numberMapped(0)
+  : m_state(state), m_done(false), m_numberOverlaps(0),
+    m_numberMapped(0), m_currentSource(0)
 {
   LMRPSubgraph* gen = state.getSubgraphGen();
   if (gen != nullptr)
   {
     bool success = gen->getSubgraph(target, m_crater);
-    std::cout << "Success in subgraph " << success << std::endl;
+    // std::cout << "Success in subgraph " << success << std::endl;
     // TODO: commit once done!
     if (!success) m_done = true;
   }
@@ -27,11 +28,14 @@ void LMRPHeuristic::optimize()
   if (m_done) return;
   calculatePreviousFitness();
   buildBorder();
+  printNodeset(m_crater);
+  printNodeset(m_border);
   identifyEdges();
   identifyComponents();
   identifyDestroyed();
   printAdjacencyList(m_sourceAdjacencies);
 
+  initializeDijkstraData();
   solve();
 }
 
@@ -62,15 +66,15 @@ void LMRPHeuristic::identifyEdgesFrom(const nodeset_t& from)
   const auto& reverse = m_state.getReverseMapping();
   for (auto itA = from.begin(); itA != from.end(); ++itA)
   {
-    for (auto itB = itA; itB != m_crater.end(); ++itB)
+    for (auto itB = m_crater.begin(); itB != m_crater.end(); ++itB)
     {
-      if (itB == itA) itB++;
+      if (*itB == *itA) continue;
       else if (containsEdge(targetGraph, edge_t{*itA, *itB}))
       {
         auto rangeA = reverse.equal_range(*itA);
-        auto rangeB = reverse.equal_range(*itB);
         for (auto revA = rangeA.first; revA != rangeA.second; ++revA)
         {
+          auto rangeB = reverse.equal_range(*itB);
           for (auto revB = rangeB.first; revB != rangeB.second; ++revB)
           {
             edge_t edge{revA->second, revB->second};
@@ -188,6 +192,7 @@ void LMRPHeuristic::solve()
   fuint32_t idx = 0;
   for (auto& component : m_componentsList)
   {
+    m_currentSource = component.m_source;
     if (component.m_nbMapped > 1)
     {
       connectComponent(component, idx);
@@ -225,6 +230,7 @@ void LMRPHeuristic::connectComponent(ConnectedList& component, fuint32_t compone
   vertex_t root = m_componentVertices[component.m_idx];
   m_currentSource = component.m_source;
 
+  // std::cout << "A" << std::endl;
   nodeset_t toConnect{};
   if (component.m_nbMapped > 1)
   { // connect the component itself
@@ -232,33 +238,41 @@ void LMRPHeuristic::connectComponent(ConnectedList& component, fuint32_t compone
     {
       toConnect.insert(m_componentVertices[component.m_idx + offset]);
     }
+  // std::cout << "B" << std::endl;
     while(!toConnect.empty())
     {
       runDijkstraToTarget(toConnect, root);
     }
   }
+  // std::cout << "C" << std::endl;
   if (componentIdx == m_componentsList.size() ||
     m_componentsList[componentIdx + 1].m_source != component.m_source)
   {
     // embedd all edges
     toConnect.clear();
+  // std::cout << "D" << std::endl;
     auto adjRange = m_sourceAdjacencies.equal_range(m_currentSource);
+  // std::cout << "E" << std::endl;
     for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
     {
       if (m_mapping.contains(adjIt->second)) toConnect.insert(adjIt->second);
     }
 
+  // std::cout << "F" << std::endl;
     auto mappedRange = m_mapping.equal_range(m_currentSource);
     for (auto mapped = mappedRange.first; mapped != mappedRange.second; ++mapped)
     { // check for every within crater whether already connected to adjacent
       checkConnectedToSource(toConnect, mapped->second);
     }
+  // std::cout << "G" << std::endl;
 
     while(!toConnect.empty())
     {
       connectAdjacentComponents(toConnect);
     }
   }
+
+  // std::cout << "H" << std::endl;
 }
 
 void LMRPHeuristic::addBorderToMapping()
@@ -417,6 +431,7 @@ void LMRPHeuristic::addSingleVertexNeighbors(vertex_t target,
   auto range = targetGraph.equal_range(target);
   for (auto it = range.first; it != range.second; ++it)
   {
+    // std::cout << "Targetgraph (" << it->first << "," << it->second << ")" << std::endl;
     if (!m_crater.contains(it->second)) continue;
     if (m_bestPaths[it->second].wasVisited()) continue;
     auto& neighbor = m_bestPaths[it->second];
@@ -427,6 +442,7 @@ void LMRPHeuristic::addSingleVertexNeighbors(vertex_t target,
     bool lowered = neighbor.lowerTo(target,
       overlaps + (overlap ? 1 : 0),
       length + (contained ? 0 : 1));
+    // std::cout << "Adding vertex " << neighbor.m_target  << " from " << target << std::endl;
     if (lowered) m_dijkstraQueue.push(neighbor);
   }
 }
@@ -434,6 +450,8 @@ void LMRPHeuristic::addSingleVertexNeighbors(vertex_t target,
 void LMRPHeuristic::runDijkstraToTarget(nodeset_t& targets, vertex_t root)
 {
   resetDijkstra();
+  // std::cout << "Running Dijkstra from root " << root << " to targets: "<< std::endl;
+  printNodeset(targets);
   vertex_t connectedTo = checkConnectedTo(targets, root);
   if (!isDefined(connectedTo))
   {
@@ -462,11 +480,16 @@ void LMRPHeuristic::runDijkstraToTarget(nodeset_t& targets, vertex_t root)
 
 void LMRPHeuristic::addEmbeddedPath(vertex_t leaf)
 {
+  // std::cout << "Adding the Embedding path" << std::endl;
   auto* vertex = &m_bestPaths[leaf];
   while(vertex != nullptr)
   {
+    // std::cout << "Vertex " << vertex->m_target << " has parent "<< vertex->m_parent << std::endl;
     mapVertex(m_currentSource, vertex->m_target);
-    if (isDefined(vertex->m_parent)) vertex = &m_bestPaths[vertex->m_parent];
+    if (isDefined(vertex->m_parent) && m_bestPaths.contains(vertex->m_parent))
+    {
+      vertex = &m_bestPaths[vertex->m_parent];
+    }
     else vertex = nullptr;
   }
 }

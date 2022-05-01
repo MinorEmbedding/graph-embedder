@@ -8,19 +8,33 @@ namespace majorminer
 
   struct ChimeraGraphInfo
   {
-    ChimeraGraphInfo(){}
-    ChimeraGraphInfo(fuint32_t x, fuint32_t y)
-      : m_x(x), m_y(y) {}
+    ChimeraGraphInfo(): m_width(0), m_height(0) {}
+    ChimeraGraphInfo(fuint32_t width, fuint32_t height)
+      : m_width(width), m_height(height) {}
 
     fuint32_t getXCoord(vertex_t vertex) const;
     fuint32_t getYCoord(vertex_t vertex) const;
-    fuint32_t getWidth() const { return m_x; }
-    fuint32_t getHeight() const { return m_y; }
+    fuint32_t getWidth() const { return m_width; }
+    fuint32_t getHeight() const { return m_height; }
 
-    fuint32_t m_x;
-    fuint32_t m_y;
+    fuint32_t m_width;
+    fuint32_t m_height;
   };
 
+  struct KingGraphInfo
+  {
+    KingGraphInfo(): m_width(0), m_height(0) {}
+    KingGraphInfo(fuint32_t width, fuint32_t height)
+      : m_width(width), m_height(height) {}
+
+    fuint32_t getXCoord(vertex_t vertex) const { return vertex % m_width; }
+    fuint32_t getYCoord(vertex_t vertex) const { return vertex / m_width; }
+    fuint32_t getWidth() const { return m_width; }
+    fuint32_t getHeight() const { return m_height; }
+
+    fuint32_t m_width;
+    fuint32_t m_height;
+  };
 }
 
 

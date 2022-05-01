@@ -12,6 +12,7 @@ namespace majorminer
   {
     public:
       ChimeraLMRPSubgraph(ChimeraGraphInfo& g): m_graph(g) {}
+      ~ChimeraLMRPSubgraph() {}
 
       bool getSubgraph(vertex_t contained, nodeset_t& subgraph) override;
 

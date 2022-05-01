@@ -68,7 +68,7 @@ namespace majorminer
 
       PriorityQueue<DijkstraVertex> m_dijkstraQueue;
       UnorderedMap<vertex_t, DijkstraVertex> m_bestPaths;
-      fuint32_t m_currentSource;
+      vertex_t m_currentSource;
   };
 
 
