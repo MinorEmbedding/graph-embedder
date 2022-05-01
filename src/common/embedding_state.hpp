@@ -3,6 +3,8 @@
 
 #include <majorminer_types.hpp>
 #include <common/embedding_base.hpp>
+#include <common/thread_manager.hpp>
+#include <lmrp/lmrp_subgraph.hpp>
 
 namespace majorminer
 {
@@ -28,6 +30,9 @@ namespace majorminer
       fuint32_t getSuperVertexSize(fuint32_t sourceNode) const { return m_mapping.count(sourceNode); }
 
       int getSourceNbFreeNeighbors(fuint32_t sourceNode) const;
+
+      ThreadManager& getThreadManager() { return m_threadManager; }
+      void setLMRPSubgraphGenerator(LMRPSubgraph* gen) { m_lmrpGen = gen; }
 
     public: // getter
       const graph_t* getSourceGraph() const override { return m_sourceGraph; }
@@ -55,6 +60,8 @@ namespace majorminer
 
       fuint32_t getNumberSourceVertices() const { return m_numberSourceVertices; }
 
+      LMRPSubgraph* getSubgraphGen() { return m_lmrpGen; }
+
     private:
       void initialize();
       void unmapNode(vertex_t sourceVertex);
@@ -77,6 +84,10 @@ namespace majorminer
       fuint32_t m_numberSourceVertices;
 
       EmbeddingVisualizer* m_visualizer;
+
+      LMRPSubgraph* m_lmrpGen;
+
+      ThreadManager m_threadManager;
   };
 
 }

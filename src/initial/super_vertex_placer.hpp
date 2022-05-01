@@ -23,9 +23,10 @@ namespace majorminer
       void improveMapping(vertex_t source);
       void trivialNode();
       bool connectedNode();
+      void replaceSuperVertex(vertex_t source, nodeset_t& svertex);
 
       void embeddNode(vertex_t node);
-      void embeddNodeNetworkSimplex(vertex_t node);
+      void embeddNodeNetworkSimplex(vertex_t node, const nodeset_t* oldMapping = nullptr);
 
       void embeddTrivialNode(vertex_t node);
       void embeddSimpleNode(vertex_t node);

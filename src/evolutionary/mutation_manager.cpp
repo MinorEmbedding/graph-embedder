@@ -26,9 +26,9 @@ void MutationManager::operator()(bool finalIteration)
   const auto& done = m_done;
   auto& runningPreps = m_runningPreps;
   auto& remaining = m_numberRemaining;
-  // const auto& wait = m_wait;
   auto& free = m_free;
-  std::thread prep{ [&](){
+
+  auto prepareLambda = [&](){
     MutationPtr mutation;
     while(!done)
     {
@@ -36,21 +36,23 @@ void MutationManager::operator()(bool finalIteration)
       if (!success) continue;
       else
       {
-        free.lock();
+        free.lock_shared();
         runningPreps++;
-        free.unlock();
-
-        // TEST_OUTPUT(Preparing mutation)
+        free.unlock_shared();
         bool valid = mutation->prepare();
-        // TEST_OUTPUT(Prepared mutation)
         if (valid) incorporationQueue.push(std::move(mutation));
         else remaining--;
         runningPreps--;
       }
     }
-  }};
+  };
+
+  auto& threadManager = m_state.getThreadManager();
+  fuint32_t threadCount = std::min(threadManager.getAvailableThreads() - 1, prepQueue.unsafe_size());
+  threadManager.runMultiple(prepareLambda, threadCount);
   incorporate();
-  prep.join();
+
+  threadManager.wait();
   m_embeddingManager.synchronize();
 }
 
@@ -89,7 +91,6 @@ void MutationManager::prepareFinal()
   {
     m_prepQueue.push(std::make_unique<MutationReduceOverlap>(m_state, m_embeddingManager, vertex));
   }
-  // std::cout << "Prepare final with " << vertices.size() <<" vertices." << std::endl;
   m_numberRemaining = m_prepQueue.unsafe_size();
 }
 
@@ -123,34 +124,26 @@ void MutationManager::incorporate()
 {
   MutationPtr mutation;
   while(m_numberRemaining > 0)
-  {// TEST_OUTPUT(popping mutation)
+  {
     bool success = m_incorporationQueue.try_pop(mutation);
-   // TEST_OUTPUT(done popping mutation)
     if (!success) continue;
-  // TEST_OUTPUT(Cheking valid)
     bool valid = mutation->isValid();
-  // TEST_OUTPUT(Done checking valid)
     if (!valid && mutation->requeue())
     {
-      // std::cout << "Invalid mutation. Requeuing." << std::endl;
       m_prepQueue.push(std::move(mutation));
-      continue;
+      m_wait = true;
     }
     else if (valid)
     {
-      // std::cout << "Starting exec" << std::endl;
       mutation->execute();
-      // std::cout << "Done execution" << std::endl;
-      m_wait = true;
+      m_numberRemaining--;
     }
-    m_numberRemaining--;
+    else m_numberRemaining--;
     if (m_wait)
     {
       m_free.lock();
       while(m_runningPreps != 0) continue;
-      // std::cout << "Synchronizing" << std::endl;
       m_embeddingManager.synchronize();
-      // std::cout << "Done synchro" << std::endl;
       m_wait = false;
       m_free.unlock();
     }

@@ -4,3 +4,6 @@
 [submodule "external/eigen"]
 	path = external/eigen
 	url = https://gitlab.com/libeigen/eigen.git
+[submodule "external/thread-pool"]
+	path = external/thread-pool
+	url = https://github.com/bshoshany/thread-pool

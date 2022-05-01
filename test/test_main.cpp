@@ -3,6 +3,7 @@
 #include <common/embedding_visualizer.hpp>
 #include <common/embedding_analyzer.hpp>
 #include <common/graph_gen.hpp>
+#include <common/debug_utils.hpp>
 
 #include "utils/test_common.hpp"
 #include "utils/qubo_problems.hpp"
@@ -28,13 +29,19 @@ namespace
     return coords;
   }
 
-  void clique_test(fuint32_t n, fuint32_t x, fuint32_t y, std::string filename, bool fullValidation)
+  void clique_test(fuint32_t n, fuint32_t x, fuint32_t y, std::string filename,
+    bool fullValidation = false, bool visualize = true, bool printStats = false)
   {
     graph_t clique = generate_completegraph(n);
     graph_t chimera = generate_chimera(x, y);
-    auto visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, filename, x, y);
-    EmbeddingSuite suite{clique, chimera, visualizer.get()};
+    std::cout << filename << std::endl;
+    std::unique_ptr<ChimeraVisualizer> visualizer;
+    if (visualize) visualizer = std::make_unique<ChimeraVisualizer>(clique, chimera, filename, x, y);
+    EmbeddingSuite suite{clique, chimera, visualize ? visualizer.get() : nullptr};
     auto embedding = suite.find_embedding();
+
+    if (printStats) printEmbeddingOverlapStats(embedding);
+
     if (fullValidation) ASSERT_TRUE(suite.isValid());
     else ASSERT_TRUE(suite.connectsNodes());
   }
@@ -114,7 +121,23 @@ TEST(EmbeddingTest, Complete_Graph_28_On_16_16_Chimera)
 
 TEST(EmbeddingTest, Complete_Graph_31_On_16_16_Chimera)
 {
-  clique_test(31, 16, 16, "imgs/Complete_Graph_31_On_16_16_Chimera/chimera_clique_31", false);
+  clique_test(31, 16, 16, "imgs/Complete_Graph_31_On_16_16_Chimera/chimera_clique_31", false, false);
+}
+
+TEST(EmbeddingTest, Complete_Graph_33_On_16_16_Chimera)
+{
+  clique_test(33, 16, 16, "imgs/Complete_Graph_33_On_16_16_Chimera/chimera_clique_33", false, false, false);
+}
+
+TEST(EmbeddingTest, Complete_Graph_34_On_16_16_Chimera)
+{
+  clique_test(34, 16, 16, "imgs/Complete_Graph_34_On_16_16_Chimera/chimera_clique_34", false, false);
+}
+
+
+TEST(EmbeddingTest, Complete_Graph_25_On_8_8_Chimera)
+{
+  clique_test(25, 8, 8, "imgs/Complete_Graph_25_On_8_8_Chimera/chimera_clique_25", false, false);
 }
 
 TEST(EmbeddingTest, Basic_Cycle_8_Visualization)
@@ -187,4 +210,12 @@ TEST(EmbeddingTest, ErdosRenyi_Chimera_7_7)
   EmbeddingSuite suite { erdos, chimera, visualizer.get() };
   suite.find_embedding();
   ASSERT_TRUE(suite.connectsNodes());
+}
+
+TEST(EmbeddingTest, DISABLED_RunMultipleTimes)
+{
+  for (int i = 0; i < 100; ++i)
+  {
+    clique_test(33, 16, 16, "imgs/Complete_Graph_33_On_16_16_Chimera/chimera_clique_33", false, false, false);
+  }
 }

@@ -13,6 +13,10 @@ namespace majorminer
   void printNodeset(const nodeset_t& nodeset);
 
   void printVertexNumberMap(const VertexNumberMap& m);
+
+  embedding_mapping_t getReverseMapping(const embedding_mapping_t& mapping);
+
+  void printEmbeddingOverlapStats(const embedding_mapping_t& mapping);
 }
 
 #endif

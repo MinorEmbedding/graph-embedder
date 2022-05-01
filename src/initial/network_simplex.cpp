@@ -3,7 +3,7 @@
 #include <common/embedding_state.hpp>
 #include <common/embedding_manager.hpp>
 #include <common/utils.hpp>
-
+#include <common/time_measurement.hpp>
 
 using namespace majorminer;
 
@@ -11,6 +11,10 @@ using namespace majorminer;
 #define OCCUPIED 10
 #define FREE 1
 
+
+NetworkSimplexWrapper::NetworkSimplexWrapper(EmbeddingState& state, EmbeddingManager& embeddingManager)
+  : m_state(state), m_embeddingManager(embeddingManager), m_initialized(false)
+{ }
 
 NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const
 {
@@ -24,7 +28,7 @@ NetworkSimplexWrapper::capacity_t NetworkSimplexWrapper::getNumberAdjacentNodes(
   return n;
 }
 
-void NetworkSimplexWrapper::constructLemonGraph(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps)
+void NetworkSimplexWrapper::constructLemonGraph()
 {
   // Construct base graph
   const auto& targetGraph = *m_state.getTargetGraph();
@@ -35,10 +39,6 @@ void NetworkSimplexWrapper::constructLemonGraph(LemonArcMap<cost_t>& costs, Lemo
     LemonArc uv = m_graph.addArc(uNode, vNode);
     LemonArc vu = m_graph.addArc(vNode, uNode);
     m_edgeMap.insert(std::make_pair(arc, std::make_pair(uv, vu)));
-    caps[uv] = m_numberAdjacent;
-    caps[vu] = m_numberAdjacent;
-    costs[uv] = determineCost(arc.first);
-    costs[vu] = determineCost(arc.second);
   }
 }
 
@@ -71,12 +71,26 @@ vertex_t NetworkSimplexWrapper::chooseSource(vertex_t source) const
   return bestFound;
 }
 
+NetworkSimplexWrapper::LemonNode& NetworkSimplexWrapper::getNextRootNode()
+{
+  if (m_rootCounter < m_rootVertices.size()) return m_rootVertices[m_rootCounter++];
+  else
+  {
+    m_rootVertices.push_back(m_graph.addNode());
+    LemonNode& root = m_rootVertices.back();
+    createCheapArc(root, m_t, *m_costMap, *m_capMap, false);
+    m_rootCounter++;
+    return root;
+  }
+}
+
 void NetworkSimplexWrapper::createCheapArc(LemonNode& from, LemonNode& to,
-    LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, capacity_t capacity)
+    LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps, bool constructionArc, capacity_t capacity)
 {
   auto temp = m_graph.addArc(from, to);
   costs[temp] = 0;
   caps[temp] = capacity;
+  if (constructionArc) m_treeConstructionArcs.push_back(temp);
 }
 
 void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps,
@@ -94,13 +108,12 @@ void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, Lem
     if (embeddingPath.first == embeddingPath.second) continue;
     adjacentCandidate = adjacentNode->second;
 
-    LemonNode constructionNode = m_graph.addNode();
-    createCheapArc(constructionNode, *m_t, costs, caps);
+    LemonNode& constructionNode = getNextRootNode();
 
     for (auto targetNode = embeddingPath.first; targetNode != embeddingPath.second; ++targetNode)
     {
       LemonNode& fromNode = m_nodeMap[targetNode->second];
-      createCheapArc(fromNode, constructionNode, costs, caps);
+      createCheapArc(fromNode, constructionNode, costs, caps, true);
     }
   }
 
@@ -108,33 +121,39 @@ void NetworkSimplexWrapper::constructHelperNodes(LemonArcMap<cost_t>& costs, Lem
   vertex_t sVertex = chooseSource(adjacentCandidate);
   LemonNode& toNode = m_nodeMap[sVertex];
   m_sConnected = sVertex;
-  createCheapArc(*m_s, toNode, costs, caps, m_numberAdjacent);
+  createCheapArc(m_s, toNode, costs, caps, true, m_numberAdjacent);
   //adjustCosts(sVertex, costs);
+}
+
+void NetworkSimplexWrapper::initialCreation()
+{
+  m_costMap = std::make_unique<LemonArcMap<cost_t>>(m_graph);
+  m_capMap = std::make_unique<LemonArcMap<capacity_t>>(m_graph);
+  m_flowMap = std::make_unique<LemonArcMap<capacity_t>>(m_graph);
+  constructLemonGraph();
+  m_s = m_graph.addNode();
+  m_t = m_graph.addNode();
+
+  m_initialized = true;
 }
 
 void NetworkSimplexWrapper::embeddNode(vertex_t node)
 {
+  if (!m_initialized) initialCreation();
   clear();
   auto adjacentIt = m_state.getSourceAdjGraph().equal_range(node);
   m_numberAdjacent = getNumberAdjacentNodes(adjacentIt);
 
-  LemonArcMap<cost_t> costs(m_graph);
-  LemonArcMap<capacity_t> caps(m_graph);
-  constructLemonGraph(costs, caps);
+  setupCostsAndCaps();
 
-  LemonNode s = m_graph.addNode();
-  LemonNode t = m_graph.addNode();
-  m_s = &s;
-  m_t = &t;
-  constructHelperNodes(costs, caps, adjacentIt);
+  constructHelperNodes(*m_costMap, *m_capMap, adjacentIt);
 
   NetworkSimplex ns(m_graph);
-  ns.costMap(costs).upperMap(caps).stSupply(*m_s, *m_t, m_numberAdjacent);
-  LemonArcMap<capacity_t> flows(m_graph);
+  ns.costMap(*m_costMap).upperMap(*m_capMap).stSupply(m_s, m_t, m_numberAdjacent);
   NetworkSimplex::ProblemType status = ns.run();
   if (status == NetworkSimplex::OPTIMAL)
   {
-    LemonArcMap<capacity_t> flows{m_graph};
+    LemonArcMap<capacity_t>& flows = *m_flowMap;
     ns.flowMap(flows);
     for (const auto& arc : m_edgeMap)
     {
@@ -193,8 +212,8 @@ NetworkSimplexWrapper::LemonNode NetworkSimplexWrapper::createNode(vertex_t node
   auto findIt = m_nodeMap.find(node);
   if (findIt == m_nodeMap.end())
   {
-    m_nodeMap.insert(std::make_pair(node, m_graph.addNode()));
-    return m_nodeMap[node];
+    auto it = m_nodeMap.insert(std::make_pair(node, m_graph.addNode()));
+    return it.first->second;
   }
   return findIt->second;
 }
@@ -204,15 +223,29 @@ NetworkSimplexWrapper::cost_t NetworkSimplexWrapper::determineCost(vertex_t node
   return m_state.isNodeOccupied(node) ? OCCUPIED : FREE;
 }
 
+void NetworkSimplexWrapper::setupCostsAndCaps()
+{
+  // set all costs of nonartificial arcs
+  for (const auto& edgePair : m_edgeMap)
+  {
+    const auto& uv = edgePair.second.first;
+    const auto& vu = edgePair.second.second;
+    (*m_capMap)[uv] = m_numberAdjacent;
+    (*m_capMap)[vu] = m_numberAdjacent;
+    (*m_costMap)[uv] = determineCost(edgePair.first.first);
+    (*m_costMap)[vu] = determineCost(edgePair.first.second);
+  }
+}
+
 void NetworkSimplexWrapper::clear()
 {
-  m_graph.clear();
-  m_nodeMap.clear();
+  for (auto& lemonArc : m_treeConstructionArcs)
+  {
+    (*m_capMap)[lemonArc] = 0;
+  }
   m_mapped.clear();
-  m_edgeMap.clear();
-
-  m_s = nullptr;
-  m_t = nullptr;
   m_numberAdjacent = 0;
   m_sConnected = -1;
+
+  m_rootCounter = 0;
 }

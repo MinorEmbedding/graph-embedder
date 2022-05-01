@@ -28,13 +28,13 @@ namespace majorminer
       EmbeddingState& m_state;
       EmbeddingManager& m_embeddingManager;
       Queue<MutationPtr> m_prepQueue;
-      PriorityQueue<MutationPtr> m_incorporationQueue;
+      Queue<MutationPtr> m_incorporationQueue;
       std::atomic<bool> m_done;
       std::atomic<fuint32_t> m_runningPreps;
       std::atomic<bool> m_wait;
 
       std::atomic<int> m_numberRemaining;
-      std::mutex m_free;
+      std::shared_mutex m_free;
   };
 
 }

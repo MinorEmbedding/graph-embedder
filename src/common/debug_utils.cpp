@@ -1,4 +1,7 @@
 #include <common/debug_utils.hpp>
+#include <common/utils.hpp>
+
+#include <algorithm>
 
 using namespace majorminer;
 
@@ -32,3 +35,26 @@ void majorminer::printVertexNumberMap(const VertexNumberMap& m)
   }
   std::cout << std::endl;
 }
+
+embedding_mapping_t majorminer::getReverseMapping(const embedding_mapping_t& mapping)
+{
+  embedding_mapping_t reverse{};
+  for (const auto& mapped : mapping) reverse.insert(reversePair(mapped));
+  return reverse;
+}
+
+void majorminer::printEmbeddingOverlapStats(const embedding_mapping_t& mapping)
+{
+  VertexNumberMap overlapStat{};
+  embedding_mapping_t reverse = getReverseMapping(mapping);
+  for (const auto& rev : reverse)
+  {
+    if(reverse.count(rev.first) > 1) overlapStat[rev.second]++;
+  }
+  Vector<fuint32_pair_t> stats{};
+  stats.reserve(overlapStat.size());
+  for (const auto& p : overlapStat) stats.push_back(reversePair(p));
+  std::sort(stats.begin(), stats.end(), PairFirstKeySorter<fuint32_t, fuint32_t, true>());
+  for (const auto& stat : stats) std::cout << "Source vertex " << stat.second << " is mapped onto " << stat.first << " vertices." << std::endl;
+}
+

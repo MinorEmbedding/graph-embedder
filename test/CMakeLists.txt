@@ -11,4 +11,5 @@ target_sources(majorminer_test PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/test_qubo_modelling.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_cut_vertex.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/test_reducer.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/test_lmrp.cpp
 )

@@ -11,4 +11,6 @@ target_sources(majorminer PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/embedding_manager.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/csc_problem.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/random_gen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/time_measurement.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/graph_info.cpp
 )
