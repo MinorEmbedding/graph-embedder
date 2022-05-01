@@ -47,6 +47,15 @@ namespace majorminer
       void mapToSingleAdjacent(vertex_t neighbor);
       void addAdjacentVertices(vertex_t source, nodeset_t& adjacent);
 
+    public:
+      // validation functions
+      bool componentsConnected() const;
+      bool destroyedConnected() const;
+      bool allEdgesEmbedded() const;
+      bool allDestroyedEmbedded() const;
+      void removeEdges(const nodeset_t& fromSet, graph_t remaining) const;
+
+
     private:
       const EmbeddingState& m_state;
       bool m_done;

@@ -1,8 +1,7 @@
 #ifndef __MAJORMINER_MAJORMINER_LIB_HPP_
 #define __MAJORMINER_MAJORMINER_LIB_HPP_
 
-#include <majorminer_types.hpp>
-
+#include <src/majorminer_types.hpp>
 #include <src/majorminer.hpp>
 
 #include <src/common/embedding_analyzer.hpp>

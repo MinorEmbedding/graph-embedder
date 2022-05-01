@@ -13,6 +13,17 @@
 
 using namespace majorminer;
 
+namespace
+{
+  void validateLMRPResults(const LMRPHeuristic& lmrp)
+  {
+    ASSERT_TRUE(lmrp.componentsConnected());
+    ASSERT_TRUE(lmrp.destroyedConnected());
+    ASSERT_TRUE(lmrp.allEdgesEmbedded());
+    ASSERT_TRUE(lmrp.allDestroyedEmbedded());
+  }
+}
+
 
 TEST(LMRPTest, SimpleChimera)
 {
@@ -55,19 +66,39 @@ TEST(LMRPTest, SimpleKings)
   {
     std::cout << mapped.first << " --> " << mapped.second << std::endl;
   }
+  validateLMRPResults(lmrp);
 }
 
 TEST(LMRPTest, TrivialKings_SingleConnection)
 {
-  auto chimera = majorminer::generate_king(7, 7);
+  auto king = majorminer::generate_king(7, 7);
   KingGraphInfo info{7,7};
   KingLMRPSubgraph subgraph{info};
   graph_t trivial{ };
-  StateGen gen{trivial, chimera};
+  StateGen gen{trivial, king};
   gen.addMapping(0, {21,22,23,31,25,26,27});
   auto state = gen.get();
   state->setLMRPSubgraphGenerator(&subgraph);
   LMRPHeuristic lmrp{*state, 24};
   lmrp.optimize();
   auto repaired = lmrp.getMapping();
+}
+
+TEST(LMRPTest, TrivialKings_MultipleErdosRenyi)
+{
+  auto king = majorminer::generate_king(7, 7);
+  KingGraphInfo info{7,7};
+  KingLMRPSubgraph subgraph{info};
+  graph_t random = majorminer::generate_erdosrenyi(10, 0.2);
+
+  EmbeddingSuite suite{random, king};
+  auto original = suite.find_embedding();
+  StateGen gen{random, king};
+  gen.addMapping(original);
+  auto state = gen.get();
+  state->setLMRPSubgraphGenerator(&subgraph);
+
+  LMRPHeuristic lmrp{*state, 24};
+  lmrp.optimize();
+  validateLMRPResults(lmrp);
 }

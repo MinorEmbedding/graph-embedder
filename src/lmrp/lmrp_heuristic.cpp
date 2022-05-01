@@ -589,3 +589,84 @@ void LMRPHeuristic::mapVertex(vertex_t source, vertex_t target)
     m_reverse.insert(reversePair(mapped));
   }
 }
+
+
+bool LMRPHeuristic::componentsConnected() const
+{
+  return false;
+}
+
+bool LMRPHeuristic::destroyedConnected() const
+{
+  const auto& targetGraph = m_state.getTargetAdjGraph();
+  nodeset_t mapped{};
+  Stack<adjacency_list_range_iterator_t> stack{};
+  for (auto destroyed : m_completelyDestroyed)
+  {
+    clearStack(stack);
+    auto mappedRange = m_mapping.equal_range(destroyed);
+    for (auto it = mappedRange.first; it != mappedRange.second; ++it)
+    { mapped.insert(it->second); }
+    if (mapped.empty()) continue;
+    stack.push(targetGraph.equal_range(*mapped.begin()));
+    mapped.unsafe_erase(*mapped.begin());
+    while(!stack.empty() && !mapped.empty())
+    {
+      auto& top = stack.top();
+      if (empty_range(top)) stack.pop();
+      else if (!mapped.contains(top.first->second)) top.first++;
+      else
+      {
+        auto next = top.first->second;
+        top.first++;
+        mapped.unsafe_erase(next);
+        stack.push(targetGraph.equal_range(next));
+      }
+    }
+    if (!mapped.empty()) return false;
+  }
+  return true;
+}
+
+
+bool LMRPHeuristic::allEdgesEmbedded() const
+{
+  graph_t remainingEdges{};
+  for (const auto& p : m_sourceAdjacencies)
+  {
+    remainingEdges.insert(orderedPair(p));
+  }
+
+  removeEdges(m_border, remainingEdges);
+  removeEdges(m_crater, remainingEdges);
+  return remainingEdges.empty();
+}
+
+void LMRPHeuristic::removeEdges(const nodeset_t& fromSet, graph_t remaining) const
+{
+  for (auto from : fromSet)
+  {
+    for (auto to : m_crater)
+    {
+      if (from == to) continue;
+      auto rangeFrom = m_reverse.equal_range(from);
+      for (auto itFrom = rangeFrom.first; itFrom != rangeFrom.second; ++itFrom)
+      {
+        auto rangeTo = m_reverse.equal_range(to);
+        for (auto itTo = rangeTo.first; itTo != rangeTo.second; ++itTo)
+        {
+          remaining.unsafe_erase(orderedPair(edge_t{itFrom->second, itTo->second}));
+        }
+      }
+    }
+  }
+}
+
+bool LMRPHeuristic::allDestroyedEmbedded() const
+{
+  for (auto destroyed : m_completelyDestroyed)
+  {
+    if (!m_mapping.contains(destroyed)) return false;
+  }
+  return true;
+}
