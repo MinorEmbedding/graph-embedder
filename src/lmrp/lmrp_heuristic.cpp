@@ -230,7 +230,6 @@ void LMRPHeuristic::connectComponent(ConnectedList& component, fuint32_t compone
   vertex_t root = m_componentVertices[component.m_idx];
   m_currentSource = component.m_source;
 
-  // std::cout << "A" << std::endl;
   nodeset_t toConnect{};
   if (component.m_nbMapped > 1)
   { // connect the component itself
@@ -238,41 +237,35 @@ void LMRPHeuristic::connectComponent(ConnectedList& component, fuint32_t compone
     {
       toConnect.insert(m_componentVertices[component.m_idx + offset]);
     }
-  // std::cout << "B" << std::endl;
     while(!toConnect.empty())
     {
       runDijkstraToTarget(toConnect, root);
     }
   }
-  // std::cout << "C" << std::endl;
   if (componentIdx == m_componentsList.size() ||
     m_componentsList[componentIdx + 1].m_source != component.m_source)
   {
     // embedd all edges
     toConnect.clear();
-  // std::cout << "D" << std::endl;
     auto adjRange = m_sourceAdjacencies.equal_range(m_currentSource);
-  // std::cout << "E" << std::endl;
     for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
     {
       if (m_mapping.contains(adjIt->second)) toConnect.insert(adjIt->second);
     }
 
-  // std::cout << "F" << std::endl;
     auto mappedRange = m_mapping.equal_range(m_currentSource);
     for (auto mapped = mappedRange.first; mapped != mappedRange.second; ++mapped)
     { // check for every within crater whether already connected to adjacent
       checkConnectedToSource(toConnect, mapped->second);
     }
-  // std::cout << "G" << std::endl;
 
     while(!toConnect.empty())
     {
       connectAdjacentComponents(toConnect);
     }
   }
+  component.satisfied();
 
-  // std::cout << "H" << std::endl;
 }
 
 void LMRPHeuristic::addBorderToMapping()
@@ -283,7 +276,7 @@ void LMRPHeuristic::addBorderToMapping()
     auto mappedRange = reverse.equal_range(borderVertex);
     for (auto revIt = mappedRange.first; revIt != mappedRange.second; ++revIt)
     {
-      m_mapping.insert(reversePair(*revIt));
+      mapVertex(revIt->second, revIt->first);
     }
     m_reverse.insert(mappedRange.first, mappedRange.second);
   }
@@ -474,7 +467,11 @@ void LMRPHeuristic::runDijkstraToTarget(nodeset_t& targets, vertex_t root)
     }
     if (isDefined(best)) addEmbeddedPath(best);
   }
-  if (isDefined(connectedTo)) targets.unsafe_erase(connectedTo);
+  if (isDefined(connectedTo))
+  {
+    std::cout << "Removing vertex " << connectedTo << std::endl;
+    targets.unsafe_erase(connectedTo);
+  }
   else throw std::runtime_error("No connection found!");
 }
 
@@ -484,7 +481,7 @@ void LMRPHeuristic::addEmbeddedPath(vertex_t leaf)
   auto* vertex = &m_bestPaths[leaf];
   while(vertex != nullptr)
   {
-    // std::cout << "Vertex " << vertex->m_target << " has parent "<< vertex->m_parent << std::endl;
+    std::cout << vertex->m_target << " ";
     mapVertex(m_currentSource, vertex->m_target);
     if (isDefined(vertex->m_parent) && m_bestPaths.contains(vertex->m_parent))
     {
@@ -492,6 +489,7 @@ void LMRPHeuristic::addEmbeddedPath(vertex_t leaf)
     }
     else vertex = nullptr;
   }
+  std::cout << std::endl;
 }
 
 vertex_t LMRPHeuristic::checkConnectedTo(const nodeset_t& wantedTargets,

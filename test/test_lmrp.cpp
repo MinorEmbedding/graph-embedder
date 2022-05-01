@@ -41,11 +41,11 @@ TEST(LMRPTest, SimpleKings)
   auto chimera = majorminer::generate_king(7, 7);
   KingGraphInfo info{7,7};
   KingLMRPSubgraph subgraph{info};
-  graph_t trivial{ }; //{ 0, 1 }, {0, 2}, {1, 2}};
+  graph_t trivial{{ 0, 1 }, {0, 2}, {1, 2}};
   StateGen gen{trivial, chimera};
   gen.addMapping(0, { 21,22,23,31,25,26,27});
-  //gen.addMapping(1, { 3, 10, 17, 24, 30, 38, 45});
-  //gen.addMapping(2, {0, 8, 16});
+  gen.addMapping(1, { 3, 10, 17, 24, 30, 38, 45});
+  gen.addMapping(2, {0, 8, 16});
   auto state = gen.get();
   state->setLMRPSubgraphGenerator(&subgraph);
   LMRPHeuristic lmrp{*state, 24};
@@ -55,4 +55,19 @@ TEST(LMRPTest, SimpleKings)
   {
     std::cout << mapped.first << " --> " << mapped.second << std::endl;
   }
+}
+
+TEST(LMRPTest, TrivialKings_SingleConnection)
+{
+  auto chimera = majorminer::generate_king(7, 7);
+  KingGraphInfo info{7,7};
+  KingLMRPSubgraph subgraph{info};
+  graph_t trivial{ };
+  StateGen gen{trivial, chimera};
+  gen.addMapping(0, {21,22,23,31,25,26,27});
+  auto state = gen.get();
+  state->setLMRPSubgraphGenerator(&subgraph);
+  LMRPHeuristic lmrp{*state, 24};
+  lmrp.optimize();
+  auto repaired = lmrp.getMapping();
 }

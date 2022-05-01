@@ -30,7 +30,7 @@ bool DijkstraVertex::lowerTo(fuint32_t parent, fuint32_t overlap,
   if (overlap < m_overlapCnt || (overlap == m_overlapCnt
     && nonOverlap < m_nonOverlapCnt))
   {
-    std::cout << "Changing parent from " << m_parent << " to " << parent << std::endl;
+    //std::cout << "Changing parent from " << m_parent << " to " << parent << std::endl;
     m_parent = parent;
     m_overlapCnt = overlap;
     m_nonOverlapCnt = nonOverlap;
