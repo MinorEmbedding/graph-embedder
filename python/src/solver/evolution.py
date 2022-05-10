@@ -19,12 +19,12 @@ logger = logging.getLogger('evolution')
 params = EvolutionParams(
     population_size=12,
     max_mutation_trials=30,
-    mutation_extend_to_free_neighbors_probability=0.3  # should be less than 0.5
+    mutation_extend_to_free_neighbors_probability=0.3  # should be <=0.5
 )
 
 max_total = 1
-max_generations = 300
-remove_redundant_nodes_probability = 0.01
+max_generations = 1000
+remove_redundancy_probability = 0.01
 
 
 ############################### Evolution ######################################
@@ -71,7 +71,6 @@ def main(d: DrawEmbedding) -> bool:
         return True
 
     # --- Start solver
-
     for i in range(max_generations):
         child = do_one_generation(i, solver)
 
@@ -82,13 +81,15 @@ def main(d: DrawEmbedding) -> bool:
         solver.commit(child)
 
         # Save embedding every x steps
-        if i % 30 == 0 or i == max_generations - 1:
+        save_embedding_steps = 50
+        if (i % save_embedding_steps == 0) \
+                or (i == max_generations - 2) or (i == max_generations - 1):
             save_embedding(*solver.get_embedding(), d, i,
                            title=f'Generation {i}')
 
         # Check if done
         if child.is_valid_embedding():
-            child.remove_redundant_supernode_nodes()
+            child.remove_redundancy()
             save_embedding(*solver.get_embedding(), d, i,
                            title=f'Generation {i} (final with redundancy removed)')
             logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
@@ -109,10 +110,8 @@ def do_one_generation(i: int, solver: EmbeddingSolver) -> Optional[Embedding]:
         return None
 
     # Leave "room" on graph for next generation
-    if random() < remove_redundant_nodes_probability:
-        logger.info('Try to remove redundant supernode nodes')
-        child.remove_redundant_supernode_nodes()
-        # best_mutation.remove_unnecessary_edges_between_supernodes()
+    if random() < remove_redundancy_probability:
+        child.remove_redundancy()
 
     return child
 

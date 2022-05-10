@@ -224,10 +224,15 @@ class Embedding():
 
         return len(missing_edges_added)
 
+    def remove_redundancy(self) -> None:
+        self.remove_redundant_supernode_nodes()
+        self.remove_unnecessary_edges_between_supernodes()
+
     def remove_unnecessary_edges_between_supernodes(self) -> None:
         """Tries to remove unnecessary edges, e.g. multiple edges between
         two supernodes.
         """
+        logger.info('Remove unnecessary edges between supernodes')
         # For every supernode (chain)
         for supernode in self.H.get_nodes():
             considered_supernodes = []
@@ -254,7 +259,7 @@ class Embedding():
                         # this must be preserved by this method
 
     def remove_redundant_supernode_nodes(self):
-        logging.info('Removing redundant supernode nodes')
+        logger.info('Removing redundant supernode nodes')
         for supernode in self.H.get_nodes():
             self.remove_redundant_nodes_in_supernode(supernode)
 

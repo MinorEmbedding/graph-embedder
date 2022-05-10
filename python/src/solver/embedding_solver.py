@@ -61,7 +61,7 @@ class EmbeddingSolver():
     def last_trial(self, params: EvolutionParams) -> Optional[list[Embedding]]:
         """Try to remove unnecessary supernode nodes and generate a new population"""
         logger.info(f'🔳 Last trial, remove redundant nodes')
-        self._embedding.remove_redundant_supernode_nodes()
+        self._embedding.remove_redundancy()
         return self._generate_children(params)
 
     def _generate_children(self, params: EvolutionParams) -> list[Embedding]:

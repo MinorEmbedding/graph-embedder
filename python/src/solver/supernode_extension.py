@@ -2,7 +2,6 @@ import logging
 import random
 from collections import namedtuple
 from dataclasses import dataclass
-from math import ceil
 from typing import Optional
 
 import numpy as np
@@ -78,18 +77,18 @@ class SupernodeExtension():
             increases = [lin_increases[node] for node in supernodes_sorted]
 
             # Calculate selection chances
-            selection_chances_without_increase = np.array(
-                [(1-p) for p in degree_percentages.values()])
-            selection_chances = np.array([(1-p) + increases[i]
-                                          for i, p in enumerate(degree_percentages.values())])
+            selection_chances = np.array([(1-p) for p in degree_percentages.values()])
+            selection_chances_without_increase = np.copy(selection_chances)
             selection_chances_without_increase *= 1 / \
                 np.sum(selection_chances_without_increase)
+            selection_chances += increases
             selection_chances *= 1 / np.sum(selection_chances)
+            self.selection_chances = selection_chances
+
             np.set_printoptions(precision=2)
             logger.info(
                 f'Selection chances (without increases) are: {selection_chances_without_increase}')
             logger.info(f'Selection chances are: {selection_chances}')
-            self.selection_chances = selection_chances
 
         # Choose according to calculated chances
         supernode = np.random.choice(supernodes, p=self.selection_chances)
