@@ -39,7 +39,10 @@ class Embedding():
         Returns:
             set[int]: The embedded nodes.
         """
-        return self.G_embedding.get_embedded_nodes()
+        embedded_nodes = self.G_embedding.get_embedded_nodes()
+        if not embedded_nodes:
+            raise Exception('No nodes embedded yet')
+        return embedded_nodes
 
     def get_reachable_neighbors(self, source):
         return self.G_layout.get_neighbor_nodes(source)
@@ -153,6 +156,36 @@ class Embedding():
     def get_nodes_G(self, node_H: int) -> set[int]:
         return self.mapping.get_nodes_G(node_H)
 
+    def get_nodes_H(self) -> set[int]:
+        return self.H.get_nodes()
+
+    def get_supernode_degree_percentages(self) -> dict[int, float]:
+        """Returns a dictionary of percentages for each supernode indicating
+        how many edges between supernodes are currently embedded in G compared
+        to how many should be as specified in the input graph H."""
+        degree_percentages = {}
+        for source_H in self.H.get_nodes():
+            expected_degree = len(self.H.get_neighbor_nodes(source_H))
+            actual_degree = len(self.G_embedding_view.get_neighbor_nodes(source_H))
+            degree_percentages[source_H] = actual_degree / expected_degree
+        return degree_percentages
+
+    def _get_supernode_sizes(self) -> dict[int, int]:
+        supernode_sizes = {}
+        for source_H in self.H.get_nodes():
+            supernode_nodes = self.get_nodes_in_supernode(source_H)
+            supernode_sizes[source_H] = len(supernode_nodes)
+        return supernode_sizes
+
+    def get_sorted_supernodes_by_size(self) -> list[int]:
+        """Returns a list of sorted supernode keys according to their size
+        (how many nodes in the hardware graph they map onto).
+        """
+        supernode_sizes = self._get_supernode_sizes()
+        # sort according to value (supernode size)
+        sorted_entries = sorted(supernode_sizes.items(), key=lambda item: item[1])
+        return [entry[0] for entry in sorted_entries]
+
     def try_embed_missing_edges(self) -> int:
         """Tries to embed missing edges if possible.
 
@@ -191,10 +224,15 @@ class Embedding():
 
         return len(missing_edges_added)
 
+    def remove_redundancy(self) -> None:
+        self.remove_redundant_supernode_nodes()
+        self.remove_unnecessary_edges_between_supernodes()
+
     def remove_unnecessary_edges_between_supernodes(self) -> None:
         """Tries to remove unnecessary edges, e.g. multiple edges between
         two supernodes.
         """
+        logger.info('Remove unnecessary edges between supernodes')
         # For every supernode (chain)
         for supernode in self.H.get_nodes():
             considered_supernodes = []
@@ -221,6 +259,7 @@ class Embedding():
                         # this must be preserved by this method
 
     def remove_redundant_supernode_nodes(self):
+        logger.info('Removing redundant supernode nodes')
         for supernode in self.H.get_nodes():
             self.remove_redundant_nodes_in_supernode(supernode)
 
@@ -231,7 +270,6 @@ class Embedding():
             return
 
         removed_nodes = set()
-
         while True:
             removed_in_this_iteration = False
 

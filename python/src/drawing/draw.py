@@ -7,6 +7,12 @@ from matplotlib.axes import Axes
 
 class DrawEmbedding():
 
+    def init_figure(self):
+        self.fig = plt.figure()
+        plt.subplots_adjust(left=0.0, right=1.0,
+                            bottom=0.0, top=1.0,
+                            wspace=0.1, hspace=0.1)
+
     def __init__(self, m, n, t):
         self.total_steps = 0
 
@@ -22,13 +28,9 @@ class DrawEmbedding():
         self.px = 1/plt.rcParams['figure.dpi']  # pixel in inches
         plt.rcParams.update({'axes.titlesize': 24})
 
-        # Init figure
-        self.fig = plt.figure()
-        plt.subplots_adjust(left=0.0, right=1.0,
-                            bottom=0.0, top=1.0,
-                            wspace=0.1, hspace=0.1)
-
         self.col = 0
+        self.m = m
+        self.n = n
 
         self.init_chimera_graph(m, n, t)
 
@@ -49,7 +51,7 @@ class DrawEmbedding():
 
         # Labels
         # Shift labels
-        pos_labels = {node: [pos[0] - 0.025, pos[1]]
+        pos_labels = {node: [pos[0] - 0.020, pos[1]]
                       for (node, pos) in self.pos_chimera.items()}
         nx.draw_networkx_labels(self.chimera_G,
                                 pos=pos_labels,
@@ -143,31 +145,31 @@ class DrawEmbedding():
 
     def draw_whole_embedding_step(self, nodes: set[int], edges: set[tuple[int, int, int]],
                                   mapping_G_to_H, title=''):
-        ax = self.construct_subplot_to_the_right()
-        ax.set_title(title)
+        self.init_figure()
+        self.fig.suptitle(title, fontsize=20)
         self.draw_chimera_and_embedding(nodes, edges, mapping_G_to_H)
         self.total_steps += 1
 
-    def construct_subplot_to_the_right(self) -> Axes:
-        """Constructs a new subplot to the right."""
-        self.col += 1
-        gs = gridspec.GridSpec(1, self.col)
+    # def construct_subplot_to_the_right(self) -> Axes:
+    #     """Constructs a new subplot to the right."""
+    #     self.col += 1
+    #     gs = gridspec.GridSpec(1, self.col)
 
-        # Reposition subplots
-        for i, ax in enumerate(self.fig.axes):
-            # ax.set_position(gs[i, 0].get_position(self.fig))
-            ax.set_subplotspec(gs[0, i])
+    #     # Reposition subplots
+    #     for i, ax in enumerate(self.fig.axes):
+    #         # ax.set_position(gs[i, 0].get_position(self.fig))
+    #         ax.set_subplotspec(gs[0, i])
 
-        # Add new subplot
-        ax = self.fig.add_subplot(gs[0, self.col-1])
-        ax.set_position(gs[0, self.col-1].get_position(self.fig))
+    #     # Add new subplot
+    #     ax = self.fig.add_subplot(gs[0, self.col-1])
+    #     ax.set_position(gs[0, self.col-1].get_position(self.fig))
 
-        return ax
+    #     return ax
 
     def save_and_clear(self, path):
-        self.fig.set_size_inches(self.total_steps*1000*self.px, 800*self.px)
+        self.fig.set_size_inches(self.m*3, self.n*3)
         self.fig.savefig(path, bbox_inches='tight')
-        plt.clf()
+        plt.close(self.fig)
 
 
 def change_brightness(color, amount=1):
