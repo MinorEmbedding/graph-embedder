@@ -7,6 +7,7 @@ from typing import Optional
 from src.drawing.draw import DrawEmbedding
 from src.embedding.embedding import Embedding
 from src.graph.test_graph import TestGraph
+from src.results.degree_percentage import DegreePercentageData
 from src.solver.embedding_solver import EmbeddingSolver, EvolutionParams
 from src.util.logging import init_logger
 
@@ -60,6 +61,7 @@ def main(d: DrawEmbedding) -> bool:
     H = TestGraph.k(12)
 
     solver = EmbeddingSolver(H)
+    dp = DegreePercentageData(len(H.get_nodes()))
     solver.initialize_embedding()
     save_embedding(*solver.get_embedding(), d, -1,
                    title=f'Initial embedding')
@@ -86,6 +88,9 @@ def main(d: DrawEmbedding) -> bool:
                 or (i == max_generations - 2) or (i == max_generations - 1):
             save_embedding(*solver.get_embedding(), d, i,
                            title=f'Generation {i}')
+
+        # Save degree percentage data
+        dp.save_current_degree_percentages(i, solver._embedding)
 
         # Check if done
         if child.is_valid_embedding():
