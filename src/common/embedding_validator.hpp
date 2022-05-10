@@ -2,7 +2,6 @@
 #define __MAJORMINER_EMBEDDING_VALIDATOR_HPP_
 
 #include "majorminer_types.hpp"
-#include "utils.hpp"
 
 namespace majorminer
 {
@@ -10,18 +9,19 @@ namespace majorminer
   class EmbeddingValidator
   {
     public:
-      EmbeddingValidator(const embedding_mapping_t& embedding,
-      const graph_t& source, const adjacency_list_t& target)
-       : m_embedding(embedding), m_source(source), m_target(target){}
+      EmbeddingValidator(const EmbeddingState& state)
+       : m_state(state) {}
 
       bool isDisjoint() const;
       bool nodesConnected() const;
       bool isValid() const { return isDisjoint() && nodesConnected(); }
 
     private:
-      const embedding_mapping_t& m_embedding;
-      const graph_t& m_source;
-      const adjacency_list_t& m_target;
+      void printMissingEdges(vertex_t node) const;
+      void printOverlappings() const;
+
+    private:
+      const EmbeddingState& m_state;
   };
 }
 

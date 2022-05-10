@@ -4,13 +4,10 @@
 #include <lemon/smart_graph.h>
 #include <lemon/network_simplex.h>
 
-#include "majorminer_types.hpp"
-#include "majorminer.hpp"
+#include <majorminer_types.hpp>
 
 namespace majorminer
 {
-  class EmbeddingSuite;
-
   class NetworkSimplexWrapper
   {
     using cost_t = int;
@@ -22,25 +19,58 @@ namespace majorminer
     using LemonArcMap = LemonGraph::ArcMap<T>;
     using NetworkSimplex = lemon::NetworkSimplex<LemonGraph, capacity_t, cost_t>;
     typedef std::pair<LemonArc, LemonArc> LemonArcPair;
-    public:
-      NetworkSimplexWrapper(EmbeddingSuite* suite)
-        : m_suite(suite) { }
 
-      void embeddNode(fuint32_t node);
+    public:
+      NetworkSimplexWrapper(EmbeddingState& state, EmbeddingManager& embeddingManager);
+
+      void embeddNode(vertex_t node);
+      const nodeset_t& getMapped() const { return m_mapped; }
 
     private:
-      LemonNode createNode(fuint32_t node);
-      cost_t determineCost(fuint32_t node);
-      void adjustCosts(fuint32_t node, LemonArcMap<cost_t>& costs);
+      void initialCreation();
+      LemonNode createNode(vertex_t node);
+      cost_t determineCost(vertex_t node);
+      void adjustCosts(vertex_t node, LemonArcMap<cost_t>& costs);
+      void setupCostsAndCaps();
+
+      const LemonArcPair& getArcPair(vertex_t n1, vertex_t n2);
+      vertex_t chooseSource(vertex_t source) const;
+
+      void createCheapArc(LemonNode& from, LemonNode& to, LemonArcMap<cost_t>& costs,
+
+          LemonArcMap<capacity_t>& caps, bool constructionArc = false, capacity_t capacity = 1);
+
+      capacity_t getNumberAdjacentNodes(const adjacency_list_range_iterator_t& adjacentIt) const;
+      void constructLemonGraph();
+      void constructHelperNodes(LemonArcMap<cost_t>& costs, LemonArcMap<capacity_t>& caps,
+          const adjacency_list_range_iterator_t& adjacentIt);
+
+      LemonNode& getNextRootNode();
       void clear();
-      const LemonArcPair& getArcPair(fuint32_t n1, fuint32_t n2);
 
     private:
       LemonGraph m_graph;
-      EmbeddingSuite* m_suite;
-      UnorderedMap<fuint32_t, LemonNode> m_nodeMap;
-      UnorderedMap<edge_t, LemonArcPair, PairHashFunc<fuint32_t>> m_edgeMap;
-      UnorderedSet<fuint32_t> m_mapped;
+      EmbeddingState& m_state;
+      EmbeddingManager& m_embeddingManager;
+      UnorderedMap<vertex_t, LemonNode> m_nodeMap;
+      UnorderedMap<edge_t, LemonArcPair, PairHashFunc<vertex_t>> m_edgeMap;
+      UnorderedSet<vertex_t> m_mapped;
+
+      std::unique_ptr<LemonArcMap<cost_t>> m_costMap;
+      std::unique_ptr<LemonArcMap<capacity_t>> m_capMap;
+      std::unique_ptr<LemonArcMap<capacity_t>> m_flowMap;
+
+      Vector<LemonNode> m_rootVertices;
+      Vector<LemonArc> m_treeConstructionArcs;
+
+      LemonNode m_s;
+      LemonNode m_t;
+
+      capacity_t m_numberAdjacent;
+      fuint32_t m_sConnected;
+      fuint32_t m_rootCounter;
+
+      bool m_initialized;
   };
 
 }

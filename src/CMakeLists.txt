@@ -1,5 +1,6 @@
 
 add_subdirectory(common)
+add_subdirectory(lmrp)
 add_subdirectory(evolutionary)
 add_subdirectory(initial)
 

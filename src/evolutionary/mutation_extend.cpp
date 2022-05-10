@@ -1,123 +1,98 @@
-#include "mutation_extend.hpp"
+#include "evolutionary/mutation_extend.hpp"
+
+#include <common/embedding_state.hpp>
+#include <common/embedding_visualizer.hpp>
+#include <common/embedding_manager.hpp>
+
+#include <sstream>
 
 using namespace majorminer;
 
 
-MutationExtend::MutationExtend(EmbeddingSuite* suite, fuint32_t sourceNode)
-  : m_suite(*suite) {
-  // check whether node needs more
-  int delta = std::max(suite->numberFreeNeighborsNeeded(sourceNode), 0);
-  if (delta == 0) return;
+MutationExtend::MutationExtend(const EmbeddingState& state, EmbeddingManager& embeddingManager, fuint32_t sourceNode)
+  : m_state(state), m_embeddingManager(embeddingManager), m_sourceVertex(sourceNode),
+    m_time(m_embeddingManager.getTimestamp()) { }
 
-  // find adjacent target node with highest number
-  auto mapRange = suite->m_mapping.equal_range(sourceNode);
-
-  double bestVal = MAXFLOAT;
-  fuint32_t bestExtend = -1;
-  fuint32_t adjTargetNode = -1;
-
-  for (auto targetNode = mapRange.first; targetNode != mapRange.second; ++targetNode)
-  { // check nodes adjacent to targetNode as possible candidates
-    auto adjRange = suite->m_target.equal_range(targetNode->second);
-    for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
-    {
-      if (m_suite.m_targetNodesRemaining.contains(adj->second))
-      { // legitimate candidate
-        auto improvement = checkCandidate(adj->second, sourceNode, delta);
-        if (improvement < bestVal)
-        {
-          bestVal = improvement;
-          bestExtend = adj->second;
-          adjTargetNode = targetNode->second;
-        }
-      }
-    }
-  }
-
-  if (bestVal < 0)
-  {
-    DEBUG(OUT_S << "Emitting extend task for sourceNode=" << sourceNode
-      << " to extend to " << bestExtend << ". Improvement: "
-      << bestVal << std::endl;)
-    m_sourceVertex = sourceNode;
-    m_targetVertex = adjTargetNode;
-    m_extendedTarget = bestExtend;
-    m_valid = true;
-  }
-}
-
-double MutationExtend::checkCandidate(fuint32_t extendNode, fuint32_t sourceNode, int delta)
-{
-  m_degraded.clear();
-  double improvement = 0;
-
-  auto adjRange = m_suite.m_target.equal_range(extendNode);
-  int nbFree = 0;
-  for (auto adj = adjRange.first; adj != adjRange.second; ++adj)
-  {
-    if (m_suite.m_targetNodesRemaining.contains(adj->second)) nbFree++;
-    else
-    { // already mapped to
-      // go over each that was mapped to this node and add to degraded
-      auto revIt = m_suite.m_reverseMapping.equal_range(adj->second);
-      for (auto rev = revIt.first; rev != revIt.second; ++rev)
-      {
-        m_degraded.insert(rev->second);
-      }
-    }
-  }
-  if (nbFree == 0) return MAXFLOAT;
-  improvement = - std::min(delta, nbFree) + 1;
-  for (auto deg : m_degraded)
-  {
-    if (improvement >= 0) return MAXFLOAT;
-    if (deg == extendNode) continue;
-    else
-    {
-      int needed = m_suite.numberFreeNeighborsNeeded(deg);
-      if (needed > -1) improvement++;
-    }
-  }
-  return improvement;
-}
-
+// use embedding manager only
 void MutationExtend::execute()
 {
-  if(!m_valid || !m_suite.m_targetNodesRemaining.contains(m_extendedTarget)) return;
-  int delta = m_suite.numberFreeNeighborsNeeded(m_sourceVertex);
-  if (delta <= 0) return;
-  double improvement = checkCandidate(m_extendedTarget, m_sourceVertex, delta);
+  // std::cout << "1. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << "; improving=" << m_improving << "; contains="
+  //           << m_embeddingManager.getRemainingTargetNodes().contains(m_extendedTarget) << std::endl;
+  // m_embeddingManager.printRemainingTargetNodes();
+  if(!m_improving || !m_embeddingManager.getRemainingTargetNodes().contains(m_extendedTarget)) return;
+  // std::cout << "2. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << std::endl;
+  //int delta = m_embeddingManager.numberFreeNeighborsNeeded(m_sourceVertex);
+  //if (delta <= 0) return;
+  // std::cout << "3. Extend execute node "<<m_sourceVertex << " to " <<m_extendedTarget << std::endl;
+  double improvement = checkImprovement(m_extendedTarget, m_embeddingManager);
+
+  // std::cout << "4. Extend execute node "<<m_sourceVertex << " improves by " <<improvement << std::endl;
   if (improvement < 0)
   { // adopt mutation
-    m_suite.m_targetNodesRemaining.unsafe_erase(m_extendedTarget);
-    m_suite.m_nodesOccupied.insert(m_extendedTarget);
-    m_suite.m_mapping.insert(std::make_pair(m_sourceVertex, m_extendedTarget));
-    m_suite.m_reverseMapping.insert(std::make_pair(m_extendedTarget, m_sourceVertex));
+    // std::cout << "Applying extend on " << m_sourceVertex << " towards " << m_extendedTarget << std::endl;
+    m_embeddingManager.occupyNode(m_extendedTarget);
 
-    for (auto deg : m_degraded)
-    {
-      if (deg != m_sourceVertex) m_suite.m_sourceFreeNeighbors[deg]--;
-    }
-    m_degraded.clear();
-    auto embRange = m_suite.m_mapping.equal_range(m_sourceVertex);
-    for (auto embIt = embRange.first; embIt != embRange.second; ++embIt)
-    {
-      auto adjRange = m_suite.m_target.equal_range(embIt->second);
-      for (auto adjIt = adjRange.first; adjIt != adjRange.second; ++adjIt)
-      {
-        if (m_suite.m_targetNodesRemaining.contains(adjIt->second))
-        { m_degraded.insert(adjIt->second); }
-      }
-    }
-    m_suite.m_sourceFreeNeighbors[m_sourceVertex] = m_degraded.size();
+    m_embeddingManager.insertMappingPair(m_sourceVertex, m_extendedTarget);
 
-    if (m_suite.m_visualizer != nullptr)
+    m_embeddingManager.commit();
+
+    if (m_state.hasVisualizer())
     {
       std::stringstream ss;
       ss << "ExtendMutation applied " << m_sourceVertex
          << " -> { ..., " << m_extendedTarget << " }; improvement: "
          << improvement << std::endl;
-      m_suite.m_visualizer->draw(m_suite.m_mapping, ss.str().c_str());
+      m_embeddingManager.getVisualizer()->draw(m_embeddingManager.getMapping(), ss.str().c_str());
     }
   }
 }
+
+double MutationExtend::checkImprovement(fuint32_t extendNode, const EmbeddingBase& base)
+{
+  const auto& remainingTargetNodes = base.getRemainingTargetNodes();
+  double improvement = 0;
+  base.iterateTargetGraphAdjacent(extendNode, [&](fuint32_t adjacent){
+    if (!remainingTargetNodes.contains(adjacent)) improvement -= 1;
+  });
+  return improvement;
+}
+
+bool MutationExtend::prepare()
+{
+  int delta = std::max(m_state.numberFreeNeighborsNeeded(m_sourceVertex), 0);
+  // std::cout << "Extend - node m_sourceVertex " << m_sourceVertex << " has delta of " << delta << std::endl;
+  if (delta == 0) return false;
+  const auto& remainingTargetNodes = m_state.getRemainingTargetNodes();
+
+  double bestVal = MAXFLOAT;
+  fuint32_t bestExtend = -1;
+
+  nodeset_t candidates{};
+  m_state.iterateSourceMappingAdjacent<true>(m_sourceVertex, [&](fuint32_t neighbor, fuint32_t){
+    if (remainingTargetNodes.contains(neighbor)) candidates.insert(neighbor);
+    return false;
+  });
+
+  for (auto& candidate : candidates)
+  {
+    double improvement = checkImprovement(candidate, m_state);
+    if (improvement < bestVal)
+    {
+      bestVal = improvement;
+      bestExtend = candidate;
+    }
+  }
+  m_improving = bestVal < 0;
+  m_extendedTarget = bestExtend;
+
+  m_time = m_embeddingManager.getTimestamp();
+  return m_improving;
+}
+
+bool MutationExtend::isValid()
+{
+  // std::cout << "Time" << m_time << std::endl;
+  // std::cout <<"History "<< m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged <<std::endl;
+  return m_embeddingManager.getHistory(m_sourceVertex).m_timestampNodeChanged < m_time;
+}
+
