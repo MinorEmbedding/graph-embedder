@@ -1,7 +1,6 @@
 import csv
 
 import matplotlib.pyplot as plt
-import numpy as np
 from src.embedding.embedding import Embedding
 
 # Matplotlib
@@ -42,10 +41,10 @@ class DegreePercentageData():
 
         # Prepare 2D lines
         for i in range(self.max_nodes):
+            self.y_percentage_datas.append([])
             color = supernode_colors[i % len(supernode_colors)]
             line, = self.ax.plot([], [], color=color, marker='x', label=i)
             self.lines.append(line)
-            self.y_percentage_datas.append([])
 
         plt.xlabel('Generation')
         plt.ylabel('Super vertices degree percentages')
@@ -56,6 +55,8 @@ class DegreePercentageData():
         # self.ax.set_xlim(0, 100)
 
         self.ax.grid()
+
+        plt.show(block=False)
 
     def _update_plot(self, generation, values):
         # https://stackoverflow.com/a/24272092
@@ -77,3 +78,6 @@ class DegreePercentageData():
         # We need to draw *and* flush
         self.figure.canvas.draw()
         self.figure.canvas.flush_events()
+
+    def plot_blocking(self):
+        plt.show(block=True)

@@ -1,6 +1,7 @@
 import logging
 import os
 import shutil
+import signal
 from random import random
 from typing import Optional
 
@@ -13,6 +14,8 @@ from src.util.logging import init_logger
 
 init_logger()
 logger = logging.getLogger('evolution')
+
+stop = False
 
 
 ################################# Params #######################################
@@ -46,6 +49,16 @@ def main_loop():
             break
 
 
+def signal_handler(sig, frame):
+    # https://stackoverflow.com/questions/1112343/how-do-i-capture-sigint-in-python
+    # sys.exit(0)
+    global stop
+    stop = True
+
+
+signal.signal(signal.SIGINT, signal_handler)
+
+
 def main(d: DrawEmbedding) -> bool:
     # logger.info('--- Main ---')
 
@@ -74,6 +87,10 @@ def main(d: DrawEmbedding) -> bool:
 
     # --- Start solver
     for i in range(max_generations):
+        if stop:
+            print('Stop spawning new generations')
+            break
+
         child = do_one_generation(i, solver)
 
         if not child:
@@ -103,6 +120,7 @@ def main(d: DrawEmbedding) -> bool:
         else:
             logger.info('✅ Generation passed')
 
+    dp.plot_blocking()
     return False
 
 
