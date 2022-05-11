@@ -1,17 +1,21 @@
 import logging
 import os
 import shutil
+import signal
 from random import random
 from typing import Optional
 
 from src.drawing.draw import DrawEmbedding
 from src.embedding.embedding import Embedding
 from src.graph.test_graph import TestGraph
+from src.results.degree_percentage import DegreePercentageData
 from src.solver.embedding_solver import EmbeddingSolver, EvolutionParams
 from src.util.logging import init_logger
 
 init_logger()
 logger = logging.getLogger('evolution')
+
+stop = False
 
 
 ################################# Params #######################################
@@ -45,6 +49,16 @@ def main_loop():
             break
 
 
+def signal_handler(sig, frame):
+    # https://stackoverflow.com/questions/1112343/how-do-i-capture-sigint-in-python
+    # sys.exit(0)
+    global stop
+    stop = True
+
+
+signal.signal(signal.SIGINT, signal_handler)
+
+
 def main(d: DrawEmbedding) -> bool:
     # logger.info('--- Main ---')
 
@@ -60,6 +74,7 @@ def main(d: DrawEmbedding) -> bool:
     H = TestGraph.k(12)
 
     solver = EmbeddingSolver(H)
+    dp = DegreePercentageData(len(H.get_nodes()))
     solver.initialize_embedding()
     save_embedding(*solver.get_embedding(), d, -1,
                    title=f'Initial embedding')
@@ -72,6 +87,10 @@ def main(d: DrawEmbedding) -> bool:
 
     # --- Start solver
     for i in range(max_generations):
+        if stop:
+            print('Stop spawning new generations')
+            break
+
         child = do_one_generation(i, solver)
 
         if not child:
@@ -87,6 +106,9 @@ def main(d: DrawEmbedding) -> bool:
             save_embedding(*solver.get_embedding(), d, i,
                            title=f'Generation {i}')
 
+        # Save degree percentage data
+        dp.save_current_degree_percentages(i, solver._embedding)
+
         # Check if done
         if child.is_valid_embedding():
             child.remove_redundancy()
@@ -98,6 +120,7 @@ def main(d: DrawEmbedding) -> bool:
         else:
             logger.info('✅ Generation passed')
 
+    dp.plot_blocking()
     return False
 
 
