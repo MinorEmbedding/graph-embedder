@@ -42,8 +42,15 @@ class DegreePercentageData():
         # Prepare 2D lines
         for i in range(self.max_nodes):
             self.y_percentage_datas.append([])
+
+            # Style plot
+            # https://stackoverflow.com/a/55762294/9655481
+            #linewidth = 5 - 3 * (i / self.max_nodes)
+            #linestyle = ['-', '--', '-.', ':'][i % 4]
             color = supernode_colors[i % len(supernode_colors)]
-            line, = self.ax.plot([], [], color=color, marker='x', label=i)
+
+            line, = self.ax.plot([], [], color=color, marker='o', markersize=5,
+                                 label=i, linewidth=1.8)
             self.lines.append(line)
 
         plt.xlabel('Generation')
@@ -64,6 +71,11 @@ class DegreePercentageData():
         # Set new data
         self.x_generation_data.append(generation)
         for i, v in enumerate(values):
+            # Avoid overlapping lines by shifting them a tiny bit
+            prior_values = values[:i]
+            count_v = prior_values.count(v)
+            if count_v:
+                v += 0.005 * count_v
             self.y_percentage_datas[i].append(v)
 
         # Update data (with the new *and* the old points)
