@@ -4,6 +4,8 @@ import networkx as nx
 from src.drawing.color_util import change_brightness
 from src.drawing.node_colors import get_supernode_color
 
+default_embedded_color = '#6B6B6A'
+
 
 class DrawEmbedding():
 
@@ -15,8 +17,6 @@ class DrawEmbedding():
 
     def __init__(self, m, n, t):
         self.total_steps = 0
-
-        self.supernode_default_color = '#858585'
 
         # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/figure_size_units.html
         self.px = 1/plt.rcParams['figure.dpi']  # pixel in inches
@@ -40,8 +40,8 @@ class DrawEmbedding():
                          pos=self.pos_chimera,
                          width=2,
                          with_labels=False,
-                         node_color='#858585',
-                         edge_color='#BABABA')
+                         node_color='#C8C8C8',
+                         edge_color='#C8C8C8')
 
         # Labels
         # Shift labels
@@ -77,7 +77,7 @@ class DrawEmbedding():
 
         # Nodes & Edges
         remember_nodes_in_chain = []
-        for i, edge in enumerate(edges):
+        for edge in edges:
             node1 = edge[0]
             node2 = edge[1]
 
@@ -85,25 +85,15 @@ class DrawEmbedding():
             # and between supernodes with the first color
             node1_H = mapping_G_to_H[node1]
             node2_H = mapping_G_to_H[node2]
-            chain_color = get_supernode_color(node1_H)
 
             # Nodes
-            if node1_H == node2_H:
-                # Draw over nodes when they are in the same chain
-                self.draw_node(node1, chain_color)
-                remember_nodes_in_chain.append(node1)
-                self.draw_node(node2, chain_color)
-                remember_nodes_in_chain.append(node2)
-            else:
-                # Don't draw over nodes if they are not in the same chain now
-                # but have been
-                if not node1 in remember_nodes_in_chain:
-                    self.draw_node(node1, self.supernode_default_color)
-                if not node2 in remember_nodes_in_chain:
-                    self.draw_node(node2, self.supernode_default_color)
+            self.draw_node(node1, get_supernode_color(node1_H))
+            self.draw_node(node2, get_supernode_color(node2_H))
 
             # Edges
             G.add_edge(node1, node2)
+            chain_color = get_supernode_color(node1_H)\
+                if node1_H == node2_H else default_embedded_color
             nx.draw_networkx_edges(G,
                                    pos=self.pos_chimera,
                                    width=3,
