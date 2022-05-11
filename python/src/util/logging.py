@@ -12,6 +12,8 @@ def init_logger():
     logger.setLevel(logging.DEBUG)
 
     # File handler
+    if not os.path.exists('./logs'):
+        os.mkdir('./logs/')
     log_filename = './logs/evolution.log'
     should_roll_over = os.path.isfile(log_filename)
     log_handler = logging.handlers.RotatingFileHandler(
