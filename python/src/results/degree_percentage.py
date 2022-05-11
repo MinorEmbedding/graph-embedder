@@ -1,17 +1,13 @@
 import csv
 
 import matplotlib.pyplot as plt
+from src.drawing.node_colors import get_supernode_color
 from src.embedding.embedding import Embedding
 
 # Matplotlib
 # https://stackoverflow.com/a/7389998
 # https://stackoverflow.com/a/10944967
 plt.ion()
-
-supernode_colors = ['#F29E38', '#F23827', '#D748F5', '#39DBC8',
-                    '#F5428A', '#3CDE73', '#11F0EB', '#E9B952',
-                    '#7D2EFF', '#DBDE5D', '#3A2CE0', '#DE6E31',
-                    '#E0165C']
 
 
 class DegreePercentageData():
@@ -47,7 +43,7 @@ class DegreePercentageData():
             # https://stackoverflow.com/a/55762294/9655481
             #linewidth = 5 - 3 * (i / self.max_nodes)
             #linestyle = ['-', '--', '-.', ':'][i % 4]
-            color = supernode_colors[i % len(supernode_colors)]
+            color = get_supernode_color(i)
 
             line, = self.ax.plot([], [], color=color, marker='o', markersize=5,
                                  label=i, linewidth=1.8)
