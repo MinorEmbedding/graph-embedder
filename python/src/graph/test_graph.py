@@ -55,3 +55,12 @@ class TestGraph():
         H.set_edge(1, 5)
         H.set_edge(2, 5)  # comment this line out to get a tree
         return H
+
+    @staticmethod
+    def crossed_house() -> UndirectedGraphAdjList:
+        # In Germany known as "Haus vom Nikolaus"
+        H = TestGraph.k(4)
+        new_node = H.add_node()
+        H.set_edge(1, new_node)
+        H.set_edge(2, new_node)
+        return H
