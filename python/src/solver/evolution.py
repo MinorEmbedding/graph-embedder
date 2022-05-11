@@ -30,6 +30,11 @@ max_total = 1
 max_generations = 1000
 remove_redundancy_probability = 0.01
 
+# Chimera graph
+m = 5  # grid size
+n = 5  # grid size
+t = 4  # shore size
+
 
 ############################### Evolution ######################################
 
@@ -42,7 +47,7 @@ def main_loop():
         logger.info('')
         logger.info(f'Calling main: {i}')
 
-        d = DrawEmbedding(5, 5, 4)
+        d = DrawEmbedding(m, n, t)
         res = main(d)
         save_final(d)
         if res:
@@ -73,7 +78,7 @@ def main(d: DrawEmbedding) -> bool:
     # --- Setup
     H = TestGraph.k(12)
 
-    solver = EmbeddingSolver(H)
+    solver = EmbeddingSolver(H, m, n, t)
     dp = DegreePercentageData(len(H.get_nodes()))
     solver.initialize_embedding()
     save_embedding(*solver.get_embedding(), d, -1,
