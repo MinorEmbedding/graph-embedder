@@ -1,6 +1,7 @@
 import dwave_networkx as dnx
 import matplotlib.pyplot as plt
 import networkx as nx
+from src.drawing.color_util import change_brightness
 from src.drawing.node_colors import get_supernode_color
 
 
@@ -140,33 +141,3 @@ class DrawEmbedding():
         self.fig.set_size_inches(self.m*3, self.n*3)
         self.fig.savefig(path, bbox_inches='tight')
         plt.close(self.fig)
-
-
-def change_brightness(color, amount=1):
-    """
-    Lightens the given color by multiplying luminosity by the given amount.
-    Input can be matplotlib color string, hex string, or RGB tuple.
-
-    Examples:
-    >> lighten_color('g', 0.3)
-    >> lighten_color('#F034A3', 0.6)
-    >> lighten_color((.3,.55,.1), 0.5)
-    """
-    # adapted from
-    # https://gist.github.com/ihincks/6a420b599f43fcd7dbd79d56798c4e5a
-    # https://stackoverflow.com/a/49601444/9655481
-
-    import colorsys
-
-    import matplotlib.colors as mc
-    import numpy as np
-
-    try:
-        c = mc.cnames[color]
-    except:
-        c = color
-
-    c = np.array(colorsys.rgb_to_hls(*mc.to_rgb(c)))
-    hls = (c[0], max(0, min(1, amount * c[1])), c[2])
-    rgb = colorsys.hls_to_rgb(*hls)
-    return mc.to_hex(rgb)
