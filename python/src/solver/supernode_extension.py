@@ -79,8 +79,12 @@ class SupernodeExtension():
             # Calculate selection chances
             selection_chances = np.array([(1-p) for p in degree_percentages.values()])
             selection_chances_without_increase = np.copy(selection_chances)
-            selection_chances_without_increase *= 1 / \
-                np.sum(selection_chances_without_increase)
+
+            # Norm
+            sum = np.sum(selection_chances_without_increase)
+            if sum != 0:
+                selection_chances_without_increase *= 1 / \
+                    np.sum(selection_chances_without_increase)
             selection_chances += increases
             selection_chances *= 1 / np.sum(selection_chances)
             self.selection_chances = selection_chances
