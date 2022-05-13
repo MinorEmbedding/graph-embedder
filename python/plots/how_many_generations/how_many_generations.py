@@ -3,7 +3,7 @@ import matplotlib.ticker as ticker
 import numpy as np
 
 # --- Prepare data
-with open('./plots/how_many_generations/how_many_generations_nikolaus_10000.txt', 'r') as f:
+with open('./how_many_generations_k7.txt', 'r') as f:
     data = f.read().splitlines()
     data = [int(value) for value in data]
 

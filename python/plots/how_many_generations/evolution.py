@@ -1,3 +1,5 @@
+# Move this file to src/solver to start
+
 import logging
 from random import random
 from typing import Optional
@@ -49,7 +51,7 @@ H = TestGraph.crossed_house()
 ############################### Evolution ######################################
 
 def main_loop():
-    with open('./out/how_many_generations2.txt', 'w') as f:
+    with open('./out/how_many_generations.txt', 'w') as f:
         for i in tqdm(range(max_total)):
             logger.info('')
             logger.info('#############')
