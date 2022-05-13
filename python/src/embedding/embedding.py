@@ -167,7 +167,7 @@ class Embedding():
         for source_H in self.H.get_nodes():
             expected_degree = len(self.H.get_neighbor_nodes(source_H))
             actual_degree = len(self.G_embedding_view.get_neighbor_nodes(source_H))
-            degree_percentages[source_H] = actual_degree / expected_degree
+            degree_percentages[source_H] = min(1.0, actual_degree / expected_degree)
         return degree_percentages
 
     def _get_supernode_sizes(self) -> dict[int, int]:
