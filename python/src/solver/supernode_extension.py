@@ -170,23 +170,23 @@ class SupernodeExtension():
             return playground
 
         # Check that previous connections still work
-        res, neighbors_done = self._construct_with_one_chain(
-            playground, p, shifted_target_reachable)
-        if not res:
-            res = self._construct_with_another_chain(
-                playground, source, p, neighbors_done)
-        if not res:
-            return None
+        # 1st strategy
+        neighbors_done = self._construct_with_one_chain(playground, p, shifted_target_reachable)
+        # 2nd strategy (complementing 1st strategy)
+        if not len(neighbors_done) == len(p.target_neighbors):
+            worked = self._construct_with_another_chain(playground, source, p, neighbors_done)
+            if not worked:
+                return None
 
         # Check if strategy really worked
-        if res.check_supernode_connectiveness(p.target_supernode):
-            return res
+        if playground.check_supernode_connectiveness(p.target_supernode):
+            return playground
         else:
             logger.info(f'Supernode sanity not ensured.')
             return None
 
     def _construct_with_one_chain(self, playground: Embedding, p: TargetParams,
-                                  shifted_target_reachable: set[int]) -> tuple[Optional[Embedding], set[int]]:
+                                  shifted_target_reachable: set[int]) -> set[int]:
         """Tries to construct the supernode extension with just one chain."""
         neighbors_done = set()
 
@@ -203,12 +203,12 @@ class SupernodeExtension():
                             f'(reachable nodes are: {shifted_target_reachable})')
                 # Continue normally with next neighbor as next one might be
                 # reachable with this strategy (we then try to reach the
-                # remaining neighbors with the next strategy down below)
+                # remaining neighbors with the next strategy).
 
-        return playground, neighbors_done
+        return neighbors_done
 
     def _construct_with_another_chain(self, playground: Embedding, source: int,
-                                      p: TargetParams, neighbors_done: set[int]) -> Optional[Embedding]:
+                                      p: TargetParams, neighbors_done: set[int]) -> bool:
         """Tries to construct another chain to see if we can reach
         remaining neighbors."""
         try:
@@ -254,9 +254,9 @@ class SupernodeExtension():
             else:
                 logger.info(f'Could also not reach (reachable nodes are: '
                             f'{shifted_target_partner_reachable})')
-                return None  # did not achieve a viable mutation even with 2nd strategy
+                return False  # did not achieve a viable mutation even with 2nd strategy
 
-        return playground
+        return True
 
     def get_reachable_node_in_neighbor_supernode(self, playground: Embedding,
                                                  neighbor: int, ignore_neighbors: set[int],

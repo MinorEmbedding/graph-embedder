@@ -12,7 +12,7 @@ logger = logging.getLogger('evolution')
 
 
 class Embedding():
-    def __init__(self, H: UndirectedGraphAdjList):
+    def __init__(self, H: UndirectedGraphAdjList, m, n, t):
         """Initializes an Embedding.
 
         Args:
@@ -23,7 +23,7 @@ class Embedding():
 
         # --- Layout Graph
         # Graph to embed H onto
-        self.G_layout = ChimeraGraphLayout(5, 5, 4)
+        self.G_layout = ChimeraGraphLayout(m, n, t)
 
         # --- Embedding Graph
         # Full graph: nodes are labeled according to G

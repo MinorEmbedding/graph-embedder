@@ -30,6 +30,18 @@ max_total = 1
 max_generations = 1000
 remove_redundancy_probability = 0.01
 
+# Chimera graph
+m = 5  # grid size
+n = 5  # grid size
+t = 4  # shore size
+
+
+################################  Setup ########################################
+
+H = TestGraph.k(12)
+solver = EmbeddingSolver(H, m, n, t)
+dp = DegreePercentageData(len(H.get_nodes()))
+
 
 ############################### Evolution ######################################
 
@@ -42,45 +54,38 @@ def main_loop():
         logger.info('')
         logger.info(f'Calling main: {i}')
 
-        d = DrawEmbedding(5, 5, 4)
+        d = DrawEmbedding(m, n, t)
         res = main(d)
         save_final(d)
         if res:
             break
+    dp.plot_blocking()
 
 
 def signal_handler(sig, frame):
     # https://stackoverflow.com/questions/1112343/how-do-i-capture-sigint-in-python
-    # sys.exit(0)
     global stop
     stop = True
-
-
-signal.signal(signal.SIGINT, signal_handler)
 
 
 def main(d: DrawEmbedding) -> bool:
     # logger.info('--- Main ---')
 
     # --- Clear
-    # Clear out directory
     try:
         shutil.rmtree('./out/')
     except FileNotFoundError:
         pass
     os.mkdir('./out')
 
-    # --- Setup
-    H = TestGraph.k(12)
-
-    solver = EmbeddingSolver(H)
-    dp = DegreePercentageData(len(H.get_nodes()))
+    # --- Init
     solver.initialize_embedding()
     save_embedding(*solver.get_embedding(), d, -1,
                    title=f'Initial embedding')
 
     if solver.found_embedding():
         logger.info('🎉 Directly found embedding after initialization')
+        print('🎉 Directly found embedding after initialization')
         # save_final(d)
         output_embedding(*solver.get_embedding(), d)
         return True
@@ -120,7 +125,6 @@ def main(d: DrawEmbedding) -> bool:
         else:
             logger.info('✅ Generation passed')
 
-    dp.plot_blocking()
     return False
 
 
@@ -171,4 +175,5 @@ def save_final(d: DrawEmbedding) -> None:
 
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
     main_loop()

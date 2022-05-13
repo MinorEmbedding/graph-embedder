@@ -20,12 +20,12 @@ class EvolutionParams():
 
 class EmbeddingSolver():
 
-    def __init__(self, H: UndirectedGraphAdjList):
+    def __init__(self, H: UndirectedGraphAdjList, m, n, t):
         self.H = H
         if H.nodes_count < 2:
             raise NameError('The minor to embed must have at least two nodes')
 
-        self._embedding = Embedding(H)
+        self._embedding = Embedding(H, m, n, t)
         self.initialization = Initialization(self._embedding)
         self._supernode_extension = SupernodeExtension(self._embedding)
 

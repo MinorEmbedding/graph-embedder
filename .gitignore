@@ -1,7 +1,6 @@
 # Own stuff
 build/
 Makefile
-.vscode/
 external/lemon/
 external/lemon.tar.gz
 
