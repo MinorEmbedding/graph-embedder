@@ -1,0 +1,5 @@
+dwave-networkx==0.8.10
+matplotlib==3.4.3
+networkx==2.6.3
+numpy==1.19.3
+tqdm==4.62.3

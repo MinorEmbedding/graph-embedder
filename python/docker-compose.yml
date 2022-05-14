@@ -1,0 +1,15 @@
+services:
+  major-miner:
+    build: .
+    container_name: major-miner
+    environment:
+      CORE_PERCENTAGE: 75
+      GRID_M: 5
+      GRID_N: 5
+      K_MAX: 10
+      K_MIN: 6
+      MAX_TOTAL: 10
+    volumes:
+    - type: bind
+      source: ./out2
+      target: /app/out
