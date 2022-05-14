@@ -49,10 +49,9 @@ t = 4 # shore size
 - 9x9: 803.30s
 
 
-######################## K8 different population sizes #########################
+####################### K8 different population sizes (100) ####################
 
 ◾ Params
-population_size = ?
 max_mutation_trials = 30
 mutation_extend_to_free_neighbors_probability = 0.3
 max_total = 100
@@ -79,3 +78,96 @@ t = 4 # shore size
 - 14: 378.01s
 - 15: 343.30s
 - 16: 371.73s
+
+
+###################### K8 different population sizes (100) #####################
+
+◾ Params
+max_mutation_trials = 30
+mutation_extend_to_free_neighbors_probability = 0.3
+max_total = 100
+max_generations = 600
+remove_redundancy_probability = 0.01
+m = 5  # grid size
+n = 5  # grid size
+t = 4 # shore size
+
+⏱ how_many_generations_population_size (100 a time)
+-  1: 128.87s
+-  2: 224.79s
+-  3: 281.21s
+-  4: 259.75s
+-  5: 385.54s
+-  6: 408.23s
+-  7: 505.68s
+-  8: 648.50s
+-  9: 652.14s
+- 10: 718.90s
+- 11: 618.84s
+- 12: 862.02s
+- 13: 843.26s
+- 14: 914.88s
+- 15: 435.01s
+- 16: 382.50s
+- 17: 607.80s (started to run another task with 100%)
+- 18: 735.05s
+- 19: 
+- 20:
+
+
+####################### K8 different population sizes (1000) ###################
+
+Marc💥
+◾ Params
+max_mutation_trials = 30
+mutation_extend_to_free_neighbors_probability = 0.3
+max_total = 1000
+max_generations = 100
+remove_redundancy_probability = 0.01
+m = 5  # grid size
+n = 5  # grid size
+t = 4 # shore size
+
+⏱ how_many_generations_population_size (1000 a time)
+
+
+###################### K8 different population sizes (1000) ####################
+
+Marc💥
+◾ Params
+max_mutation_trials = 30
+mutation_extend_to_free_neighbors_probability = 0.3
+max_total = 1000
+max_generations = 600
+remove_redundancy_probability = 0.01
+m = 5  # grid size
+n = 5  # grid size
+t = 4 # shore size
+
+⏱ how_many_generations_population_size (1000 a time)
+
+
+######################## K8 different probabilities (50) #######################
+
+◾ Params
+population_size=4,
+max_mutation_trials=30
+max_total = 50
+max_generations = 600
+remove_redundancy_probability = 0.01
+m = 5  # grid size
+n = 5  # grid size
+t = 4  # shore size
+
+⏱ how_many_generations_extend_to_free_probability (50 a time)
+- 0.00: 132.61s
+- 0.11: 276.20s
+- 0.22: 359.29s
+- 0.33: 272.75s
+- 0.44: 269.85s
+- 0.55: 301.38s
+- 0.66: 326.49s
+- 0.77: 332.97s
+- 0.88: 357.85s
+- 1.00: 226.74s
+        
