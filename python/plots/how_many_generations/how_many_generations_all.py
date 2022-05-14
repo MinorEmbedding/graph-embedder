@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-names = ['k5', 'k6', 'k7', 'k8', 'k9', 'k10', 'k11', 'k12', 'k13']
+names = ['2x2', '3x3', '4x4', '5x5', '6x6', '7x7', '8x8', '9x9']
 
 
 # --- Prepare data
 Data = namedtuple('Data', ['unique', 'counts'])
 datas = []
 for name in names:
-    with open(f'./data/how_many_generations_5x5_{name}.txt', 'r') as f:
+    with open(f'./data/how_many_generations_{name}_k8_different_grid_sizes.txt', 'r') as f:
         data = f.read().splitlines()
         data = [int(value) for value in data]
         unique, counts = np.unique(data, return_counts=True)
@@ -40,8 +40,8 @@ plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
 
 
 # --- Plot
-rows = 3
-cols = 3
+rows = 2
+cols = 4
 fig, axs = plt.subplots(rows, cols, figsize=(14, 9))
 
 i = 0
@@ -64,6 +64,10 @@ for r in range(rows):
         minor = 1 if max(datas[i].unique) <= 60 else 5
         ax.xaxis.set_minor_locator(ticker.MultipleLocator(minor))
 
+        y_max = 60 if r == 0 else 70
+        ax.set_ylim(top=y_max)
+        # ax.set_xlim(0, 100)
+
         i += 1
 
 # Label
@@ -71,6 +75,6 @@ axs[1, 0].set_ylabel('Occurrences')
 axs[1, 0].set_xlabel('Generations needed')
 
 # ax.set_title('Generations needed for the crossed house puzzle')
-plt.subplots_adjust(left=0.05, top=0.96, right=0.98, bottom=0.06, hspace=0.2, wspace=0.1)
+plt.subplots_adjust(left=0.05, top=0.96, right=0.98, bottom=0.06, hspace=0.2, wspace=0.2)
 # plt.tight_layout(pad=0.2, w_pad=0.1, h_pad=0.1, rect=(0.05, 0.05, 0.95, 0.95))
 plt.show()

@@ -1,7 +1,7 @@
 Execution times on i7-6700 CPU @3.40GHz, 4 cores @ 100% workload using
 Python's multiprocessing module
 
-########################### 2x2 Chimera gird ###################################
+########################### 2x2 Chimera grid ###################################
 
 ◾ Params
 population_size = 12
@@ -14,7 +14,7 @@ m = 2  # grid size
 n = 2  # grid size
 t = 4 # shore size
 
-⏱ how_many_generations_2x2 (1000)
+⏱ how_many_generations_2x2 (1000 a time)
 - K2: 2.96s
 - K3: 10.90s
 - K4: 25.61s
@@ -24,3 +24,25 @@ t = 4 # shore size
 - K8: 632.42s
 - K9: 839.06s
 - K10: ? (around the same time as K9)
+
+
+######################## K8 different Chimera grid sizes #######################
+
+◾ Params
+population_size = 12
+max_mutation_trials = 30
+mutation_extend_to_free_neighbors_probability = 0.3
+max_total = 1000
+max_generations = 100
+remove_redundancy_probability = 0.01
+t = 4 # shore size
+
+⏱ how_many_generations_mxm (100 a time)
+- 2x2: 61.78s
+- 3x3: 119.37s
+- 4x4: 201.84s
+- 5x5: 299.73s
+- 6x6: 430.39s
+- 7x7: 502.94s
+- 8x8: 638.90s
+- 9x9: 803.30s
