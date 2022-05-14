@@ -76,7 +76,7 @@ namespace majorminer
       embedding_mapping_t m_reverse;
       graph_t m_superVertices;
 
-      PriorityQueue<DijkstraVertex> m_dijkstraQueue;
+      PriorityQueue<DijkstraVertex, std::greater<DijkstraVertex>> m_dijkstraQueue;
       UnorderedMap<vertex_t, DijkstraVertex> m_bestPaths;
       vertex_t m_currentSource;
   };

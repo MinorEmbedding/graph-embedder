@@ -95,7 +95,7 @@ TEST(LMRPTest, TrivialKings_SingleConnection)
   visualizeKing(info, state->getMapping(), repaired, king, trivial, "imgs/LMRP_TrivialKings_SingleConnection/TrivialKings_SingleConnection");
 }
 
-TEST(LMRPTest, DISABLED_TrivialKings_MultipleErdosRenyi)
+TEST(LMRPTest, TrivialKings_MultipleErdosRenyi)
 {
   auto king = majorminer::generate_king(7, 7);
   KingGraphInfo info{7,7};
@@ -111,5 +111,27 @@ TEST(LMRPTest, DISABLED_TrivialKings_MultipleErdosRenyi)
 
   LMRPHeuristic lmrp{*state, 24};
   lmrp.optimize();
+  visualizeKing(info, state->getMapping(), lmrp.getMapping(), king, random, "imgs/TrivialKings_MultipleErdosRenyi/TrivialKings_MultipleErdosRenyi");
+  validateLMRPResults(lmrp);
+}
+
+
+TEST(LMRPTest, KingComplete6)
+{
+  auto king = majorminer::generate_king(7, 7);
+  KingGraphInfo info{7,7};
+  KingLMRPSubgraph subgraph{info};
+  graph_t complete = majorminer::generate_completegraph(6);
+
+  EmbeddingSuite suite{complete, king};
+  auto original = suite.find_embedding();
+  StateGen gen{complete, king};
+  gen.addMapping(original);
+  auto state = gen.get();
+  state->setLMRPSubgraphGenerator(&subgraph);
+
+  LMRPHeuristic lmrp{*state, 24};
+  lmrp.optimize();
+  visualizeKing(info, state->getMapping(), lmrp.getMapping(), king, complete, "imgs/LMRP_complete_6_king/LMRP_complete_6_king");
   validateLMRPResults(lmrp);
 }

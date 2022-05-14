@@ -18,3 +18,24 @@ TEST(PerfTest, CompleteLarge_21)
 }
 
 
+
+TEST(PerfTest, DISABLED_CompleteGraphTest_Frequencies_Chimera)
+{
+  graph_t chimera = generate_chimera(16, 16);
+  for (fuint32_t n = 1; n < 35; ++n)
+  {
+    graph_t clique = generate_completegraph(n);
+    fuint32_t nbValid = 0;
+    for (fuint32_t i = 0; i < 100;)
+    {
+      EmbeddingSuite suite{clique, chimera};
+      auto embedding = suite.find_embedding();
+      if (suite.connectsNodes())
+      {
+        i++; // in case of a bug, skip this attempt
+        nbValid++;
+      }
+    }
+    std::cout << n << ":" << nbValid << std::endl;
+  }
+}
