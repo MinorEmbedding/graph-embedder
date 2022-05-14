@@ -1,0 +1,26 @@
+Execution times on i7-6700 CPU @3.40GHz, 4 cores @ 100% workload using
+Python's multiprocessing module
+
+########################### 2x2 Chimera gird ###################################
+
+◾ Params
+population_size = 12
+max_mutation_trials = 30
+mutation_extend_to_free_neighbors_probability = 0.3
+max_total = 1000
+max_generations = 100
+remove_redundancy_probability = 0.01
+m = 2  # grid size
+n = 2  # grid size
+t = 4 # shore size
+
+⏱ how_many_generations_2x2 (1000)
+- K2: 2.96s
+- K3: 10.90s
+- K4: 25.61s
+- K5: 52.77s
+- K6: 131.34s
+- K7: 276.01s
+- K8: 632.42s
+- K9: 839.06s
+- K10: ? (around the same time as K9)
