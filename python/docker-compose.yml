@@ -3,13 +3,19 @@ services:
     build: .
     container_name: major-miner
     environment:
-      CORE_PERCENTAGE: 75
+      CORE_PERCENTAGE: 90
+      POPULATION_SIZE: 4
+      MAX_MUTATION_TRIALS: 30
+      PROB_EXTEND_TO_FREE_NEIGHBOR: 0.11
+      MAX_TOTAL: 1000
+      MAX_GENERATIONS: 600
+      PROB_REMOVE_REDUNDANCY: 0.01
       GRID_M: 5
       GRID_N: 5
-      K_MAX: 10
-      K_MIN: 6
-      MAX_TOTAL: 10
+      K_MIN: 3
+      K_MAX: 30
+
     volumes:
-    - type: bind
-      source: ./out2
-      target: /app/out
+      - type: bind
+        source: ./out-kgraphs-1000total-600maxgen
+        target: /app/out

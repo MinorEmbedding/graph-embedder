@@ -23,14 +23,15 @@ logger = logging.getLogger('evolution')
 ################################# Params #######################################
 
 params = EvolutionParams(
-    population_size=12,
-    max_mutation_trials=30,
-    mutation_extend_to_free_neighbors_probability=0.3  # should be <=0.5
+    population_size=int(os.getenv('POPULATION_SIZE', 4)),
+    max_mutation_trials=int(os.getenv('MAX_MUTATION_TRIALS', 30)),
+    mutation_extend_to_free_neighbors_probability=int(
+        os.getenv('PROB_EXTEND_TO_FREE_NEIGHBOR', 0.11))  # should be <=0.5
 )
 
 max_total = int(os.getenv('MAX_TOTAL', 1000))
-max_generations = 100
-remove_redundancy_probability = 0.01
+max_generations = int(os.getenv('MAX_GENERATIONS', 600))
+remove_redundancy_probability = int(os.getenv('PROB_REMOVE_REDUNDANCY', 0.01))
 
 # Chimera graph
 m = int(os.getenv('GRID_M', 5))  # grid size
@@ -41,16 +42,16 @@ t = 4  # shore size
 ############################### Evolution ######################################
 
 def do_all_k_graphs():
-    for i in range(int(os.getenv('K_MIN', 5)), int(os.getenv('K_MAX', 10)) + 1):
+    for i in range(int(os.getenv('K_MIN', 5)), int(os.getenv('K_MAX', 30)) + 1):
         print(f'Started k{i}')
         start_time = time.time()
         start_multiprocessing(TestGraph.k(i), f'k{i}')
         duration = time.time() - start_time
-        print(f'Duration for k{i}: {duration} s')
+        print(f'Duration for k{i}: {duration}')
 
 
 def start_multiprocessing(H: UndirectedGraphAdjList, name: str):
-    processes = multiprocessing.cpu_count() * int(os.getenv('CORE_PERCENTAGE', 50)) // 100
+    processes = multiprocessing.cpu_count() * int(os.getenv('CORE_PERCENTAGE', 90)) // 100
     with multiprocessing.Pool(processes) as pool:
         # Multiprocessing
         res = list(tqdm(
@@ -59,7 +60,7 @@ def start_multiprocessing(H: UndirectedGraphAdjList, name: str):
         )
 
         # Save to file
-        with open(f'./out/how_many_generations_{m}x{n}_{name}.txt', 'w') as f:
+        with open(f'./out/howManyGenerations_{m}x{n}_{max_total}_{max_generations}gen_{params.population_size}popsize_{name}.txt', 'w') as f:
             for generations_needed in res:
                 f.write(str(generations_needed) + '\n')
 
