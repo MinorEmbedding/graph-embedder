@@ -4,14 +4,14 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-names = ['nikolaus', 'k5', 'k6', 'k7', 'k8', 'k9']
+names = ['k5', 'k6', 'k7', 'k8', 'k9', 'k10', 'k11', 'k12', 'k13']
 
 
 # --- Prepare data
 Data = namedtuple('Data', ['unique', 'counts'])
 datas = []
 for name in names:
-    with open(f'./data/how_many_generations_{name}.txt', 'r') as f:
+    with open(f'./data/how_many_generations_5x5_{name}.txt', 'r') as f:
         data = f.read().splitlines()
         data = [int(value) for value in data]
         unique, counts = np.unique(data, return_counts=True)
@@ -40,7 +40,7 @@ plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
 
 
 # --- Plot
-rows = 2
+rows = 3
 cols = 3
 fig, axs = plt.subplots(rows, cols, figsize=(14, 9))
 
