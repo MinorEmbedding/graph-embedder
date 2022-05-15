@@ -2,9 +2,10 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-names = [str(i) for i in range(1, 8)]
+names = [str(i) for i in range(1, 21)]
 embedded = []
 average_generations = []
+max_total = 10
 
 # --- Prepare data
 for name in names:
@@ -13,7 +14,7 @@ for name in names:
         data = f.read().splitlines()
         data = [int(value) for value in data]
         # unique, counts = np.unique(data, return_counts=True)
-        embedded.append(100 - data.count(-1))
+        embedded.append(max_total - data.count(-1))
 
         data_embedded = [value for value in data if value != -1]
         average_generations.append(np.average(data_embedded))
@@ -40,23 +41,38 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
 # --- Plot
-color = '#E53054'
 fig, ax = plt.subplots(figsize=(10, 6))
-ax.set_ylabel('Occurrences of valid embeddings')
-ax.set_xlabel('Probability of using the "extend to free neighbor" mutation')
-ax.set_ylim(0, 100)
+ax.set_xlabel('Population size')
+
+# Average generations
+color_blue = '#2981B3'
+# color_blue = '#2EB4FF'
+ax.set_ylabel('Average number of generations needed', color=color_blue)
+# ax2.plot(names, average_generations, color=color_blue, marker='o')
+ax.bar(names, average_generations, color=color_blue)
+ax.tick_params(axis='y', labelcolor=color_blue)
+
+
+ax2 = ax.twinx()
+# Number embedded
+color_red = '#E53054'
+# color_red = '#FF4A6D'
+ax2.set_ylabel('Occurrences of valid embeddings', color=color_red)
+ax2.set_ylim(0, max_total)
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
 # ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
-ax.plot(names, embedded, color, marker='o')
+ax2.plot(names, embedded, color=color_red, marker='o')
+ax2.tick_params(axis='y', labelcolor=color_red)
+
 
 # Write average number of generations needed next to data point
 # https://queirozf.com/entries/add-labels-and-text-to-matplotlib-plots-annotation-examples
-for i, v in enumerate(average_generations):
-    ax.annotate(str(round(v, 0)),
-                (i, embedded[i]),
-                textcoords='offset points',
-                xytext=(0, -22),
-                horizontalalignment='center')
+# for i, v in enumerate(average_generations):
+#     ax.annotate(str(round(v, 0)),
+#                 (i, embedded[i]),
+#                 textcoords='offset points',
+#                 xytext=(0, -22),
+#                 horizontalalignment='center')
 
 # ax.set_title('Generations needed for the crossed house puzzle')
 plt.tight_layout()
