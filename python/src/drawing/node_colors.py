@@ -8,14 +8,16 @@ supernode_colors = [
 remember_colors = dict()
 i = 0
 
+
 def get_supernode_color(node_H: int):
     global i
 
     if node_H in remember_colors:
         return remember_colors[node_H]
 
-    # Choose color
+    # Choose color and remember it
     color = supernode_colors[i % len(supernode_colors)]
+    remember_colors[node_H] = color
     i += 1
 
     return color
