@@ -12,8 +12,8 @@ services:
       GRID_M: 5
       GRID_N: 5
       K_GRAPH: 8
-      POPSIZE_MIN: 1
-      POPSIZE_MAX: 20
+      POPSIZE: 6
+      PROB_STEPS: 20
 
     volumes:
       - type: bind
