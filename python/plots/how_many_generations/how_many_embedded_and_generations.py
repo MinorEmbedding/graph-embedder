@@ -2,27 +2,28 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-# names = [str(i) for i in range(1, 21)]
-names = np.linspace(0.0, 0.2, num=10)
-names = [str(round(v, 2)) for v in names]
-names.append('0.22')
-names.append('0.24')
-names.append('0.27')
-names.append('0.29')
-names.append('0.31')
-names.append('0.33')
-names.append('0.36')
-names.append('0.38')
-names.append('0.4')
+names = [str(i) for i in range(6, 15)]
+# names = np.linspace(0.0, 0.2, num=10)
+# names = [str(round(v, 2)) for v in names]
+# names.append('0.22')
+# names.append('0.24')
+# names.append('0.27')
+# names.append('0.29')
+# names.append('0.31')
+# names.append('0.33')
+# names.append('0.36')
+# names.append('0.38')
+# names.append('0.4')
 
 embedded = []
 average_generations = []
-max_total = 20
+max_total = 100
 
 # --- Prepare data
 for name in names:
     # filename = f'./data_after_bug_fix/k8_popsize/howManyGenerations_5x5_10_600gen_k8popsize{name}.txt'
-    filename = f'./data_after_bug_fix/k8_probabilities_free/howManyGenerations_5x5_20_600gen_k80.0-0.2prob{name}.txt'
+    # filename = f'./data_after_bug_fix/k8_probabilities_free/howManyGenerations_5x5_20_600gen_k80.0-0.2prob{name}.txt'
+    filename = f'./data_after_bug_fix/k_graphs/howManyGenerations_5x5_100_600gen_6popsize_k{name}.txt'
     with open(filename, 'r') as f:
         data = f.read().splitlines()
         data = [int(value) for value in data]
@@ -56,7 +57,8 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 # --- Plot
 fig, ax = plt.subplots(figsize=(10, 6))
 # ax.set_xlabel('Population size')
-ax.set_xlabel('Probability for "extend to free neighbors" heuristic')
+# ax.set_xlabel('Probability for "extend to free neighbors" heuristic')
+ax.set_xlabel('K graph')
 
 # Average generations
 color_blue = '#2981B3'
