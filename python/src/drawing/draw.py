@@ -49,7 +49,7 @@ class DrawEmbedding():
 
         # Labels
         # Shift labels
-        pos_labels = {node: [pos[0] - 0.040, pos[1]]
+        pos_labels = {node: [pos[0] - 0.020, pos[1]]
                       for (node, pos) in self.pos_chimera.items()}
         nx.draw_networkx_labels(self.chimera_G,
                                 pos=pos_labels,
