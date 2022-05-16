@@ -17,3 +17,19 @@ CPU: i5-8350U @ 1.70 GHz (around 2.5 GHz at execution)
 - K15: 61.46s
 - K16: 48.78s
 - K17 failed at 64/100
+
+
+second time (80% cpu and sharing with another process)
+- K2: 4.77s
+- K3: 8.05s
+- K4: 13.13s
+- K5: 17.48s
+- K6: 29.51s
+- K7: 108.64s
+- K8: 351.69s
+- K9: 221.80s
+- K10: 107.57s
+- K11: 72.60s
+- K12: 70.01s
+- K13: 58.08s
+- K14: 59.24s

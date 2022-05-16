@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-names = [str(i) for i in range(6, 15)]
+names = [str(i) for i in range(2, 15)]
 # names = np.linspace(0.0, 0.2, num=10)
 # names = [str(round(v, 2)) for v in names]
 # names.append('0.22')
@@ -17,13 +17,13 @@ names = [str(i) for i in range(6, 15)]
 
 embedded = []
 average_generations = []
-max_total = 100
+max_total = 200
 
 # --- Prepare data
 for name in names:
     # filename = f'./data_after_bug_fix/k8_popsize/howManyGenerations_5x5_10_600gen_k8popsize{name}.txt'
     # filename = f'./data_after_bug_fix/k8_probabilities_free/howManyGenerations_5x5_20_600gen_k80.0-0.2prob{name}.txt'
-    filename = f'./data_after_bug_fix/k_graphs/howManyGenerations_5x5_100_600gen_6popsize_k{name}.txt'
+    filename = f'./data_after_bug_fix/k_graphs/howManyGenerations_2x2_200_600gen_6popsize_k{name}.txt'
     with open(filename, 'r') as f:
         data = f.read().splitlines()
         data = [int(value) for value in data]
@@ -55,7 +55,7 @@ plt.rc('figure', titlesize=BIGGER_SIZE)  # fontsize of the figure title
 
 
 # --- Plot
-fig, ax = plt.subplots(figsize=(10, 6))
+fig, ax = plt.subplots(figsize=(11, 6))
 # ax.set_xlabel('Population size')
 # ax.set_xlabel('Probability for "extend to free neighbors" heuristic')
 ax.set_xlabel('K graph')
@@ -72,9 +72,9 @@ ax.tick_params(axis='y', labelcolor=color_blue)
 ax2 = ax.twinx()
 # Number embedded
 color_red = '#E53054'
-# color_red = '#FF4A6D'
+color_red_bright = '#FF4A6D'
 ax2.set_ylabel('Occurrences of valid embeddings', color=color_red)
-ax2.set_ylim(0, max_total)
+ax2.set_ylim(0, max_total+5)
 # ax.xaxis.set_major_locator(ticker.MultipleLocator(5))
 # ax.xaxis.set_minor_locator(ticker.MultipleLocator(1))
 ax2.plot(names, embedded, color=color_red, marker='o')
@@ -83,6 +83,15 @@ ax2.tick_params(axis='y', labelcolor=color_red)
 
 # Write average number of generations needed next to data point
 # https://queirozf.com/entries/add-labels-and-text-to-matplotlib-plots-annotation-examples
+for i, embedded_count in enumerate(embedded):
+    percent_embedded = round(embedded_count / max_total * 100, 2)
+    ax2.annotate(f'{percent_embedded}\,\%',
+                 (i, embedded_count),
+                 textcoords='offset points',
+                 xytext=(16, 10),
+                 horizontalalignment='center',
+                 color=color_red,
+                 fontsize=14)
 # for i, v in enumerate(average_generations):
 #     ax.annotate(str(round(v, 0)),
 #                 (i, embedded[i]),

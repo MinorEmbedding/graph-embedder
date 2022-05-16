@@ -4,14 +4,16 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as ticker
 import numpy as np
 
-names = [str(i) for i in range(1, 15)]
+names = [str(i) for i in range(2, 10)]
 
 
 # --- Prepare data
 Data = namedtuple('Data', ['unique', 'counts'])
 datas = []
 for name in names:
-    with open(f'./data/population_size_100_runs/how_many_generations_5x5_100_600_max_gen_k8_population_size_{name}.txt', 'r') as f:
+    # filename = f'./data/population_size_100_runs/how_many_generations_5x5_100_600_max_gen_k8_population_size_{name}.txt'
+    filename = f'./data_after_bug_fix/k_graphs/howManyGenerations_2x2_200_600gen_6popsize_k{name}.txt'
+    with open(filename, 'r') as f:
         data = f.read().splitlines()
         data = [int(value) for value in data]
         unique, counts = np.unique(data, return_counts=True)
@@ -40,7 +42,7 @@ plt.rc('legend', fontsize=MEDIUM_SIZE)    # legend fontsize
 
 
 # --- Plot
-rows = 3
+rows = 2
 cols = 4
 fig, axs = plt.subplots(rows, cols, figsize=(14, 9))
 
@@ -56,13 +58,27 @@ for r in range(rows):
         color = '#E53054'
         ax.bar(datas[i][0], datas[i].counts, color=color)
         # ax.axhline(0, color='grey', linewidth=0.8)
-        ax.set_title(f'population size {names[i]}')
+        # ax.set_title(f'population size {names[i]}')
+        ax.set_title(f'$K_{names[i]}$')
+
+        # Same scale for most subfigures
+        # maximum = max(datas[i].unique)
+        # print(maximum)
+        # if maximum < 100:
+        #     ax.set_xlim(-5, 100)
+
+        ax.set_xlim(left=-5)
 
         # major = 5 if max(datas[i].unique) <= 60 else 10
         # ax.xaxis.set_major_locator(ticker.MultipleLocator(major))
 
         # minor = 1 if max(datas[i].unique) <= 60 else 5
         # ax.xaxis.set_minor_locator(ticker.MultipleLocator(minor))
+
+        # https://stackoverflow.com/a/38096332/9655481
+        ax.yaxis.get_major_locator().set_params(integer=True)
+        ax.xaxis.set_minor_locator(ticker.AutoMinorLocator())
+        ax.yaxis.set_minor_locator(ticker.AutoMinorLocator())
 
         # y_max = 60 if r == 0 else 70
         # ax.set_ylim(top=75)
@@ -75,8 +91,10 @@ for r in range(rows):
         i += 1
 
 # Label
-# axs[3, 0].set_ylabel('Occurrences')
-# axs[3, 0].set_xlabel('Generations needed')
+axs[0, 0].set_xlim(-5, 20)
+
+axs[1, 0].set_ylabel('Occurrences')
+axs[1, 0].set_xlabel('Generations needed')
 
 # ax.set_title('Generations needed for the crossed house puzzle')
 plt.subplots_adjust(left=0.05, top=0.96, right=0.98, bottom=0.06, hspace=0.4, wspace=0.25)
