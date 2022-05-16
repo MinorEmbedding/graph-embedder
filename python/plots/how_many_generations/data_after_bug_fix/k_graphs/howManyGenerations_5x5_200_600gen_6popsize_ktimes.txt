@@ -1,0 +1,26 @@
+CPU: i7-6700 @ 3.40 GHz (around 3.6 GHz at execution)
+4 cores, 60% used
+
+- K2: 5.46s
+- K3: 23.17s
+- K4: 54.17s
+- K5: 100.35s
+- unknown
+
+
+CPU: i5-8350U @ 1.70 GHz (around 2.5 GHz at execution)
+4 cores, 80% used
+
+- K2: 3.13s
+- K3: 11.70s
+- K4: 44.09s
+- K5: 108.74s
+- K6: 232.39s
+- K7: 521.61s
+- K8: 3722.22s
+- K9: 1655.97s
+- K10: 2720.19s
+- K11: 3210.61s
+- K12: 3686.02s
+- K13: 3449.03s
+- K14: 4362.36s
