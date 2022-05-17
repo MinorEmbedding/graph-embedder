@@ -20,7 +20,11 @@ class DrawEmbedding():
 
         # https://matplotlib.org/stable/gallery/subplots_axes_and_figures/figure_size_units.html
         self.px = 1/plt.rcParams['figure.dpi']  # pixel in inches
-        plt.rcParams.update({'axes.titlesize': 24})
+        plt.rcParams.update({
+            'axes.titlesize': 22,
+            'text.usetex': False,
+            'font.family': 'Helvetica'
+        })
 
         self.col = 0
         self.m = m
@@ -123,7 +127,7 @@ class DrawEmbedding():
     def draw_whole_embedding_step(self, nodes: set[int], edges: set[tuple[int, int, int]],
                                   mapping_G_to_H, title=''):
         self.init_figure()
-        self.fig.suptitle(title, fontsize=20)
+        self.fig.suptitle(title, fontsize=16)
         self.draw_chimera_and_embedding(nodes, edges, mapping_G_to_H)
         self.total_steps += 1
 

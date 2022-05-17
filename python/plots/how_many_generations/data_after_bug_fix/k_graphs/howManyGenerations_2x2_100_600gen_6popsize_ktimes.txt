@@ -1,0 +1,35 @@
+CPU: i5-8350U @ 1.70 GHz (around 2.5 GHz at execution)
+4 cores, 100% used
+
+- K2: 3.04s
+- K3: 5.25s
+- K4: 8.83s
+- K5: 16.20s
+- K6: 20.99s
+- K7: 109.49s
+- K8: 239.84s
+- K9: 197.11s
+- K10: 98.86s
+- K11: 64.00s
+- K12: 53.02s
+- K13: 42.98s
+- K14: 58.70s
+- K15: 61.46s
+- K16: 48.78s
+- K17 failed at 64/100
+
+
+second time (80% cpu and sharing with another process)
+- K2: 4.77s
+- K3: 8.05s
+- K4: 13.13s
+- K5: 17.48s
+- K6: 29.51s
+- K7: 108.64s
+- K8: 351.69s
+- K9: 221.80s
+- K10: 107.57s
+- K11: 72.60s
+- K12: 70.01s
+- K13: 58.08s
+- K14: 59.24s

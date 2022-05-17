@@ -79,8 +79,12 @@ class SupernodeExtension():
             # Calculate selection chances
             selection_chances = np.array([(1-p) for p in degree_percentages.values()])
             selection_chances_without_increase = np.copy(selection_chances)
-            selection_chances_without_increase *= 1 / \
-                np.sum(selection_chances_without_increase)
+
+            # Norm
+            sum = np.sum(selection_chances_without_increase)
+            if sum != 0:
+                selection_chances_without_increase *= 1 / \
+                    np.sum(selection_chances_without_increase)
             selection_chances += increases
             selection_chances *= 1 / np.sum(selection_chances)
             self.selection_chances = selection_chances
@@ -130,7 +134,7 @@ class SupernodeExtension():
         for shifted_target in target_free_neighbors:
             logger.info(f'▶ Try out shifted target on node: {shifted_target}')
             p = TargetParams(target, target_supernode, shifted_target, target_neighbors)
-            res = self._construct_supernode_with_shifted_target(playground, source, p)
+            res = self._construct_supernode_with_shifted_target(source, p)
             if res:
                 return res
 
@@ -145,7 +149,6 @@ class SupernodeExtension():
         return node
 
     def _construct_supernode_with_shifted_target(self,
-                                                 playground: Embedding,
                                                  source: int,
                                                  p: TargetParams) -> Optional[Embedding]:
         """Tries to embed the shifted target, so that the node placement is viable.
@@ -155,6 +158,7 @@ class SupernodeExtension():
             - ``target`` - ``shifted_target``
             - ``shifted_target`` - ``target_neighbors`` (all embedded ``target`` neighbors)
         """
+        playground = self._embedding.get_playground()
         # Get reachable neighbors
         # has to be calculated prior to supernode handover (!)
         shifted_target_reachable = playground.get_reachable_neighbors(p.shifted_target)

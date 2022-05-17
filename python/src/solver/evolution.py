@@ -31,14 +31,14 @@ max_generations = 1000
 remove_redundancy_probability = 0.01
 
 # Chimera graph
-m = 5  # grid size
-n = 5  # grid size
+m = 2  # grid size
+n = 2  # grid size
 t = 4  # shore size
 
 
 ################################  Setup ########################################
 
-H = TestGraph.k(12)
+H = TestGraph.crossed_house()
 solver = EmbeddingSolver(H, m, n, t)
 dp = DegreePercentageData(len(H.get_nodes()))
 
@@ -80,8 +80,9 @@ def main(d: DrawEmbedding) -> bool:
 
     # --- Init
     solver.initialize_embedding()
-    save_embedding(*solver.get_embedding(), d, -1,
+    save_embedding(*solver.get_embedding(), d, 'initial',
                    title=f'Initial embedding')
+    dp.save_current_degree_percentages(-1, solver._embedding)
 
     if solver.found_embedding():
         logger.info('🎉 Directly found embedding after initialization')
@@ -105,10 +106,10 @@ def main(d: DrawEmbedding) -> bool:
         solver.commit(child)
 
         # Save embedding every x steps
-        save_embedding_steps = 50
+        save_embedding_steps = 1
         if (i % save_embedding_steps == 0) \
                 or (i == max_generations - 2) or (i == max_generations - 1):
-            save_embedding(*solver.get_embedding(), d, i,
+            save_embedding(*solver.get_embedding(), d, str(i),
                            title=f'Generation {i}')
 
         # Save degree percentage data
@@ -116,8 +117,10 @@ def main(d: DrawEmbedding) -> bool:
 
         # Check if done
         if child.is_valid_embedding():
+            save_embedding(*solver.get_embedding(), d, str(i),
+                           title=f'Generation {i} (final)')
             child.remove_redundancy()
-            save_embedding(*solver.get_embedding(), d, i,
+            save_embedding(*solver.get_embedding(), d, f'{i}final',
                            title=f'Generation {i} (final with redundancy removed)')
             logger.info('🎉🎉🎉🎉🎉🎉 Found embedding')
             print('🎉🎉🎉🎉🎉🎉 Found embedding')
@@ -156,7 +159,7 @@ def output_embedding(nodes, edges, mapping_G_to_H, d: DrawEmbedding):
 
 
 def save_embedding(nodes: set[int], edges: set[tuple[int, int, int]],
-                   mapping_G_to_H, d: DrawEmbedding, i: int, title=''):
+                   mapping_G_to_H, d: DrawEmbedding, i: str, title=''):
     logger.info('')
     logger.info('🎈 Current embedding')
     logger.info(f'edges: {edges}')

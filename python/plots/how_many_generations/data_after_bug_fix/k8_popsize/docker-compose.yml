@@ -1,0 +1,21 @@
+services:
+  major-miner:
+    build: .
+    container_name: major-miner
+    environment:
+      CORE_PERCENTAGE: 90
+      MAX_MUTATION_TRIALS: 30
+      PROB_EXTEND_TO_FREE_NEIGHBOR: 0.3
+      MAX_TOTAL: 1000
+      MAX_GENERATIONS: 600
+      PROB_REMOVE_REDUNDANCY: 0.01
+      GRID_M: 5
+      GRID_N: 5
+      K_GRAPH: 8
+      POPSIZE_MIN: 1
+      POPSIZE_MAX: 20
+
+    volumes:
+      - type: bind
+        source: ./out
+        target: /app/out

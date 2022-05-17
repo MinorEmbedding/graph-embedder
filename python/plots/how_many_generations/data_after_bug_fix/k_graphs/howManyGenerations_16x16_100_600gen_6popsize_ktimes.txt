@@ -1,0 +1,5 @@
+CPU: i7-6700 @ 3.40 GHz (around 3.6 GHz at execution)
+4 cores, 60% used
+
+- previous data was lost (terminal closed too quickly)
+- k13: 20154.59s
