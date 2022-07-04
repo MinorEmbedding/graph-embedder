@@ -1,4 +1,4 @@
-# majorminer
+# graph-embedder
 [![Documentation Status](https://readthedocs.org/projects/majorminer/badge/?version=latest)](https://majorminer.readthedocs.io/en/latest/?badge=latest)
 
 
