@@ -4,6 +4,8 @@
 
 Testing a bunch of graph minor embedding heuristics and related techniques to improve the embedding of QUBOs.
 
+Our final results for the project can be found [here](doc/Studienarbeit.pdf).
+
 
 
 | :warning:    | This is a research repo, so APIs and algorithms might change frequently as we are trying out different ideas. Moreover, this means that the code is not production-ready. |
